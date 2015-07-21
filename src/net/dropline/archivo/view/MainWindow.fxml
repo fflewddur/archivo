@@ -72,13 +72,13 @@
         </ButtonBar>
     </bottom>
    <center>
-      <TreeTableView prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+       <TableView prefHeight="200.0" prefWidth="200.0" BorderPane.alignment="CENTER">
         <columns>
-            <TreeTableColumn prefWidth="75.0" text="Show"/>
-            <TreeTableColumn prefWidth="94.0" text="Episode"/>
-            <TreeTableColumn prefWidth="205.0" text="Date"/>
-            <TreeTableColumn prefWidth="75.0" text="Duration" />
+            <TableColumn prefWidth="75.0" text="Show"/>
+            <TableColumn prefWidth="75.0" text="Episode"/>
+            <TableColumn prefWidth="75.0" text="Date"/>
+            <TableColumn prefWidth="75.0" text="Duration"/>
         </columns>
-      </TreeTableView>
+       </TableView>
    </center>
 </BorderPane>

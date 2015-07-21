@@ -19,35 +19,67 @@
 
 package net.dropline.archivo.model;
 
+import javafx.beans.property.*;
+
+import java.time.LocalDateTime;
+
 public class Recording {
-    private final String seriesTitle;
+    private final StringProperty seriesTitle;
+    private final StringProperty episodeTitle;
+    private final ObjectProperty<LocalDateTime> dateRecorded;
+    private final IntegerProperty minutesLong;
+
     private final int seriesNumber;
-    private final String episodeTitle;
     private final int episodeNumber;
     private final Channel channel;
-    private final int minutesLong;
 
     public Recording(Builder builder) {
-        seriesTitle = builder.seriesTitle;
+        seriesTitle = new SimpleStringProperty(builder.seriesTitle);
+        episodeTitle = new SimpleStringProperty(builder.episodeTitle);
+        dateRecorded = new SimpleObjectProperty<>(builder.dateRecorded);
+        minutesLong = new SimpleIntegerProperty(builder.minutesLong);
+
+        // FIXME these need to become Properties
         seriesNumber = builder.seriesNumber;
-        episodeTitle = builder.episodeTitle;
         episodeNumber = builder.episodeNumber;
         channel = builder.channel;
-        minutesLong = builder.minutesLong;
     }
 
     public String getSeriesTitle() {
+        return seriesTitle.get();
+    }
+
+    public StringProperty seriesTitleProperty() {
         return seriesTitle;
+    }
+
+    public String getEpisodeTitle() {
+        return episodeTitle.get();
+    }
+
+    public StringProperty episodeTitleProperty() {
+        return episodeTitle;
+    }
+
+    public LocalDateTime getDateRecorded() {
+        return dateRecorded.get();
+    }
+
+    public ObjectProperty<LocalDateTime> dateRecordedProperty() {
+        return dateRecorded;
+    }
+
+    public int getDuration() {
+        return minutesLong.get();
+    }
+
+    public IntegerProperty durationProperty() {
+        return minutesLong;
     }
 
     public int getSeriesNumber() {
         return seriesNumber;
     }
-
-    public String getEpisodeTitle() {
-        return episodeTitle;
-    }
-
     public int getEpisodeNumber() {
         return episodeNumber;
     }
@@ -56,9 +88,7 @@ public class Recording {
         return channel;
     }
 
-    public int getDuration() {
-        return minutesLong;
-    }
+
 
     public static class Builder {
         private String seriesTitle;
@@ -67,6 +97,7 @@ public class Recording {
         private int episodeNumber;
         private Channel channel;
         private int minutesLong;
+        private LocalDateTime dateRecorded;
 
         public Builder seriesTitle(String val) {
             seriesTitle = val;
@@ -95,6 +126,11 @@ public class Recording {
 
         public Builder minutesLong(int val) {
             minutesLong = val;
+            return this;
+        }
+
+        public Builder recordedOn(LocalDateTime val) {
+            dateRecorded = val;
             return this;
         }
 
