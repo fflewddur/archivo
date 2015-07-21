@@ -30,7 +30,9 @@ import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
 import java.io.IOException;
 
-public class Main extends Application {
+public class MainApp extends Application {
+
+    private Stage primaryStage;
 
     public static final String ApplicationName = "Archivo";
     public static final String ApplicationRDN = "net.dropline.archivo";
@@ -41,15 +43,25 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
-        Parent root = FXMLLoader.load(getClass().getResource("main.fxml"));
-        primaryStage.setTitle("Archivo");
-        primaryStage.setScene(new Scene(root, 600, 400));
-        primaryStage.show();
-        MenuBar mb = (MenuBar) root.lookup("#menubar");
-        mb.setUseSystemMenuBar(true);
+        this.primaryStage = primaryStage;
+        this.primaryStage.setTitle(ApplicationName);
+
+        initMainWindow();
     }
 
+    private void initMainWindow() {
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource("view/MainWindow.fxml"));
 
+            MenuBar mb = (MenuBar) root.lookup("#menubar");
+            mb.setUseSystemMenuBar(true);
+
+            primaryStage.setScene(new Scene(root));
+            primaryStage.show();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
     public static void main(String[] args) {
 //        testDNS();
         launch(args);

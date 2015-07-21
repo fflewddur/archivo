@@ -19,7 +19,7 @@
 
 package net.dropline.archivo.tests;
 
-import net.dropline.archivo.Main;
+import net.dropline.archivo.MainApp;
 import net.dropline.archivo.model.Recording;
 import net.dropline.archivo.model.Tivo;
 import org.junit.Test;
@@ -32,14 +32,14 @@ import java.util.List;
 public class TivoTest {
     @Test
     public void testCreateTivoConnection() throws UnknownHostException {
-        InetAddress address = InetAddress.getByAddress(Main.testDeviceAddress);
-        Tivo tc = new Tivo("TiVo", address, Main.testDeviceMAK);
+        InetAddress address = InetAddress.getByAddress(MainApp.testDeviceAddress);
+        Tivo tc = new Tivo("TiVo", address, MainApp.testDeviceMAK);
     }
 
     @Test
-    public void testGetRecordings() throws UnknownHostException, IOException {
-        InetAddress address = InetAddress.getByAddress(Main.testDeviceAddress);
-        Tivo tc = new Tivo("TiVo", address, Main.testDeviceMAK);
+    public void testGetRecordings() throws IOException {
+        InetAddress address = InetAddress.getByAddress(MainApp.testDeviceAddress);
+        Tivo tc = new Tivo("TiVo", address, MainApp.testDeviceMAK);
         List<Recording> recordings = tc.getRecordings();
     }
 }
