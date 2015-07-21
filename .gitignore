@@ -11,3 +11,7 @@ hs_err_pid*
 
 # System files
 .DS_Store
+
+# IDE files
+/.idea/workspace.xml
+/.idea/tasks.xml
