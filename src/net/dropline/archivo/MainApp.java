@@ -20,28 +20,21 @@
 package net.dropline.archivo;
 
 import javafx.application.Application;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-import net.dropline.archivo.model.Recording;
 import net.dropline.archivo.view.RecordingListController;
 
 import javax.jmdns.JmDNS;
 import javax.jmdns.ServiceInfo;
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 public class MainApp extends Application {
-
     private Stage primaryStage;
     private BorderPane rootLayout;
-
-    private ObservableList<Recording> recordings = FXCollections.observableArrayList();
 
     public static final String ApplicationName = "Archivo";
     public static final String ApplicationRDN = "net.dropline.archivo";
@@ -51,17 +44,6 @@ public class MainApp extends Application {
     public static final String testDeviceMAK = "3806772447";
 
     public MainApp() {
-        // Add some test recordings
-        recordings.add(new Recording.Builder().seriesTitle("NOVA").seriesNumber(20).channel("OPB", 710).recordedOn(LocalDateTime.of(2015, 7, 14, 21, 0)).
-                episodeTitle("Chasing Pluto").episodeNumber(14).minutesLong(59).build());
-        recordings.add(new Recording.Builder().seriesTitle("NOVA").seriesNumber(20).channel("OPB", 710).recordedOn(LocalDateTime.of(2015, 3, 5, 19, 30)).
-                episodeTitle("The Great Math Mystery").episodeNumber(12).minutesLong(59).build());
-        recordings.add(new Recording.Builder().seriesTitle("Doctor Who").seriesNumber(4).channel("BBC America", 790).
-                episodeTitle("Silence in the Library").episodeNumber(8).minutesLong(60).recordedOn(LocalDateTime.of(2010, 9, 20, 20, 0)).build());
-    }
-
-    public ObservableList<Recording> getRecordings() {
-        return recordings;
     }
 
     @Override
