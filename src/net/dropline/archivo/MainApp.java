@@ -21,23 +21,26 @@ package net.dropline.archivo;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
-import javafx.scene.control.MenuBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import net.dropline.archivo.view.RecordingListController;
+import net.dropline.archivo.view.RootLayoutController;
 
-import javax.jmdns.JmDNS;
-import javax.jmdns.ServiceInfo;
 import java.io.IOException;
 
 public class MainApp extends Application {
     private Stage primaryStage;
     private BorderPane rootLayout;
+    private final StringProperty statusText;
+
+    private RootLayoutController rootController;
 
     public static final String ApplicationName = "Archivo";
     public static final String ApplicationRDN = "net.dropline.archivo";
@@ -47,6 +50,7 @@ public class MainApp extends Application {
     public static final String testDeviceMAK = "3806772447";
 
     public MainApp() {
+        statusText = new SimpleStringProperty();
     }
 
     @Override
@@ -73,8 +77,8 @@ public class MainApp extends Application {
             loader.setLocation(MainApp.class.getResource("view/RootLayout.fxml"));
             rootLayout = loader.load();
 
-            MenuBar mb = (MenuBar) rootLayout.lookup("#menubar");
-            mb.setUseSystemMenuBar(true);
+            rootController = loader.getController();
+            rootController.setMainApp(this);
 
             primaryStage.setScene(new Scene(rootLayout));
             primaryStage.show();
@@ -92,6 +96,7 @@ public class MainApp extends Application {
 
             RecordingListController controller = loader.getController();
             controller.setMainApp(this);
+            controller.startTivoSearch();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -101,37 +106,20 @@ public class MainApp extends Application {
         return primaryStage;
     }
 
-    public static void main(String[] args) {
-//        testDNS();
-        launch(args);
+    public StringProperty statusTextProperty() {
+        return statusText;
     }
 
-    public static void testDNS() {
-        JmDNS jmdns = null;
-        try {
-            jmdns = JmDNS.create();
-            while (true) {
-                ServiceInfo[] infos = jmdns.list("_http._tcp.local.");
-                System.out.println("List _http._tcp.local.");
-                for (int i = 0; i < infos.length; i++) {
-                    System.out.println(infos[i]);
-                }
-                System.out.println();
+    public void setStatusText(String status) {
+        statusText.set(status);
+        rootController.showStatus();
+    }
 
-                try {
-                    Thread.sleep(5000);
-                } catch (InterruptedException e) {
-                    break;
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (jmdns != null) try {
-                jmdns.close();
-            } catch (IOException exception) {
-                //
-            }
-        }
+    public void clearStatusText() {
+        rootController.hideStatus();
+    }
+
+    public static void main(String[] args) {
+        launch(args);
     }
 }

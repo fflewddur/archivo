@@ -38,8 +38,13 @@ public class TivoSearchService extends Service<Set<Tivo>> {
     private static final String PROPERTY_VALUE_STARTS_WITH = "tcd/";
     private static final String TSN_PROPERTY = "TSN";
 
-    public TivoSearchService() throws IOException {
-        jmdns = JmDNS.create(InetAddress.getLocalHost());
+    public TivoSearchService() {
+        try {
+            jmdns = JmDNS.create(InetAddress.getLocalHost());
+            jmdns.unregisterAllServices();
+        } catch (IOException e) {
+            System.err.println("Error searching for TiVo devices: " + e.getLocalizedMessage());
+        }
     }
 
     @Override

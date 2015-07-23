@@ -23,23 +23,29 @@ import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.layout.HBox;
 import net.dropline.archivo.MainApp;
 import net.dropline.archivo.controller.TivoSearchService;
 import net.dropline.archivo.model.Recording;
 import net.dropline.archivo.model.Tivo;
 
-import java.io.IOException;
+import java.net.URL;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class RecordingListController {
+public class RecordingListController implements Initializable {
     private final ObservableList<Tivo> tivos;
     private final ObservableList<Recording> recordings;
+    private final TivoSearchService tivoSearchService;
 
+    @FXML
+    private HBox toolbar;
     @FXML
     private ComboBox<Tivo> tivoList;
     @FXML
@@ -58,10 +64,13 @@ public class RecordingListController {
     public RecordingListController() {
         tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
         recordings = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+        tivoSearchService = new TivoSearchService();
     }
 
-    @FXML
-    private void initialize() {
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        disableUI();
+
         tivoList.setConverter(new Tivo.StringConverter());
         tivoList.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> {
@@ -80,25 +89,31 @@ public class RecordingListController {
 
         // When the list of TiVos is first populated, automatically select one
         tivos.addListener(new TivoListChangeListener());
-
-        // Start looking for TiVo devices
-        startTivoSearch();
     }
 
-    private void startTivoSearch() {
-        try {
-            System.out.println("Start tivo search...");
-            TivoSearchService searchService = new TivoSearchService();
-            searchService.setOnSucceeded(event -> {
-                Set<Tivo> found = (Set<Tivo>) event.getSource().getValue();
-                List<Tivo> toAdd = found.stream().filter(t -> !tivos.contains(t)).collect(Collectors.toList());
-                tivos.addAll(toAdd);
-            });
-            searchService.start();
-        } catch (IOException e) {
-            System.err.println("Error searching for TiVo devices: " + e.getLocalizedMessage());
-            e.printStackTrace();
-        }
+    public void startTivoSearch() {
+        mainApp.setStatusText("Looking for TiVos...");
+        tivoSearchService.setOnSucceeded(event -> {
+            // Add any new TiVos to our list
+            @SuppressWarnings("unchecked") Set<Tivo> found = (Set<Tivo>) event.getSource().getValue();
+            List<Tivo> toAdd = found.stream().filter(t -> !tivos.contains(t)).collect(Collectors.toList());
+            tivos.addAll(toAdd);
+            mainApp.clearStatusText();
+        });
+        tivoSearchService.start();
+    }
+
+    private void disableUI() {
+        setUIDisabled(true);
+    }
+
+    private void enableUI() {
+        setUIDisabled(false);
+    }
+
+    private void setUIDisabled(boolean disabled) {
+        toolbar.setDisable(disabled);
+        recordingTable.setDisable(disabled);
     }
 
     public void setMainApp(MainApp mainApp) {
@@ -116,6 +131,7 @@ public class RecordingListController {
                     // If a new Tivo was found, and we don't currently have a selected Tivo, select the new device
                     if (tivoList.getValue() == null) {
                         tivoList.getSelectionModel().selectFirst();
+                        enableUI();
                     }
                 }
             }
