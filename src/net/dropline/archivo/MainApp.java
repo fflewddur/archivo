@@ -20,12 +20,15 @@
 package net.dropline.archivo;
 
 import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.MenuBar;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import net.dropline.archivo.view.RecordingListController;
 
 import javax.jmdns.JmDNS;
@@ -54,6 +57,14 @@ public class MainApp extends Application {
         initRootLayout();
 
         showRecordingList();
+
+        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            @Override
+            public void handle(WindowEvent e) {
+                Platform.exit();
+                System.exit(0);
+            }
+        });
     }
 
     private void initRootLayout() {

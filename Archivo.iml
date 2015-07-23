@@ -19,6 +19,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="jmdns-3.4.1" level="project" />
+    <orderEntry type="library" name="jmdns" level="project" />
   </component>
 </module>

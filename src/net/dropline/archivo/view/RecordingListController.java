@@ -27,12 +27,14 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import net.dropline.archivo.MainApp;
+import net.dropline.archivo.controller.TivoSearchService;
 import net.dropline.archivo.model.Recording;
 import net.dropline.archivo.model.Tivo;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.time.LocalDateTime;
+import java.io.IOException;
+import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class RecordingListController {
     private final ObservableList<Tivo> tivos;
@@ -54,44 +56,8 @@ public class RecordingListController {
     private MainApp mainApp;
 
     public RecordingListController() {
-        tivos = FXCollections.observableArrayList();
-        recordings = FXCollections.observableArrayList();
-
-        // FIXME just for testing
-        new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    System.out.println("adding first tivo");
-                    // Add a Tivo
-                    try {
-                        InetAddress address = InetAddress.getByAddress(MainApp.testDeviceAddress);
-                        Tivo tivo = new Tivo("TiVo", address, MainApp.testDeviceMAK);
-                        tivos.add(tivo);
-                    } catch (UnknownHostException e) {
-                        e.printStackTrace();
-                        System.exit(1);
-                    }
-                    Thread.sleep(10000);
-                    System.out.println("adding second tivo");
-                    InetAddress address = InetAddress.getByAddress(MainApp.testDeviceAddress);
-                    Tivo tivo = new Tivo("TiVo 2", address, MainApp.testDeviceMAK);
-                    tivos.add(tivo);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                } catch (UnknownHostException e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-
-        // Add some test recordings
-        recordings.add(new Recording.Builder().seriesTitle("NOVA").seriesNumber(20).channel("OPB", 710).recordedOn(LocalDateTime.of(2015, 7, 14, 21, 0)).
-                episodeTitle("Chasing Pluto").episodeNumber(14).minutesLong(59).build());
-        recordings.add(new Recording.Builder().seriesTitle("NOVA").seriesNumber(20).channel("OPB", 710).recordedOn(LocalDateTime.of(2015, 3, 5, 19, 30)).
-                episodeTitle("The Great Math Mystery").episodeNumber(12).minutesLong(59).build());
-        recordings.add(new Recording.Builder().seriesTitle("Doctor Who").seriesNumber(4).channel("BBC America", 790).
-                episodeTitle("Silence in the Library").episodeNumber(8).minutesLong(60).recordedOn(LocalDateTime.of(2010, 9, 20, 20, 0)).build());
+        tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+        recordings = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
     }
 
     @FXML
@@ -112,7 +78,27 @@ public class RecordingListController {
         recordingTable.setItems(recordings);
         tivoList.setItems(tivos);
 
+        // When the list of TiVos is first populated, automatically select one
         tivos.addListener(new TivoListChangeListener());
+
+        // Start looking for TiVo devices
+        startTivoSearch();
+    }
+
+    private void startTivoSearch() {
+        try {
+            System.out.println("Start tivo search...");
+            TivoSearchService searchService = new TivoSearchService();
+            searchService.setOnSucceeded(event -> {
+                Set<Tivo> found = (Set<Tivo>) event.getSource().getValue();
+                List<Tivo> toAdd = found.stream().filter(t -> !tivos.contains(t)).collect(Collectors.toList());
+                tivos.addAll(toAdd);
+            });
+            searchService.start();
+        } catch (IOException e) {
+            System.err.println("Error searching for TiVo devices: " + e.getLocalizedMessage());
+            e.printStackTrace();
+        }
     }
 
     public void setMainApp(MainApp mainApp) {

@@ -20,26 +20,37 @@
 package net.dropline.archivo.tests;
 
 import net.dropline.archivo.MainApp;
-import net.dropline.archivo.model.Recording;
 import net.dropline.archivo.model.Tivo;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class TivoTest {
     @Test
     public void testCreateTivoConnection() throws UnknownHostException {
         InetAddress address = InetAddress.getByAddress(MainApp.testDeviceAddress);
-        Tivo tc = new Tivo("TiVo", address, MainApp.testDeviceMAK);
+//        Tivo tc = new Tivo("TiVo", address, MainApp.testDeviceMAK);
     }
 
     @Test
     public void testGetRecordings() throws IOException {
         InetAddress address = InetAddress.getByAddress(MainApp.testDeviceAddress);
-        Tivo tc = new Tivo("TiVo", address, MainApp.testDeviceMAK);
-        List<Recording> recordings = tc.getRecordings();
+//        Tivo tc = new Tivo("TiVo", address, MainApp.testDeviceMAK);
+//        List<Recording> recordings = tc.getRecordings();
+    }
+
+    @Test
+    public void testEquality() {
+        Tivo a = new Tivo.Builder().name("Foo").tsn("Bar").build();
+        Tivo aCopy = new Tivo.Builder().name("Foo").tsn("Bar").build();
+        Tivo b = new Tivo.Builder().name("Foo2").tsn("Bar2").build();
+
+        assertEquals("a equals aCopy", true, a.equals(aCopy));
+        assertEquals("a not equals b", false, a.equals(b));
+        assertEquals("aCopy not equals b", false, aCopy.equals(b));
     }
 }
