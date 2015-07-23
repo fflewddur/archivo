@@ -134,15 +134,18 @@ public class MindRPC {
             System.out.println("Writer flushed");
             String headerStart = socketReader.readLine();
             Matcher matcher = RESPONSE_HEAD.matcher(headerStart);
-            matcher.find();
-            int headerLength = Integer.parseInt(matcher.group(1));
-            int bodyLength = Integer.parseInt(matcher.group(2));
-            char[] header = new char[headerLength];
-            char[] body = new char[bodyLength];
-            socketReader.read(header, 0, headerLength);
-            System.out.print("Header: " + new String(header));
-            socketReader.read(body, 0, bodyLength);
-            System.out.println("Body: " + new String(body));
+            if (matcher.find()) {
+                int headerLength = Integer.parseInt(matcher.group(1));
+                int bodyLength = Integer.parseInt(matcher.group(2));
+                char[] header = new char[headerLength];
+                char[] body = new char[bodyLength];
+                socketReader.read(header, 0, headerLength);
+                System.out.print("Header: " + new String(header));
+                socketReader.read(body, 0, bodyLength);
+                System.out.println("Body: " + new String(body));
+            } else {
+                throw new IOException("Response format not as expected");
+            }
         } catch (IOException e) {
             System.err.println("Network error: " + e.getLocalizedMessage());
         }

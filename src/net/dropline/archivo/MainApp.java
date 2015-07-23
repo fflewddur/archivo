@@ -23,13 +23,11 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-import javafx.stage.WindowEvent;
 import net.dropline.archivo.view.RecordingListController;
 import net.dropline.archivo.view.RootLayoutController;
 
@@ -62,13 +60,11 @@ public class MainApp extends Application {
 
         showRecordingList();
 
-        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
-            @Override
-            public void handle(WindowEvent e) {
-                Platform.exit();
-                System.exit(0);
-            }
-        });
+        primaryStage.setOnCloseRequest(e -> {
+                    Platform.exit();
+                    System.exit(0);
+                }
+        );
     }
 
     private void initRootLayout() {
