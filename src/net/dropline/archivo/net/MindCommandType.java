@@ -25,6 +25,7 @@ public enum MindCommandType {
     RECORDING_FOLDER_ITEM_SEARCH;
 
     @Override public String toString() {
+        // These strings must match the name of the command in the TiVo Mind API
         switch(this) {
             case AUTH:
                 return "bodyAuthenticate";

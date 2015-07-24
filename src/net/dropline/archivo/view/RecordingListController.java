@@ -29,9 +29,12 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.HBox;
 import net.dropline.archivo.MainApp;
-import net.dropline.archivo.controller.TivoSearchService;
 import net.dropline.archivo.model.Recording;
 import net.dropline.archivo.model.Tivo;
+import net.dropline.archivo.net.MindCommandRecordingFolderItemSearch;
+import net.dropline.archivo.net.MindTask;
+import net.dropline.archivo.net.TivoSearchTask;
+import org.json.JSONObject;
 
 import java.net.URL;
 import java.util.List;
@@ -42,7 +45,7 @@ import java.util.stream.Collectors;
 public class RecordingListController implements Initializable {
     private final ObservableList<Tivo> tivos;
     private final ObservableList<Recording> recordings;
-    private final TivoSearchService tivoSearchService;
+    private final TivoSearchTask tivoSearchTask;
 
     @FXML
     private HBox toolbar;
@@ -64,7 +67,7 @@ public class RecordingListController implements Initializable {
     public RecordingListController() {
         tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
         recordings = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
-        tivoSearchService = new TivoSearchService();
+        tivoSearchTask = new TivoSearchTask();
     }
 
     @Override
@@ -73,9 +76,8 @@ public class RecordingListController implements Initializable {
 
         tivoList.setConverter(new Tivo.StringConverter());
         tivoList.getSelectionModel().selectedItemProperty().addListener(
-                (observable, oldValue, newValue) -> {
-                    recordings.clear();
-                    recordings.addAll(newValue.getRecordings());
+                (tivoList, oldTivo, curTivo) -> {
+                    fetchRecordingsFrom(curTivo);
                 }
         );
 
@@ -91,16 +93,36 @@ public class RecordingListController implements Initializable {
         tivos.addListener(new TivoListChangeListener());
     }
 
+    public void fetchRecordingsFromSelectedTivo() {
+        fetchRecordingsFrom(tivoList.getValue());
+    }
+
+    private void fetchRecordingsFrom(Tivo tivo) {
+        mainApp.setStatusText("Fetching recordings...");
+        recordings.clear();
+        recordingTable.setDisable(true);
+
+        MindTask task = new MindTask(tivo.getClient(), new MindCommandRecordingFolderItemSearch());
+        task.setOnSucceeded(event -> {
+            JSONObject response = (JSONObject) event.getSource().getValue();
+            // TODO Parse the reponse to a list of Recordings
+            System.out.println("Response: " + response);
+            mainApp.clearStatusText();
+            recordingTable.setDisable(false);
+        });
+        mainApp.getExecutor().submit(task);
+    }
+
     public void startTivoSearch() {
         mainApp.setStatusText("Looking for TiVos...");
-        tivoSearchService.setOnSucceeded(event -> {
+        tivoSearchTask.setOnSucceeded(event -> {
             // Add any new TiVos to our list
             @SuppressWarnings("unchecked") Set<Tivo> found = (Set<Tivo>) event.getSource().getValue();
             List<Tivo> toAdd = found.stream().filter(t -> !tivos.contains(t)).collect(Collectors.toList());
             tivos.addAll(toAdd);
             mainApp.clearStatusText();
         });
-        tivoSearchService.start();
+        mainApp.getExecutor().submit(tivoSearchTask);
     }
 
     private void disableUI() {

@@ -19,6 +19,8 @@
 
 package net.dropline.archivo.net;
 
+import org.json.JSONObject;
+
 import javax.net.ssl.*;
 import java.io.*;
 import java.net.InetAddress;
@@ -100,9 +102,9 @@ public class MindRPC {
         socketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
     }
 
-    private void authenticate() {
+    private void authenticate() throws IOException {
         MindCommand authCommand = new MindCommandAuth(mak);
-        authCommand.executeOn(this, null);
+        authCommand.executeOn(this);
     }
 
     private SSLSocketFactory createSecureSocketFactory() {
@@ -131,30 +133,24 @@ public class MindRPC {
         return store;
     }
 
-    public void send(String request, MindCommandCompletedHandler completedHandler) {
+    public JSONObject send(String request) throws IOException {
         System.out.print("Request to send:\n" + request);
-        try {
-            connectAndAuthenticate();
-            socketWriter.print(request);
-            System.out.println("Flushing writer");
-            socketWriter.flush();
-            System.out.println("Writer flushed");
-            String headerStart = socketReader.readLine();
-            Matcher matcher = RESPONSE_HEAD.matcher(headerStart);
-            if (matcher.find()) {
-                int headerLength = Integer.parseInt(matcher.group(1));
-                int bodyLength = Integer.parseInt(matcher.group(2));
-                char[] header = new char[headerLength];
-                char[] body = new char[bodyLength];
-                socketReader.read(header, 0, headerLength);
-                System.out.print("Header: " + new String(header));
-                socketReader.read(body, 0, bodyLength);
-                System.out.println("Body: " + new String(body));
-            } else {
-                throw new IOException("Response format not as expected");
-            }
-        } catch (IOException e) {
-            System.err.println("Network error: " + e.getLocalizedMessage());
+
+        connectAndAuthenticate();
+        socketWriter.print(request);
+        socketWriter.flush();
+        String headerStart = socketReader.readLine();
+        Matcher matcher = RESPONSE_HEAD.matcher(headerStart);
+        if (matcher.find()) {
+            int headerLength = Integer.parseInt(matcher.group(1));
+            int bodyLength = Integer.parseInt(matcher.group(2));
+            char[] header = new char[headerLength];
+            char[] body = new char[bodyLength];
+            socketReader.read(header, 0, headerLength);
+            socketReader.read(body, 0, bodyLength);
+            return new JSONObject(new String(body));
+        } else {
+            throw new IOException("Response format not as expected (First line = '" + headerStart + "'");
         }
     }
 

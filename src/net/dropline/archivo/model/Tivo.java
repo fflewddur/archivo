@@ -20,14 +20,10 @@
 package net.dropline.archivo.model;
 
 import net.dropline.archivo.MainApp;
-import net.dropline.archivo.net.MindCommand;
-import net.dropline.archivo.net.MindCommandRecordingFolderItemSearch;
 import net.dropline.archivo.net.MindRPC;
 
 import java.net.InetAddress;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 public class Tivo {
     private final String name;
@@ -47,14 +43,19 @@ public class Tivo {
         return name;
     }
 
-    public List<Recording> getRecordings() {
-        initRPCClient();
-        MindCommand command = new MindCommandRecordingFolderItemSearch();
-        command.executeOn(client, null);
-        return Collections.emptyList();
+//    public List<Recording> getRecordings() throws IOException {
+//        initRPCClientIfNeeded();
+//        MindCommand command = new MindCommandRecordingFolderItemSearch();
+//        JSONObject response = command.executeOn(client);
+//        return Collections.emptyList();
+//    }
+
+    public MindRPC getClient() {
+        initRPCClientIfNeeded();
+        return client;
     }
 
-    private void initRPCClient() {
+    private void initRPCClientIfNeeded() {
         if (client == null) {
             client = new MindRPC(addresses[0], port, MainApp.testDeviceMAK);
         }

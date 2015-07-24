@@ -22,12 +22,13 @@ package net.dropline.archivo.net;
 import net.dropline.archivo.MainApp;
 import org.json.JSONObject;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
 public abstract class MindCommand {
-    private MindRPC manager;
+    private MindRPC client;
     protected MindCommandType commandType;
     protected JSONObject bodyData;
 
@@ -36,10 +37,11 @@ public abstract class MindCommand {
         this.bodyData = new JSONObject();
     }
 
-    public void executeOn(MindRPC manager, MindCommandCompletedHandler completedHandler) {
-        this.manager = manager;
-        String request = buildRequest();
-        manager.send(request, completedHandler);
+    public JSONObject executeOn(MindRPC client) throws IOException {
+        assert (client != null);
+
+        this.client = client;
+        return client.send(buildRequest());
     }
 
     private String buildRequest() {
@@ -70,7 +72,7 @@ public abstract class MindCommand {
         List<String> headerLines = new ArrayList<>();
 
         headerLines.add("Type: request");
-        headerLines.add(String.format("RpcId: %d", manager.nextRequestId()));
+        headerLines.add(String.format("RpcId: %d", client.nextRequestId()));
         headerLines.add(String.format("SchemaVersion: %d", MindRPC.SCHEMA_VER));
         headerLines.add("Content-Type: application/json");
         headerLines.add(String.format("RequestType: %s", commandType));
@@ -78,11 +80,16 @@ public abstract class MindCommand {
         headerLines.add("BodyId: ");
         headerLines.add(String.format("ApplicationName: %s", MainApp.ApplicationRDN));
         headerLines.add(String.format("ApplicationVersion: %s", MainApp.ApplicationVersion));
-        headerLines.add(String.format("ApplicationSessionId: 0x%x", manager.getSessionId()));
+        headerLines.add(String.format("ApplicationSessionId: 0x%x", client.getSessionId()));
 
         // Header always ends with a blank line
         headerLines.add("");
 
         return headerLines;
+    }
+
+    @Override
+    public String toString() {
+        return String.format("MindCommand[type=%s]", commandType);
     }
 }

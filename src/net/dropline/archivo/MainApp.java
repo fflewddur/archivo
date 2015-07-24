@@ -32,11 +32,14 @@ import net.dropline.archivo.view.RecordingListController;
 import net.dropline.archivo.view.RootLayoutController;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class MainApp extends Application {
     private Stage primaryStage;
     private BorderPane rootLayout;
     private final StringProperty statusText;
+    private final ExecutorService executor;
 
     private RootLayoutController rootController;
 
@@ -44,11 +47,11 @@ public class MainApp extends Application {
     public static final String ApplicationRDN = "net.dropline.archivo";
     public static final String ApplicationVersion = "0.1.0";
 
-    public static final byte[] testDeviceAddress = {10, 0, 0, 110};
     public static final String testDeviceMAK = "3806772447";
 
     public MainApp() {
         statusText = new SimpleStringProperty();
+        executor = Executors.newSingleThreadExecutor();
     }
 
     @Override
@@ -96,6 +99,10 @@ public class MainApp extends Application {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    public ExecutorService getExecutor() {
+        return executor;
     }
 
     public Stage getPrimaryStage() {

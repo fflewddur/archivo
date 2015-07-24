@@ -19,5 +19,20 @@
 
 package net.dropline.archivo.net;
 
-public abstract class MindCommandCompletedHandler {
+import javafx.concurrent.Task;
+import org.json.JSONObject;
+
+public class MindTask extends Task<JSONObject> {
+    private final MindCommand command;
+    private final MindRPC client;
+
+    public MindTask(MindRPC client, MindCommand command) {
+        this.client = client;
+        this.command = command;
+    }
+
+    @Override
+    protected JSONObject call() throws Exception {
+        return command.executeOn(client);
+    }
 }
