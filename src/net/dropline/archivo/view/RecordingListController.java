@@ -37,10 +37,7 @@ import net.dropline.archivo.net.TivoSearchTask;
 import org.json.JSONObject;
 
 import java.net.URL;
-import java.util.List;
 import java.util.ResourceBundle;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class RecordingListController implements Initializable {
     private final ObservableList<Tivo> tivos;
@@ -115,13 +112,13 @@ public class RecordingListController implements Initializable {
 
     public void startTivoSearch() {
         mainApp.setStatusText("Looking for TiVos...");
-        tivoSearchTask.setOnSucceeded(event -> {
+//        tivoSearchTask.setOnSucceeded(event -> {
             // Add any new TiVos to our list
-            @SuppressWarnings("unchecked") Set<Tivo> found = (Set<Tivo>) event.getSource().getValue();
-            List<Tivo> toAdd = found.stream().filter(t -> !tivos.contains(t)).collect(Collectors.toList());
-            tivos.addAll(toAdd);
-            mainApp.clearStatusText();
-        });
+//            @SuppressWarnings("unchecked") Set<Tivo> found = (Set<Tivo>) event.getSource().getValue();
+//            List<Tivo> toAdd = found.stream().filter(t -> !tivos.contains(t)).collect(Collectors.toList());
+//            tivos.addAll(toAdd);
+//            mainApp.clearStatusText();
+//        });
         mainApp.getExecutor().submit(tivoSearchTask);
     }
 

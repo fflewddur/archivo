@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="mdnsjava">
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/dnsjava-2.1.7.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/mdnsjava-2.1.6.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
