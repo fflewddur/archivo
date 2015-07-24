@@ -41,7 +41,6 @@ public class TivoSearchService extends Service<Set<Tivo>> {
     public TivoSearchService() {
         try {
             jmdns = JmDNS.create(InetAddress.getLocalHost());
-            jmdns.unregisterAllServices();
         } catch (IOException e) {
             System.err.println("Error searching for TiVo devices: " + e.getLocalizedMessage());
         }
@@ -52,10 +51,8 @@ public class TivoSearchService extends Service<Set<Tivo>> {
         return new Task<Set<Tivo>>() {
             @Override
             protected Set<Tivo> call() throws Exception {
-                System.out.println("listing...");
                 Set<Tivo> tivos = new HashSet<>();
                 ServiceInfo[] infoList = jmdns.list(SERVICE_PREFIX);
-                System.out.println("list complete!");
                 for (ServiceInfo info : infoList) {
                     String identifyingProperty = info.getPropertyString(IDENTIFYING_PROPERTY);
                     if (!identifyingProperty.startsWith(PROPERTY_VALUE_STARTS_WITH)) {
@@ -68,6 +65,12 @@ public class TivoSearchService extends Service<Set<Tivo>> {
                     int port = info.getPort();
                     tivos.add(new Tivo.Builder().name(name).addresses(addresses).tsn(tsn).port(port).build());
                 }
+
+                if (!tivos.isEmpty()) {
+                    // If we found devices, shut down the mDNS service
+                    jmdns.close();
+                }
+
                 return tivos;
             }
         };
