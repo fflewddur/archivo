@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
 
 public class MindRPC {
     private final InetAddress address;
+    private final int port;
     private final String mak;
     private final SSLSocketFactory socketFactory;
     private SSLSocket socket;
@@ -52,20 +53,26 @@ public class MindRPC {
 
     private static final Pattern RESPONSE_HEAD;
 
-    private static final String KEY_PASSWORD = "LwrbLEFYvG";
-    public static final int TIVO_PORT = 1413;
     public static final int SCHEMA_VER = 9;
     public static final String LINE_ENDING = "\r\n";
+    private static final String KEY_PASSWORD = "LwrbLEFYvG";
+    private static final int DEFAULT_PORT = 1413;
+    private static final int MAX_SESSION_ID_VAL = 0x27dc20;
 
     static {
         RESPONSE_HEAD = Pattern.compile("MRPC/2\\s+(\\d+)\\s+(\\d+)");
     }
 
     public MindRPC(InetAddress address, String mak) {
+        this(address, DEFAULT_PORT, mak);
+    }
+
+    public MindRPC(InetAddress address, int port, String mak) {
         this.address = address;
+        this.port = port;
         this.mak = mak;
         this.requestId = 1;
-        this.sessionId = new Random().nextInt(0x27dc20);
+        this.sessionId = new Random().nextInt(MAX_SESSION_ID_VAL);
         socketFactory = createSecureSocketFactory();
     }
 
@@ -85,7 +92,7 @@ public class MindRPC {
     }
 
     private void connect() throws IOException {
-        socket = (SSLSocket) socketFactory.createSocket(address, TIVO_PORT);
+        socket = (SSLSocket) socketFactory.createSocket(address, port);
         socket.setNeedClientAuth(true);
         socket.setEnableSessionCreation(true);
         socket.startHandshake();

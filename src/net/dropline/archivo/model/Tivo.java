@@ -56,7 +56,7 @@ public class Tivo {
 
     private void initRPCClient() {
         if (client == null) {
-            client = new MindRPC(addresses[0], MainApp.testDeviceMAK);
+            client = new MindRPC(addresses[0], port, MainApp.testDeviceMAK);
         }
     }
 
