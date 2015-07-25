@@ -21,7 +21,7 @@ package net.dropline.archivo.net;
 
 import org.json.JSONObject;
 
-public class MindCommandAuth extends MindCommand {
+class MindCommandAuth extends MindCommand {
     public MindCommandAuth(String mak) {
         super();
         commandType = MindCommandType.AUTH;

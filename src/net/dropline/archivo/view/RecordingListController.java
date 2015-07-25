@@ -103,7 +103,7 @@ public class RecordingListController implements Initializable {
         MindTask task = new MindTask(tivo.getClient(), new MindCommandRecordingFolderItemSearch());
         task.setOnSucceeded(event -> {
             JSONObject response = (JSONObject) event.getSource().getValue();
-            // TODO Parse the reponse to a list of Recordings
+            // TODO Parse the response to a list of Recordings
             System.out.println("Response: " + response);
             mainApp.clearStatusText();
             recordingTable.setDisable(false);
@@ -116,7 +116,7 @@ public class RecordingListController implements Initializable {
         try {
             tivoSearchTask.startSearch();
         } catch (IOException e) {
-            System.err.println(e);
+            System.err.println(e.getLocalizedMessage());
             e.printStackTrace();
         }
 //        tivoSearchTask.setOnSucceeded(event -> {

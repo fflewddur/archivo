@@ -3,29 +3,25 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<AnchorPane xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.dropline.archivo.view.RecordingListController">
-   <children>
-       <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
-           <children>
-               <HBox fx:id="toolbar" spacing="8.0">
-                   <children>
-                       <ComboBox fx:id="tivoList" prefWidth="150.0" />
-                       <Button fx:id="refreshButton" mnemonicParsing="false" onAction="#fetchRecordingsFromSelectedTivo"
-                               text="Refresh"/>
-                   </children>
-                   <padding>
-                       <Insets bottom="6.0" left="6.0" right="6.0" top="6.0" />
-                   </padding>
-               </HBox>
-               <TableView fx:id="recordingTable" prefHeight="400.0" prefWidth="600.0">
-                   <columns>
-                       <TableColumn fx:id="showColumn" prefWidth="171.0" text="Show" />
-                       <TableColumn fx:id="episodeColumn" minWidth="0.0" prefWidth="210.0" text="Episode" />
-                       <TableColumn fx:id="dateColumn" prefWidth="107.0" text="Date" />
-                       <TableColumn fx:id="durationColumn" prefWidth="98.0" text="Length" />
-                   </columns>
-               </TableView>
-           </children>
-       </VBox>
-   </children>
+<AnchorPane xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="net.dropline.archivo.view.RecordingListController">
+    <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
+          AnchorPane.topAnchor="0.0">
+        <HBox fx:id="toolbar" spacing="8.0">
+            <padding>
+                <Insets bottom="6.0" left="6.0" right="6.0" top="6.0"/>
+            </padding>
+            <ComboBox fx:id="tivoList" prefWidth="150.0"/>
+            <Button mnemonicParsing="false" onAction="#fetchRecordingsFromSelectedTivo"
+                    text="Refresh"/>
+        </HBox>
+        <TableView fx:id="recordingTable" prefHeight="400.0" prefWidth="600.0">
+            <columns>
+                <TableColumn fx:id="showColumn" prefWidth="171.0" text="Show"/>
+                <TableColumn fx:id="episodeColumn" minWidth="0.0" prefWidth="210.0" text="Episode"/>
+                <TableColumn fx:id="dateColumn" prefWidth="107.0" text="Date"/>
+                <TableColumn fx:id="durationColumn" prefWidth="98.0" text="Length"/>
+            </columns>
+        </TableView>
+    </VBox>
 </AnchorPane>

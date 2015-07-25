@@ -96,9 +96,8 @@ public class TivoSearchTask extends Task<Void> {
 
                 @Override
                 public void receiveMessage(Object o, Message message) {
-                    if (checkForCancellation(mDNSService)) {
-                        return;
-                    }
+                    // No need to check the return value; this method currently does nothing.
+                    checkForCancellation(mDNSService);
                 }
 
                 @Override

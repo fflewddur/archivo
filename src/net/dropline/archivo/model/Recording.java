@@ -33,7 +33,7 @@ public class Recording {
     private final int episodeNumber;
     private final Channel channel;
 
-    public Recording(Builder builder) {
+    private Recording(Builder builder) {
         seriesTitle = new SimpleStringProperty(builder.seriesTitle);
         episodeTitle = new SimpleStringProperty(builder.episodeTitle);
         dateRecorded = new SimpleObjectProperty<>(builder.dateRecorded);

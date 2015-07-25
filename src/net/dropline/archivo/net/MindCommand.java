@@ -27,10 +27,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
-public abstract class MindCommand {
+abstract class MindCommand {
     private MindRPC client;
     protected MindCommandType commandType;
-    protected JSONObject bodyData;
+    protected final JSONObject bodyData;
 
     protected MindCommand() {
         this.commandType = MindCommandType.UNKNOWN;
@@ -41,7 +41,7 @@ public abstract class MindCommand {
         assert (client != null);
 
         this.client = client;
-        return client.send(buildRequest());
+        return this.client.send(buildRequest());
     }
 
     private String buildRequest() {

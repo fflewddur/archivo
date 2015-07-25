@@ -43,13 +43,6 @@ public class Tivo {
         return name;
     }
 
-//    public List<Recording> getRecordings() throws IOException {
-//        initRPCClientIfNeeded();
-//        MindCommand command = new MindCommandRecordingFolderItemSearch();
-//        JSONObject response = command.executeOn(client);
-//        return Collections.emptyList();
-//    }
-
     public MindRPC getClient() {
         initRPCClientIfNeeded();
         return client;
