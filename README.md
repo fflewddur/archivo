@@ -12,5 +12,5 @@ Archivo is currently in development. It is intended to eventually support the fo
 * Delete recordings from the TiVo (planned)
 
 ## Requirements
-* Java 8 (or higher)
+* Java 8u40 or higher
 * A TiVo Roamio or Premiere (Series 4 and Series 5)

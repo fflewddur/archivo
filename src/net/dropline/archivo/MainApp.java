@@ -25,13 +25,17 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.Dialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import net.dropline.archivo.view.RecordingListController;
 import net.dropline.archivo.view.RootLayoutController;
+import net.dropline.archivo.view.SetupDialogController;
 
 import java.io.IOException;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -61,13 +65,15 @@ public class MainApp extends Application {
 
         initRootLayout();
 
+        showSetupDialog();
         showRecordingList();
 
-        primaryStage.setOnCloseRequest(e -> {
-                    Platform.exit();
-                    System.exit(0);
-                }
-        );
+        primaryStage.setOnCloseRequest(e -> cleanShutdown());
+    }
+
+    private void cleanShutdown() {
+        Platform.exit();
+        System.exit(0);
     }
 
     private void initRootLayout() {
@@ -84,6 +90,28 @@ public class MainApp extends Application {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    private void showSetupDialog() {
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(MainApp.class.getResource("view/SetupDialog.fxml"));
+            Dialog<ButtonBar.ButtonData> dialog = new Dialog<>();
+            dialog.setDialogPane(loader.load());
+            SetupDialogController controller = loader.getController();
+            Optional<ButtonBar.ButtonData> result = dialog.showAndWait();
+            if (result.isPresent()) {
+                // TODO save the MAK
+                String mak = controller.getMak();
+                System.out.println("Save the MAK: " + mak);
+                return;
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        // If we reached this point, we don't have a valid MAK.
+        System.err.println("Error: We need a valid media access key (MAK) to connect to your TiVo.");
+        cleanShutdown();
     }
 
     private void showRecordingList() {

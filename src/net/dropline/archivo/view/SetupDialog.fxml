@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.DialogPane?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.text.*?>
+<DialogPane fx:id="setupDialog" prefHeight="350.0" prefWidth="500.0" xmlns="http://javafx.com/javafx/8.0.40"
+            xmlns:fx="http://javafx.com/fxml/1" fx:controller="net.dropline.archivo.view.SetupDialogController">
+    <header>
+        <Label text="Welcome to Archivo">
+            <font>
+                <Font name="System Bold" size="24.0"/>
+            </font>
+        </Label>
+    </header>
+    <content>
+        <VBox minWidth="-Infinity" prefHeight="200.0" prefWidth="400.0" spacing="18.0">
+            <children>
+                <TextFlow minWidth="-Infinity" prefWidth="400.0">
+                    <children>
+                        <Text text="Before transferring recordings from TiVo to your computer, you'll need to provide the "/>
+                        <Text text="media access key (MAK)">
+                            <font>
+                                <Font name="System Italic" size="13.0"/>
+                            </font>
+                        </Text>
+                        <Text text=" associated with your TiVo account. You can find your MAK by viewing "/>
+                        <Text text="My Account">
+                            <font>
+                                <Font name="System Bold" size="13.0"/>
+                            </font>
+                        </Text>
+                        <Text text=" on tivo.com, or from the "/>
+                        <Text text="Account &amp; System Information">
+                            <font>
+                                <Font name="System Bold" size="13.0"/>
+                            </font>
+                        </Text>
+                        <Text text=" menu on your TiVo itself."/>
+                    </children>
+                </TextFlow>
+                <TextFlow minWidth="-Infinity" prefWidth="400.0">
+                    <children>
+                        <Text text="You can change your MAK at any time from Archivo's Preferences."/>
+                    </children>
+                </TextFlow>
+                <HBox prefHeight="100.0" prefWidth="400.0" spacing="12">
+                    <children>
+                        <Label alignment="CENTER_RIGHT" minWidth="-Infinity" prefWidth="120.0" text="Media access key"/>
+                        <TextField fx:id="mak" alignment="CENTER_LEFT" minWidth="-Infinity" prefWidth="180.0"/>
+                    </children>
+                </HBox>
+            </children>
+        </VBox>
+    </content>
+    <padding>
+        <Insets bottom="12.0" left="12.0" right="12.0" top="12.0"/>
+    </padding>
+</DialogPane>

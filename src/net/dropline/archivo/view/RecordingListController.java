@@ -35,7 +35,6 @@ import net.dropline.archivo.net.MindCommandRecordingFolderItemSearch;
 import net.dropline.archivo.net.MindTask;
 import net.dropline.archivo.net.TivoSearchTask;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.ResourceBundle;
 
@@ -115,12 +114,12 @@ public class RecordingListController implements Initializable {
 
     public void startTivoSearch() {
         mainApp.setStatusText("Looking for TiVos...");
-        try {
-            tivoSearchTask.startSearch();
-        } catch (IOException e) {
-            System.err.println(e.getLocalizedMessage());
-            e.printStackTrace();
-        }
+//        try {
+//            tivoSearchTask.startSearch();
+//        } catch (IOException e) {
+//            System.err.println(e.getLocalizedMessage());
+//            e.printStackTrace();
+//        }
 //        tivoSearchTask.setOnSucceeded(event -> {
             // Add any new TiVos to our list
 //            @SuppressWarnings("unchecked") Set<Tivo> found = (Set<Tivo>) event.getSource().getValue();
@@ -128,7 +127,7 @@ public class RecordingListController implements Initializable {
 //            tivos.addAll(toAdd);
 //            mainApp.clearStatusText();
 //        });
-//        mainApp.getExecutor().submit(tivoSearchTask);
+        mainApp.getExecutor().submit(tivoSearchTask);
     }
 
     private void disableUI() {
