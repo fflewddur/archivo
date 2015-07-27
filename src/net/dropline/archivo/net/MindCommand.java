@@ -38,24 +38,34 @@ abstract class MindCommand {
         this.bodyData = new JSONObject();
     }
 
+    /**
+     * Copy constructor to make it easy to send additional commands based off of one template.
+     * Note that the @response field will not be copied.
+     *
+     * @param source The MindCommand to copy.
+     */
     protected MindCommand(MindCommand source) {
         this.client = source.client;
         this.commandType = source.commandType;
         this.bodyData = source.bodyData;
+        this.response = null;
     }
 
-    public void execute() throws IOException {
+    public final void execute() throws IOException {
         assert (client != null);
         response = this.client.send(buildRequest());
         failOnInvalidResponse();
         afterExecute();
     }
 
-    public void executeOn(MindRPC client) throws IOException {
+    public final void executeOn(MindRPC client) throws IOException {
         this.client = client;
         execute();
     }
 
+    /**
+     * Override this method to execute code following the network operation.
+     */
     protected void afterExecute() {
 
     }
