@@ -25,36 +25,47 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class MindCommandRecordingFolderItemSearch extends MindCommand {
+    private List<Recording> recordings;
+
+    private final static JSONArray templateList;
+
+    static {
+        templateList = buildTemplate();
+    }
+
     public MindCommandRecordingFolderItemSearch() {
         super();
         this.commandType = MindCommandType.RECORDING_FOLDER_ITEM_SEARCH;
-        this.bodyData.put("bodyId", "-");
-        this.bodyData.put("flatten", "true");
-        this.bodyData.put("noLimit", "true");
-        JSONObject template = new JSONObject("{\"type\":\"responseTemplate\",\"fieldName\":[\"title\", \"childRecordingId\"],\"typeName\":\"recordingFolderItem\"}");
-        this.bodyData.put("responseTemplate", template);
+        bodyData.put("responseTemplate", templateList);
+        bodyData.put("bodyId", "-");
+        // Get all of the recordings, don't group by title
+        bodyData.put("flatten", "true");
+        bodyData.put("noLimit", "true");
     }
 
+    /**
+     * Parse the response to fill @recordings.
+     */
     @Override
     protected void afterExecute() {
-        System.out.println("afterExecute()");
-        System.out.println("response = " + response);
+        System.out.println("Folder = " + response);
         JSONArray items = response.getJSONArray("recordingFolderItem");
-//        List<Recording> recordings = new ArrayList<>();
+        recordings = new ArrayList<>();
         for (int i = 0; i < items.length(); i++) {
             JSONObject o = items.getJSONObject(i);
             String bodyId = o.getString("bodyId");
             String recordingId = o.getString("childRecordingId");
-            System.out.println(o);
-            MindCommand command = new MindCommandRecordingSearch(recordingId);
-            command.bodyData.put("bodyId", bodyId);
+//            System.out.println(o);
+            MindCommandRecordingSearch command = new MindCommandRecordingSearch(recordingId, bodyId);
             try {
-                System.out.println("executing command...");
+//                System.out.println("executing command...");
                 command.executeOn(this.client);
-                System.out.println("recording id result: " + command.response);
+                recordings.add(command.getRecording());
+//                System.out.println("recording id result: " + command.response);
             } catch (IOException e) {
                 System.err.println("Error: " + e.getLocalizedMessage());
             }
@@ -69,14 +80,20 @@ public class MindCommandRecordingFolderItemSearch extends MindCommand {
      * @return List of Recording objects currently stored on the selected TiVo.
      */
     public List<Recording> getRecordings() {
-        System.out.println("Entering getRecordings()...");
-        JSONArray items = response.getJSONArray("recordingFolderItem");
-        List<Recording> recordings = new ArrayList<>();
-        for (int i = 0; i < items.length(); i++) {
-            JSONObject o = items.getJSONObject(i);
-            recordings.add(new Recording.Builder().seriesTitle(o.getString("title")).build());
-        }
-
         return recordings;
+    }
+
+    private static JSONArray buildTemplate() {
+        JSONArray templates = new JSONArray();
+        JSONObject template;
+
+        // Only get the recording ID
+        template = new JSONObject();
+        template.put("type", "responseTemplate");
+        template.put("fieldName", Arrays.asList("childRecordingId"));
+        template.put("typeName", "recordingFolderItem");
+        templates.put(template);
+
+        return templates;
     }
 }

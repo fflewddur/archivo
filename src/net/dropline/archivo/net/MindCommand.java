@@ -51,16 +51,17 @@ abstract class MindCommand {
         this.response = null;
     }
 
-    public final void execute() throws IOException {
+    public final JSONObject execute() throws IOException {
         assert (client != null);
         response = this.client.send(buildRequest());
         failOnInvalidResponse();
         afterExecute();
+        return response;
     }
 
-    public final void executeOn(MindRPC client) throws IOException {
+    public final JSONObject executeOn(MindRPC client) throws IOException {
         this.client = client;
-        execute();
+        return execute();
     }
 
     /**

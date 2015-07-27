@@ -19,16 +19,88 @@
 
 package net.dropline.archivo.net;
 
-class MindCommandRecordingSearch extends MindCommand {
-    public MindCommandRecordingSearch(String recordingId) {
-        super();
-        commandType = MindCommandType.RECORDING_SEARCH;
+import net.dropline.archivo.model.Recording;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
-        bodyData.put("recordingId", recordingId);
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.Arrays;
+
+class MindCommandRecordingSearch extends MindCommand {
+    private final static JSONArray templateList;
+
+    static {
+        templateList = buildTemplate();
     }
 
-    @Override
-    protected void afterExecute() {
-        System.out.println("Result: " + response);
+    public MindCommandRecordingSearch(String recordingId, String bodyId) {
+        super();
+        commandType = MindCommandType.RECORDING_SEARCH;
+        bodyData.put("responseTemplate", templateList);
+        bodyData.put("recordingId", recordingId);
+        bodyData.put("bodyId", bodyId);
+    }
+
+    public Recording getRecording() {
+        failOnInvalidState();
+        Recording.Builder builder = new Recording.Builder();
+        System.out.println("Response: " + response);
+        if (response.has("recording")) {
+            JSONArray recordingsJSON = response.getJSONArray("recording");
+            for (Object obj : recordingsJSON) {
+                JSONObject recordingJSON = (JSONObject) obj;
+                if (recordingJSON.has("title"))
+                    builder.seriesTitle(recordingJSON.getString("title"));
+                if (recordingJSON.has("subtitle"))
+                    builder.episodeTitle(recordingJSON.getString("subtitle"));
+                if (recordingJSON.has("seasonNumber"))
+                    builder.episodeNumber(recordingJSON.getInt("seasonNumber"));
+//                if (recordingJSON.has("episodeNum"))
+//                    builder.episodeNumber(Integer.parseInt(recordingJSON.getString("episodeNum")));
+                if (recordingJSON.has("duration"))
+                    builder.minutesLong(recordingJSON.getInt("duration") / 60);
+                if (recordingJSON.has("startTime")) {
+                    builder.recordedOn(LocalDateTime.parse(recordingJSON.getString("startTime"),
+                            DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")));
+                }
+            }
+        }
+        return builder.build();
+    }
+
+    private void failOnInvalidState() {
+        if (response == null) {
+            throw new IllegalStateException("MindCommandRecordingSearch does not have a response.");
+        }
+    }
+
+    private static JSONArray buildTemplate() {
+        JSONArray templates = new JSONArray();
+        JSONObject template;
+
+        // Only get the recording
+        template = new JSONObject();
+        template.put("type", "responseTemplate");
+        template.put("fieldName", Arrays.asList("recording"));
+        template.put("typeName", "recordingList");
+        templates.put(template);
+
+        // Get the channel
+        template = new JSONObject();
+        template.put("type", "responseTemplate");
+        template.put("fieldName", Arrays.asList("channel", "originalAirdate", "state", "subtitle",
+                "startTime", "episodeNum", "description", "title", "duration", "seasonNumber"));
+        template.put("typeName", "recording");
+        templates.put(template);
+
+        // Only get useful channel information
+        template = new JSONObject();
+        template.put("type", "responseTemplate");
+        template.put("fieldName", Arrays.asList("channelNumber", "name"));
+        template.put("typeName", "channel");
+        templates.put(template);
+
+        return templates;
     }
 }
