@@ -34,7 +34,6 @@ import net.dropline.archivo.model.Tivo;
 import net.dropline.archivo.net.MindCommandRecordingFolderItemSearch;
 import net.dropline.archivo.net.MindTask;
 import net.dropline.archivo.net.TivoSearchTask;
-import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URL;
@@ -100,13 +99,16 @@ public class RecordingListController implements Initializable {
         recordings.clear();
         recordingTable.setDisable(true);
 
-        MindTask task = new MindTask(tivo.getClient(), new MindCommandRecordingFolderItemSearch());
+        MindCommandRecordingFolderItemSearch command = new MindCommandRecordingFolderItemSearch();
+        MindTask task = new MindTask(tivo.getClient(), command);
         task.setOnSucceeded(event -> {
-            JSONObject response = (JSONObject) event.getSource().getValue();
-            // TODO Parse the response to a list of Recordings
-            System.out.println("Response: " + response);
+            recordings.addAll(command.getRecordings());
             mainApp.clearStatusText();
             recordingTable.setDisable(false);
+        });
+        task.setOnFailed(event -> {
+            System.err.format("Error fetching recordings from %s: %s%n", tivo.getName(),
+                    event.getSource().getException().getLocalizedMessage());
         });
         mainApp.getExecutor().submit(task);
     }

@@ -17,22 +17,18 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.tests;
+package net.dropline.archivo.net;
 
-import net.dropline.archivo.model.Tivo;
-import org.junit.Test;
+class MindCommandRecordingSearch extends MindCommand {
+    public MindCommandRecordingSearch(String recordingId) {
+        super();
+        commandType = MindCommandType.RECORDING_SEARCH;
 
-import static org.junit.Assert.assertEquals;
+        bodyData.put("recordingId", recordingId);
+    }
 
-public class TivoTest {
-    @Test
-    public void testEquality() {
-        Tivo a = new Tivo.Builder().name("Foo").tsn("Bar").build();
-        Tivo aCopy = new Tivo.Builder().name("Foo").tsn("Bar").build();
-        Tivo b = new Tivo.Builder().name("Foo2").tsn("Bar2").build();
-
-        assertEquals("a equals aCopy", true, a.equals(aCopy));
-        assertEquals("a not equals b", false, a.equals(b));
-        assertEquals("aCopy not equals b", false, aCopy.equals(b));
+    @Override
+    protected void afterExecute() {
+        System.out.println("Result: " + response);
     }
 }

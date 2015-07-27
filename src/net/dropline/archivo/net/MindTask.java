@@ -20,9 +20,10 @@
 package net.dropline.archivo.net;
 
 import javafx.concurrent.Task;
-import org.json.JSONObject;
 
-public class MindTask extends Task<JSONObject> {
+import java.io.IOException;
+
+public class MindTask extends Task<Void> {
     private final MindCommand command;
     private final MindRPC client;
 
@@ -32,7 +33,12 @@ public class MindTask extends Task<JSONObject> {
     }
 
     @Override
-    protected JSONObject call() throws Exception {
-        return command.executeOn(client);
+    protected Void call() {
+        try {
+            command.executeOn(client);
+        } catch (IOException e) {
+            System.err.println("Error executing MindTask: " + e.getLocalizedMessage());
+        }
+        return null;
     }
 }

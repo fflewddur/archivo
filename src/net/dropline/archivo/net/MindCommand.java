@@ -28,20 +28,36 @@ import java.util.List;
 import java.util.StringJoiner;
 
 abstract class MindCommand {
-    private MindRPC client;
+    protected MindRPC client;
     protected MindCommandType commandType;
     protected final JSONObject bodyData;
+    protected JSONObject response;
 
     protected MindCommand() {
         this.commandType = MindCommandType.UNKNOWN;
         this.bodyData = new JSONObject();
     }
 
-    public JSONObject executeOn(MindRPC client) throws IOException {
-        assert (client != null);
+    protected MindCommand(MindCommand source) {
+        this.client = source.client;
+        this.commandType = source.commandType;
+        this.bodyData = source.bodyData;
+    }
 
+    public void execute() throws IOException {
+        assert (client != null);
+        response = this.client.send(buildRequest());
+        failOnInvalidResponse();
+        afterExecute();
+    }
+
+    public void executeOn(MindRPC client) throws IOException {
         this.client = client;
-        return this.client.send(buildRequest());
+        execute();
+    }
+
+    protected void afterExecute() {
+
     }
 
     private String buildRequest() {
@@ -88,8 +104,18 @@ abstract class MindCommand {
         return headerLines;
     }
 
+    private void failOnInvalidResponse() throws IOException {
+        if (response == null) {
+            throw new IOException("No response received");
+        }
+
+        if (response.get("type").equals("error")) {
+            throw new IOException(response.get("text").toString());
+        }
+    }
+
     @Override
     public String toString() {
-        return String.format("MindCommand[type=%s]", commandType);
+        return String.format("MindCommand[type=%s, bodyData=%s]", commandType, bodyData);
     }
 }

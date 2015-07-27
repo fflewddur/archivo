@@ -22,7 +22,10 @@ package net.dropline.archivo.net;
 import org.json.JSONObject;
 
 import javax.net.ssl.*;
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -49,7 +52,7 @@ public class MindRPC {
     private final SSLSocketFactory socketFactory;
     private SSLSocket socket;
     private PrintWriter socketWriter;
-    private BufferedReader socketReader;
+    private BufferedInputStream socketReader;
     private final int sessionId;
     private int requestId;
 
@@ -99,7 +102,7 @@ public class MindRPC {
         socket.setEnableSessionCreation(true);
         socket.startHandshake();
         socketWriter = new PrintWriter(socket.getOutputStream());
-        socketReader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+        socketReader = new BufferedInputStream(socket.getInputStream());
     }
 
     private void authenticate() throws IOException {
@@ -139,19 +142,61 @@ public class MindRPC {
         connectAndAuthenticate();
         socketWriter.print(request);
         socketWriter.flush();
-        String headerStart = socketReader.readLine();
+        // The first line tells us how long the response will be
+        String headerStart = readLine(socketReader);
         Matcher matcher = RESPONSE_HEAD.matcher(headerStart);
         if (matcher.find()) {
             int headerLength = Integer.parseInt(matcher.group(1));
             int bodyLength = Integer.parseInt(matcher.group(2));
-            char[] header = new char[headerLength];
-            char[] body = new char[bodyLength];
-            socketReader.read(header, 0, headerLength);
-            socketReader.read(body, 0, bodyLength);
+            byte[] header = new byte[headerLength];
+            byte[] body = new byte[bodyLength];
+            if (!readBytes(socketReader, header, headerLength)) {
+                throw new IOException("Error reading RPC response header");
+            }
+            if (!readBytes(socketReader, body, bodyLength)) {
+                throw new IOException("Error reading RPC response body");
+            }
             return new JSONObject(new String(body));
         } else {
             throw new IOException("Response format not as expected (First line = '" + headerStart + "'");
         }
+    }
+
+    /**
+     * Read a \n-delimited line from an input stream.
+     *
+     * @param reader The BufferedInputStream to read from.
+     * @return A String representing the next line from @reader.
+     * @throws IOException
+     */
+    private String readLine(BufferedInputStream reader) throws IOException {
+        byte[] bytes = new byte[128];
+        int index = 0;
+        while (true) {
+            int val = reader.read();
+            if (val == -1 || val == '\n') {
+                break;
+            } else {
+                if (index == bytes.length) {
+                    byte[] tmp = bytes;
+                    bytes = new byte[tmp.length * 2];
+                    System.arraycopy(tmp, 0, bytes, 0, tmp.length);
+                }
+                bytes[index++] = (byte) val;
+            }
+        }
+        return new String(bytes);
+    }
+
+    private boolean readBytes(BufferedInputStream socketReader, byte[] buffer, int expectedLen) throws IOException {
+        int totalBytesRead = 0;
+        for (int bytesRead = 0; bytesRead != -1 && totalBytesRead < expectedLen; ) {
+            bytesRead = socketReader.read(buffer, totalBytesRead, expectedLen - totalBytesRead);
+            if (bytesRead > 0) {
+                totalBytesRead += bytesRead;
+            }
+        }
+        return totalBytesRead == expectedLen;
     }
 
     /**

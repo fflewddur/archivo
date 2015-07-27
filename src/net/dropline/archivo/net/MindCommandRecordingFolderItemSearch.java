@@ -19,10 +19,64 @@
 
 package net.dropline.archivo.net;
 
+import net.dropline.archivo.model.Recording;
+import org.json.JSONArray;
+import org.json.JSONObject;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 public class MindCommandRecordingFolderItemSearch extends MindCommand {
     public MindCommandRecordingFolderItemSearch() {
         super();
         this.commandType = MindCommandType.RECORDING_FOLDER_ITEM_SEARCH;
         this.bodyData.put("bodyId", "-");
+        this.bodyData.put("flatten", "true");
+        this.bodyData.put("noLimit", "true");
+        JSONObject template = new JSONObject("{\"type\":\"responseTemplate\",\"fieldName\":[\"title\", \"childRecordingId\"],\"typeName\":\"recordingFolderItem\"}");
+        this.bodyData.put("responseTemplate", template);
+    }
+
+    @Override
+    protected void afterExecute() {
+        System.out.println("afterExecute()");
+        System.out.println("response = " + response);
+        JSONArray items = response.getJSONArray("recordingFolderItem");
+//        List<Recording> recordings = new ArrayList<>();
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject o = items.getJSONObject(i);
+            String bodyId = o.getString("bodyId");
+            String recordingId = o.getString("childRecordingId");
+            System.out.println(o);
+            MindCommand command = new MindCommandRecordingSearch(recordingId);
+            command.bodyData.put("bodyId", bodyId);
+            try {
+                System.out.println("executing command...");
+                command.executeOn(this.client);
+                System.out.println("recording id result: " + command.response);
+            } catch (IOException e) {
+                System.err.println("Error: " + e.getLocalizedMessage());
+            }
+
+//            recordings.add(new Recording.Builder().seriesTitle(o.getString("title")).build());
+        }
+    }
+
+    /**
+     * Parse the JSON response to a list of Recordings.
+     *
+     * @return List of Recording objects currently stored on the selected TiVo.
+     */
+    public List<Recording> getRecordings() {
+        System.out.println("Entering getRecordings()...");
+        JSONArray items = response.getJSONArray("recordingFolderItem");
+        List<Recording> recordings = new ArrayList<>();
+        for (int i = 0; i < items.length(); i++) {
+            JSONObject o = items.getJSONObject(i);
+            recordings.add(new Recording.Builder().seriesTitle(o.getString("title")).build());
+        }
+
+        return recordings;
     }
 }

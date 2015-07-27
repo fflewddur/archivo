@@ -22,7 +22,8 @@ package net.dropline.archivo.net;
 public enum MindCommandType {
     UNKNOWN,
     AUTH,
-    RECORDING_FOLDER_ITEM_SEARCH;
+    RECORDING_FOLDER_ITEM_SEARCH,
+    RECORDING_SEARCH;
 
     @Override public String toString() {
         // These strings must match the name of the command in the TiVo Mind API
@@ -31,6 +32,8 @@ public enum MindCommandType {
                 return "bodyAuthenticate";
             case RECORDING_FOLDER_ITEM_SEARCH:
                 return "recordingFolderItemSearch";
+            case RECORDING_SEARCH:
+                return "recordingSearch";
         }
 
         return "unknown";
