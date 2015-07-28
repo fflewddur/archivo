@@ -125,7 +125,7 @@ public class Tivo {
             try {
                 addresses[i] = InetAddress.getByAddress(decoder.decode(jsonAddresses.getString(i)));
             } catch (UnknownHostException e) {
-                throw new IllegalArgumentException(e.getLocalizedMessage());
+                throw new IllegalArgumentException("TiVo address in invalid: " + e.getLocalizedMessage());
             }
         }
 
