@@ -19,7 +19,7 @@
 
 package net.dropline.archivo.net;
 
-import net.dropline.archivo.MainApp;
+import net.dropline.archivo.Archivo;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -105,8 +105,8 @@ abstract class MindCommand {
         headerLines.add(String.format("RequestType: %s", commandType));
         headerLines.add("ResponseCount: single");
         headerLines.add("BodyId: ");
-        headerLines.add(String.format("ApplicationName: %s", MainApp.ApplicationRDN));
-        headerLines.add(String.format("ApplicationVersion: %s", MainApp.ApplicationVersion));
+        headerLines.add(String.format("ApplicationName: %s", Archivo.ApplicationRDN));
+        headerLines.add(String.format("ApplicationVersion: %s", Archivo.ApplicationVersion));
         headerLines.add(String.format("ApplicationSessionId: 0x%x", client.getSessionId()));
 
         // Header always ends with a blank line

@@ -36,18 +36,53 @@ import java.util.Map;
  */
 public class TivoSearchTask extends Task<Void> {
     private final ObservableList<Tivo> tivos;
+    private String mak;
 
     private static final String SERVICE_TYPE = "_tivo-mindrpc._tcp";
     private static final String IDENTIFYING_PROPERTY = "platform";
     private static final String PROPERTY_VALUE_STARTS_WITH = "tcd/";
     private static final String TSN_PROPERTY = "TSN";
 
-    public TivoSearchTask(ObservableList<Tivo> tivos) {
+    public TivoSearchTask(ObservableList<Tivo> tivos, String mak) {
         this.tivos = tivos;
+        this.mak = mak;
     }
 
     @Override
     protected Void call() throws Exception {
+//        System.out.println("Starting TiVo search...");
+//        Lookup lookup = new Lookup(Constants.DEFAULT_BROWSE_DOMAIN_NAME, Constants.BROWSE_DOMAIN_NAME, Constants.LEGACY_BROWSE_DOMAIN_NAME, "local.");
+////System.out.println("Domains: " + Constants.DEFAULT_BROWSE_DOMAIN_NAME + ", " + Constants.BROWSE_DOMAIN_NAME + ", " + Constants.LEGACY_BROWSE_DOMAIN_NAME);
+//
+//        Lookup.Domain[] domains = lookup.lookupDomains();
+////        lookup.close();
+//
+//        Set<Name> domainNames = new HashSet<>();
+//        for (Lookup.Domain domain : domains) {
+//            System.out.println("domain: " + domain);
+//            domainNames.add(domain.getName());
+//        }
+//        Name[] browseDomains = domainNames.toArray(new Name[domainNames.size()]);
+//        lookup = new Lookup(Constants.ALL_MULTICAST_DNS_DOMAINS);
+//        domains = lookup.lookupDomains();
+//        System.out.println("DNS domains: " + Arrays.toString(domains));
+//        System.out.println("browseDomains: " + Arrays.toString(browseDomains));
+//        Name[] names = new Name[] {new Name("_tivo-mindrpc._tcp"), new Name("TiVo._tivo-mindrpc._tcp"), new Name("_http._tcp")};
+//        lookup = new Lookup(names, Type.ANY, DClass.ANY);
+//
+//        System.out.println("response wait time: " + Querier.DEFAULT_RESPONSE_WAIT_TIME);
+//        System.out.println("retry interval: " + Querier.DEFAULT_RETRY_INTERVAL);
+//        System.out.println("search path: " + Arrays.toString(lookup.getSearchPath()));
+//        System.out.println("Querier: " + lookup.getQuerier());
+//        for (ServiceInstance instance : lookup.lookupServices()) {
+//            System.out.println("Instance: " + instance);
+//        }
+//        for (Record instance : lookup.lookupRecords()) {
+//            System.out.println("Record: " + instance);
+//        }
+//        System.out.println("Done");
+
+//        lookup.close();
         startSearch();
         return null;
     }
@@ -56,6 +91,7 @@ public class TivoSearchTask extends Task<Void> {
         MulticastDNSService mDNSService;
         Browse browse;
         Querier querier = MulticastDNSLookupBase.getDefaultQuerier();
+
         if (querier != null) {
             mDNSService = new MulticastDNSService();
             browse = new Browse(SERVICE_TYPE);
@@ -139,6 +175,6 @@ public class TivoSearchTask extends Task<Void> {
         InetAddress[] addresses = instance.getAddresses();
         String name = instance.getName().getInstance();
         int port = instance.getPort();
-        return new Tivo.Builder().name(name).addresses(addresses).tsn(tsn).port(port).build();
+        return new Tivo.Builder().name(name).addresses(addresses).tsn(tsn).mak(mak).port(port).build();
     }
 }

@@ -28,7 +28,7 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.HBox;
-import net.dropline.archivo.MainApp;
+import net.dropline.archivo.Archivo;
 import net.dropline.archivo.model.Recording;
 import net.dropline.archivo.model.Tivo;
 import net.dropline.archivo.net.MindCommandRecordingFolderItemSearch;
@@ -41,7 +41,7 @@ import java.util.ResourceBundle;
 public class RecordingListController implements Initializable {
     private final ObservableList<Tivo> tivos;
     private final ObservableList<Recording> recordings;
-    private final TivoSearchTask tivoSearchTask;
+    private TivoSearchTask tivoSearchTask;
 
     @FXML
     private HBox toolbar;
@@ -58,12 +58,11 @@ public class RecordingListController implements Initializable {
     @FXML
     private TableColumn<Recording, String> durationColumn;
 
-    private MainApp mainApp;
+    private Archivo mainApp;
 
     public RecordingListController() {
         tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
         recordings = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
-        tivoSearchTask = new TivoSearchTask(tivos);
     }
 
     @Override
@@ -113,6 +112,12 @@ public class RecordingListController implements Initializable {
     }
 
     public void startTivoSearch() {
+        assert (mainApp != null);
+
+        if (tivoSearchTask == null) {
+            tivoSearchTask = new TivoSearchTask(tivos, mainApp.getMak());
+        }
+
         mainApp.setStatusText("Looking for TiVos...");
 //        try {
 //            tivoSearchTask.startSearch();
@@ -143,7 +148,7 @@ public class RecordingListController implements Initializable {
         recordingTable.setDisable(disabled);
     }
 
-    public void setMainApp(MainApp mainApp) {
+    public void setMainApp(Archivo mainApp) {
         this.mainApp = mainApp;
     }
 

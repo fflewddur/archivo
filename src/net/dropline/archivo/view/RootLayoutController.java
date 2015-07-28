@@ -24,7 +24,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.ProgressIndicator;
-import net.dropline.archivo.MainApp;
+import net.dropline.archivo.Archivo;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -38,14 +38,14 @@ public class RootLayoutController implements Initializable {
     @FXML
     private Label statusMessage;
 
-    private MainApp mainApp;
+    private Archivo mainApp;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         menubar.setUseSystemMenuBar(true);
     }
 
-    public void setMainApp(MainApp app) {
+    public void setMainApp(Archivo app) {
         mainApp = app;
         statusMessage.textProperty().bind(mainApp.statusTextProperty());
     }

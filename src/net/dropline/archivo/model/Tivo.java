@@ -19,7 +19,6 @@
 
 package net.dropline.archivo.model;
 
-import net.dropline.archivo.MainApp;
 import net.dropline.archivo.net.MindRPC;
 
 import java.net.InetAddress;
@@ -30,6 +29,7 @@ public class Tivo {
     private final String tsn;
     private final InetAddress[] addresses;
     private final int port;
+    private final String mak;
     private MindRPC client;
 
     private Tivo(Builder builder) {
@@ -37,6 +37,7 @@ public class Tivo {
         tsn = builder.tsn;
         addresses = builder.addresses;
         port = builder.port;
+        mak = builder.mak;
     }
 
     public String getName() {
@@ -50,7 +51,7 @@ public class Tivo {
 
     private void initRPCClientIfNeeded() {
         if (client == null) {
-            client = new MindRPC(addresses[0], port, MainApp.testDeviceMAK);
+            client = new MindRPC(addresses[0], port, mak);
         }
     }
 
@@ -81,6 +82,7 @@ public class Tivo {
         private InetAddress[] addresses;
         private String tsn;
         private int port;
+        private String mak;
 
         public Builder name(String val) {
             name = val;
@@ -102,13 +104,36 @@ public class Tivo {
             return this;
         }
 
+        public Builder mak(String val) {
+            mak = val;
+            return this;
+        }
+
         public Tivo build() {
+            failOnInvalidState();
             return new Tivo(this);
+        }
+
+        private void failOnInvalidState() {
+            if (name == null) {
+                throw new IllegalStateException("Field 'name' cannot be null");
+            }
+            if (mak == null) {
+                throw new IllegalStateException("Field 'mak' cannot be null");
+            }
+            if (addresses == null) {
+                throw new IllegalStateException("Field 'addresses' cannot be null");
+            }
+            if (tsn == null) {
+                throw new IllegalStateException("Field 'tsn' cannot be null");
+            }
+            if (port == 0) {
+                throw new IllegalStateException("Field 'port' cannot be 0");
+            }
         }
     }
 
     public static class StringConverter extends javafx.util.StringConverter<Tivo> {
-
         @Override
         public String toString(Tivo object) {
             return object.getName();

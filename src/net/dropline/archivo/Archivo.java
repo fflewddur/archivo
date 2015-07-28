@@ -39,21 +39,20 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class MainApp extends Application {
+public class Archivo extends Application {
     private Stage primaryStage;
     private BorderPane rootLayout;
     private final StringProperty statusText;
     private final ExecutorService executor;
-
+    private final UserPrefs prefs;
     private RootLayoutController rootController;
 
     public static final String ApplicationName = "Archivo";
     public static final String ApplicationRDN = "net.dropline.archivo";
     public static final String ApplicationVersion = "0.1.0";
 
-    public static final String testDeviceMAK = "3806772447";
-
-    public MainApp() {
+    public Archivo() {
+        prefs = new UserPrefs();
         statusText = new SimpleStringProperty();
         executor = Executors.newSingleThreadExecutor();
     }
@@ -65,8 +64,10 @@ public class MainApp extends Application {
 
         initRootLayout();
 
-        showSetupDialog();
-        showRecordingList();
+        if (prefs.getMAK() == null) {
+            showSetupDialog();
+        }
+        initRecordingList();
 
         primaryStage.setOnCloseRequest(e -> cleanShutdown());
     }
@@ -79,7 +80,7 @@ public class MainApp extends Application {
     private void initRootLayout() {
         try {
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(MainApp.class.getResource("view/RootLayout.fxml"));
+            loader.setLocation(Archivo.class.getResource("view/RootLayout.fxml"));
             rootLayout = loader.load();
 
             rootController = loader.getController();
@@ -95,15 +96,14 @@ public class MainApp extends Application {
     private void showSetupDialog() {
         try {
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(MainApp.class.getResource("view/SetupDialog.fxml"));
+            loader.setLocation(Archivo.class.getResource("view/SetupDialog.fxml"));
             Dialog<ButtonBar.ButtonData> dialog = new Dialog<>();
             dialog.setDialogPane(loader.load());
             SetupDialogController controller = loader.getController();
             Optional<ButtonBar.ButtonData> result = dialog.showAndWait();
             if (result.isPresent()) {
-                // TODO save the MAK
-                String mak = controller.getMak();
-                System.out.println("Save the MAK: " + mak);
+                // Save the MAK
+                prefs.setMAK(controller.getMak());
                 return;
             }
         } catch (IOException e) {
@@ -114,10 +114,10 @@ public class MainApp extends Application {
         cleanShutdown();
     }
 
-    private void showRecordingList() {
+    private void initRecordingList() {
         try {
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(MainApp.class.getResource("view/RecordingList.fxml"));
+            loader.setLocation(Archivo.class.getResource("view/RecordingList.fxml"));
             Pane recordingList = loader.load();
             rootLayout.setCenter(recordingList);
 
@@ -148,6 +148,10 @@ public class MainApp extends Application {
 
     public void clearStatusText() {
         rootController.hideStatus();
+    }
+
+    public String getMak() {
+        return prefs.getMAK();
     }
 
     public static void main(String[] args) {
