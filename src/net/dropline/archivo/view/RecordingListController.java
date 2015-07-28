@@ -36,6 +36,8 @@ import net.dropline.archivo.net.MindTask;
 import net.dropline.archivo.net.TivoSearchTask;
 
 import java.net.URL;
+import java.util.Collections;
+import java.util.List;
 import java.util.ResourceBundle;
 
 public class RecordingListController implements Initializable {
@@ -86,6 +88,10 @@ public class RecordingListController implements Initializable {
 
         // When the list of TiVos is first populated, automatically select one
         tivos.addListener(new TivoListChangeListener());
+    }
+
+    public List<Tivo> getTivos() {
+        return Collections.unmodifiableList(tivos);
     }
 
     public void fetchRecordingsFromSelectedTivo() {

@@ -19,6 +19,12 @@
 
 package net.dropline.archivo;
 
+import net.dropline.archivo.model.Tivo;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 class UserPrefs {
@@ -40,4 +46,56 @@ class UserPrefs {
         prefs.put(MAK, val);
     }
 
+    /**
+     * Retrieve the list of detected TiVos the last time Archivo was run.
+     *
+     * @return A List of Tivo devices
+     */
+    public List<Tivo> getKnownDevices(final String mak) {
+        Preferences deviceNode = prefs.node(DEVICE_LIST);
+        try {
+            if (deviceNode == null || deviceNode.keys().length == 0) {
+                return Collections.emptyList();
+            }
+
+            List<Tivo> tivos = new ArrayList<>();
+            for (String key : deviceNode.keys()) {
+                String json = deviceNode.get(key, null);
+                try {
+                    tivos.add(Tivo.fromJSON(json, mak));
+                } catch (IllegalArgumentException e) {
+                    System.err.println("Error building Tivo object from JSON: " + e.getLocalizedMessage());
+                }
+            }
+            return tivos;
+
+        } catch (BackingStoreException e) {
+            System.err.println("Error reading user preferences: " + e.getLocalizedMessage());
+        }
+
+        return Collections.emptyList();
+    }
+
+    /**
+     * Save the list of detected TiVos to use as our initial list next time.
+     *
+     * @param tivos The List of Tivo devices to save
+     */
+    public void setKnownDevices(List<Tivo> tivos) {
+        try {
+            if (prefs.nodeExists(DEVICE_LIST)) {
+                // Clear existing device list
+                Preferences existingDevices = prefs.node(DEVICE_LIST);
+                existingDevices.removeNode();
+            }
+            Preferences deviceNode = prefs.node(DEVICE_LIST);
+            int deviceNum = 1;
+            for (Tivo tivo : tivos) {
+                String key = String.format("device%02d", deviceNum++);
+                deviceNode.put(key, tivo.toJSON().toString());
+            }
+        } catch (BackingStoreException e) {
+            System.err.println("Error reading user preferences: " + e.getLocalizedMessage());
+        }
+    }
 }

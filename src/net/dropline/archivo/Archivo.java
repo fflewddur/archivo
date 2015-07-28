@@ -30,11 +30,13 @@ import javafx.scene.control.Dialog;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import net.dropline.archivo.model.Tivo;
 import net.dropline.archivo.view.RecordingListController;
 import net.dropline.archivo.view.RootLayoutController;
 import net.dropline.archivo.view.SetupDialogController;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -46,6 +48,7 @@ public class Archivo extends Application {
     private final ExecutorService executor;
     private final UserPrefs prefs;
     private RootLayoutController rootController;
+    private RecordingListController recordingListController;
 
     public static final String ApplicationName = "Archivo";
     public static final String ApplicationRDN = "net.dropline.archivo";
@@ -64,12 +67,22 @@ public class Archivo extends Application {
 
         initRootLayout();
 
-        if (prefs.getMAK() == null) {
-            showSetupDialog();
+        String mak = prefs.getMAK();
+        if (mak == null) {
+            try {
+                mak = showSetupDialog();
+            } catch (IllegalStateException e) {
+                System.err.println("Error: " + e.getLocalizedMessage());
+                cleanShutdown();
+            }
         }
-        initRecordingList();
+        List<Tivo> initialTivos = prefs.getKnownDevices(mak);
+        initRecordingList(initialTivos);
 
-        primaryStage.setOnCloseRequest(e -> cleanShutdown());
+        primaryStage.setOnCloseRequest(e -> {
+            prefs.setKnownDevices(recordingListController.getTivos());
+            cleanShutdown();
+        });
     }
 
     private void cleanShutdown() {
@@ -93,7 +106,7 @@ public class Archivo extends Application {
         }
     }
 
-    private void showSetupDialog() {
+    private String showSetupDialog() throws IllegalStateException {
         try {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(Archivo.class.getResource("view/SetupDialog.fxml"));
@@ -103,27 +116,28 @@ public class Archivo extends Application {
             Optional<ButtonBar.ButtonData> result = dialog.showAndWait();
             if (result.isPresent()) {
                 // Save the MAK
-                prefs.setMAK(controller.getMak());
-                return;
+                String mak = controller.getMak();
+                prefs.setMAK(mak);
+                return mak;
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
         // If we reached this point, we don't have a valid MAK.
-        System.err.println("Error: We need a valid media access key (MAK) to connect to your TiVo.");
-        cleanShutdown();
+        throw new IllegalStateException("We need a valid media access key (MAK) to connect to your TiVo.");
     }
 
-    private void initRecordingList() {
+    private void initRecordingList(List<Tivo> initialTivos) {
         try {
+            initialTivos.stream().forEach(System.out::println);
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(Archivo.class.getResource("view/RecordingList.fxml"));
             Pane recordingList = loader.load();
             rootLayout.setCenter(recordingList);
 
-            RecordingListController controller = loader.getController();
-            controller.setMainApp(this);
-            controller.startTivoSearch();
+            recordingListController = loader.getController();
+            recordingListController.setMainApp(this);
+            recordingListController.startTivoSearch();
         } catch (IOException e) {
             e.printStackTrace();
         }
