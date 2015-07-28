@@ -98,4 +98,30 @@ class UserPrefs {
             System.err.println("Error reading user preferences: " + e.getLocalizedMessage());
         }
     }
+
+    public Tivo getLastDevice(final String mak) {
+        Tivo lastDevice = null;
+        String json = prefs.get(MOST_RECENT_DEVICE, null);
+        if (json != null) {
+            try {
+                lastDevice = Tivo.fromJSON(json, mak);
+            } catch (IllegalArgumentException e) {
+                System.err.println("Error parsing most recent device: " + e.getLocalizedMessage());
+            }
+        }
+        return lastDevice;
+    }
+
+    public void setLastDevice(Tivo tivo) {
+        prefs.put(MOST_RECENT_DEVICE, tivo.toJSON().toString());
+    }
+
+    public void sync() {
+        try {
+            prefs.flush();
+            prefs.sync();
+        } catch (BackingStoreException e) {
+            System.err.println("Error synchronizing user preferences: " + e.getLocalizedMessage());
+        }
+    }
 }

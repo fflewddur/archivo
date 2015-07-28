@@ -36,7 +36,6 @@ import net.dropline.archivo.net.MindTask;
 import net.dropline.archivo.net.TivoSearchTask;
 
 import java.net.URL;
-import java.util.Collections;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -62,18 +61,18 @@ public class RecordingListController implements Initializable {
 
     private Archivo mainApp;
 
-    public RecordingListController() {
-        tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
+    public RecordingListController(Archivo mainApp, List<Tivo> initialTivos) {
+        this.mainApp = mainApp;
+        tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(initialTivos));
         recordings = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        disableUI();
-
         tivoList.setConverter(new Tivo.StringConverter());
         tivoList.getSelectionModel().selectedItemProperty().addListener(
                 (tivoList, oldTivo, curTivo) -> {
+                    mainApp.setLastDevice(curTivo);
                     fetchRecordingsFrom(curTivo);
                 }
         );
@@ -88,10 +87,11 @@ public class RecordingListController implements Initializable {
 
         // When the list of TiVos is first populated, automatically select one
         tivos.addListener(new TivoListChangeListener());
-    }
 
-    public List<Tivo> getTivos() {
-        return Collections.unmodifiableList(tivos);
+        Tivo lastDevice = mainApp.getLastDevice();
+        if (lastDevice != null && tivos.contains(lastDevice)) {
+            tivoList.setValue(lastDevice);
+        }
     }
 
     public void fetchRecordingsFromSelectedTivo() {
@@ -124,20 +124,11 @@ public class RecordingListController implements Initializable {
             tivoSearchTask = new TivoSearchTask(tivos, mainApp.getMak());
         }
 
-        mainApp.setStatusText("Looking for TiVos...");
-//        try {
-//            tivoSearchTask.startSearch();
-//        } catch (IOException e) {
-//            System.err.println(e.getLocalizedMessage());
-//            e.printStackTrace();
-//        }
-//        tivoSearchTask.setOnSucceeded(event -> {
-            // Add any new TiVos to our list
-//            @SuppressWarnings("unchecked") Set<Tivo> found = (Set<Tivo>) event.getSource().getValue();
-//            List<Tivo> toAdd = found.stream().filter(t -> !tivos.contains(t)).collect(Collectors.toList());
-//            tivos.addAll(toAdd);
-//            mainApp.clearStatusText();
-//        });
+        if (tivos.size() == 0) {
+            mainApp.setStatusText("Looking for TiVos...");
+            disableUI();
+        }
+
         mainApp.getExecutor().submit(tivoSearchTask);
     }
 
@@ -152,10 +143,6 @@ public class RecordingListController implements Initializable {
     private void setUIDisabled(boolean disabled) {
         toolbar.setDisable(disabled);
         recordingTable.setDisable(disabled);
-    }
-
-    public void setMainApp(Archivo mainApp) {
-        this.mainApp = mainApp;
     }
 
     /**
@@ -173,6 +160,8 @@ public class RecordingListController implements Initializable {
                     }
                 }
             }
+            // Save our list of known TiVos
+            mainApp.setKnownDevices(tivos);
         }
     }
 }

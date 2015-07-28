@@ -80,12 +80,12 @@ public class Archivo extends Application {
         initRecordingList(initialTivos);
 
         primaryStage.setOnCloseRequest(e -> {
-            prefs.setKnownDevices(recordingListController.getTivos());
             cleanShutdown();
         });
     }
 
     private void cleanShutdown() {
+        prefs.sync();
         Platform.exit();
         System.exit(0);
     }
@@ -129,14 +129,15 @@ public class Archivo extends Application {
 
     private void initRecordingList(List<Tivo> initialTivos) {
         try {
-            initialTivos.stream().forEach(System.out::println);
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(Archivo.class.getResource("view/RecordingList.fxml"));
+
+            recordingListController = new RecordingListController(this, initialTivos);
+            loader.setController(recordingListController);
+
             Pane recordingList = loader.load();
             rootLayout.setCenter(recordingList);
 
-            recordingListController = loader.getController();
-            recordingListController.setMainApp(this);
             recordingListController.startTivoSearch();
         } catch (IOException e) {
             e.printStackTrace();
@@ -166,6 +167,18 @@ public class Archivo extends Application {
 
     public String getMak() {
         return prefs.getMAK();
+    }
+
+    public void setLastDevice(Tivo tivo) {
+        prefs.setLastDevice(tivo);
+    }
+
+    public Tivo getLastDevice() {
+        return prefs.getLastDevice(prefs.getMAK());
+    }
+
+    public void setKnownDevices(List<Tivo> tivos) {
+        prefs.setKnownDevices(tivos);
     }
 
     public static void main(String[] args) {

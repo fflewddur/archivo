@@ -107,7 +107,11 @@ public class TivoSearchTask extends Task<Void> {
                     try {
                         Tivo tivo = buildTivoFromServiceInstance(serviceInstance);
                         // Add this device to our list, but use the JavaFX thread to do it.
-                        Platform.runLater(() -> tivos.add(tivo));
+                        Platform.runLater(() -> {
+                            if (!tivos.contains(tivo)) {
+                                tivos.add(tivo);
+                            }
+                        });
                     } catch (IllegalArgumentException e) {
                         System.err.println("Discovered a device, but it doesn't look like a supported TiVo");
                     }
