@@ -20,9 +20,13 @@
 package net.dropline.archivo.model;
 
 import net.dropline.archivo.net.MindRPC;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Arrays;
+import java.util.Base64;
 
 public class Tivo {
     private final String name;
@@ -31,6 +35,11 @@ public class Tivo {
     private final int port;
     private final String mak;
     private MindRPC client;
+
+    private static final String JSON_NAME = "name";
+    private static final String JSON_TSN = "tsn";
+    private static final String JSON_ADDRESSES = "addresses";
+    private static final String JSON_PORT = "port";
 
     private Tivo(Builder builder) {
         name = builder.name;
@@ -75,6 +84,52 @@ public class Tivo {
     @Override
     public String toString() {
         return String.format("Tivo[name=%s, tsn=%s, addresses=%s, port=%d]", name, tsn, Arrays.toString(addresses), port);
+    }
+
+    /**
+     * Convert this Tivo to a JSON object.
+     *
+     * @return A new JSONObject representing this Tivo
+     */
+    public JSONObject toJSON() {
+        JSONObject json = new JSONObject();
+        json.put(JSON_NAME, name);
+        json.put(JSON_TSN, tsn);
+        json.put(JSON_PORT, port);
+        Base64.Encoder encoder = Base64.getEncoder();
+        String[] encodedAddresses = new String[addresses.length];
+        for (int i = 0; i < addresses.length; i++) {
+            encodedAddresses[i] = encoder.encodeToString(addresses[i].getAddress());
+        }
+        json.put(JSON_ADDRESSES, new JSONArray(encodedAddresses));
+        return json;
+    }
+
+    /**
+     * Create a new Tivo object from a JSON String.
+     *
+     * @param json String containing the Tivo object in JSON
+     * @param mak  Media access key to use for the resulting Tivo
+     * @return A new Tivo object
+     * @throws IllegalArgumentException
+     */
+    public static Tivo fromJSON(final String json, final String mak) throws IllegalArgumentException {
+        JSONObject jo = new JSONObject(json);
+        String name = jo.getString(JSON_NAME);
+        String tsn = jo.getString(JSON_TSN);
+        int port = jo.getInt(JSON_PORT);
+        JSONArray jsonAddresses = jo.getJSONArray(JSON_ADDRESSES);
+        InetAddress[] addresses = new InetAddress[jsonAddresses.length()];
+        Base64.Decoder decoder = Base64.getDecoder();
+        for (int i = 0; i < jsonAddresses.length(); i++) {
+            try {
+                addresses[i] = InetAddress.getByAddress(decoder.decode(jsonAddresses.getString(i)));
+            } catch (UnknownHostException e) {
+                throw new IllegalArgumentException(e.getLocalizedMessage());
+            }
+        }
+
+        return new Builder().name(name).tsn(tsn).port(port).addresses(addresses).mak(mak).build();
     }
 
     public static class Builder {
