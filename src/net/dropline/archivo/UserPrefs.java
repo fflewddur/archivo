@@ -119,13 +119,4 @@ class UserPrefs {
     public void setLastDevice(Tivo tivo) {
         prefs.put(MOST_RECENT_DEVICE, tivo.toJSON().toString());
     }
-
-    public void sync() {
-        try {
-            prefs.flush();
-            prefs.sync();
-        } catch (BackingStoreException e) {
-            System.err.println("Error synchronizing user preferences: " + e.getLocalizedMessage());
-        }
-    }
 }

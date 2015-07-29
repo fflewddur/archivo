@@ -110,10 +110,8 @@ public class RecordingListController implements Initializable {
             mainApp.clearStatusText();
             recordingTable.setDisable(false);
         });
-        task.setOnFailed(event -> {
-            System.err.format("Error fetching recordings from %s: %s%n", tivo.getName(),
-                    event.getSource().getException().getLocalizedMessage());
-        });
+        task.setOnFailed(event -> System.err.format("Error fetching recordings from %s: %s%n", tivo.getName(),
+                event.getSource().getException().getLocalizedMessage()));
         mainApp.getExecutor().submit(task);
     }
 
