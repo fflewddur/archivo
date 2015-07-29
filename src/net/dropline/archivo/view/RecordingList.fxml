@@ -11,16 +11,14 @@
                 <Insets bottom="6.0" left="6.0" right="6.0" top="6.0"/>
             </padding>
             <ComboBox fx:id="tivoList" prefWidth="150.0"/>
-            <Button mnemonicParsing="false" onAction="#fetchRecordingsFromSelectedTivo"
-                    text="Refresh"/>
+            <Button mnemonicParsing="false" onAction="#fetchRecordingsFromSelectedTivo" text="Refresh"/>
         </HBox>
-        <TableView fx:id="recordingTable" prefHeight="400.0" prefWidth="600.0">
+        <TreeTableView fx:id="recordingTreeTable">
             <columns>
-                <TableColumn fx:id="showColumn" prefWidth="171.0" text="Show"/>
-                <TableColumn fx:id="episodeColumn" minWidth="0.0" prefWidth="210.0" text="Episode"/>
-                <TableColumn fx:id="dateColumn" prefWidth="107.0" text="Date"/>
-                <TableColumn fx:id="durationColumn" prefWidth="98.0" text="Length"/>
+                <TreeTableColumn fx:id="showColumn" minWidth="250.0" prefWidth="75.0" text="Show"/>
+                <TreeTableColumn fx:id="episodeColumn" minWidth="300.0" prefWidth="75.0" text="Episode"/>
+                <TreeTableColumn fx:id="dateColumn" minWidth="100.0" prefWidth="75.0" text="Recorded on"/>
             </columns>
-        </TableView>
+        </TreeTableView>
     </VBox>
 </AnchorPane>

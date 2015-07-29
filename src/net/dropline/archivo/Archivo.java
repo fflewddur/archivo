@@ -44,6 +44,12 @@ import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+// TODO Display details of the selected recording below the recording list
+// TODO Add control for downloading the selected recording
+// TODO Add control for filtering TiVo recommendations from the recording list
+// TODO Add control for filtering DRM-protected recordings from the recording list
+// TODO Change output statements to use a logging system
+
 public class Archivo extends Application {
     private Stage primaryStage;
     private BorderPane rootLayout;

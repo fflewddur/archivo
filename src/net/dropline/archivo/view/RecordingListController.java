@@ -25,23 +25,25 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.ComboBox;
-import javafx.scene.control.TableColumn;
-import javafx.scene.control.TableView;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeTableColumn;
+import javafx.scene.control.TreeTableView;
 import javafx.scene.layout.HBox;
 import net.dropline.archivo.Archivo;
 import net.dropline.archivo.model.Recording;
+import net.dropline.archivo.model.Series;
 import net.dropline.archivo.model.Tivo;
 import net.dropline.archivo.net.MindCommandRecordingFolderItemSearch;
 import net.dropline.archivo.net.MindTask;
 import net.dropline.archivo.net.TivoSearchTask;
 
 import java.net.URL;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ResourceBundle;
 
 public class RecordingListController implements Initializable {
     private final ObservableList<Tivo> tivos;
-    private final ObservableList<Recording> recordings;
     private TivoSearchTask tivoSearchTask;
 
     @FXML
@@ -49,22 +51,19 @@ public class RecordingListController implements Initializable {
     @FXML
     private ComboBox<Tivo> tivoList;
     @FXML
-    private TableView<Recording> recordingTable;
+    private TreeTableView<Recording> recordingTreeTable;
     @FXML
-    private TableColumn<Recording, String> showColumn;
+    private TreeTableColumn<Recording, String> showColumn;
     @FXML
-    private TableColumn<Recording, String> episodeColumn;
+    private TreeTableColumn<Recording, String> episodeColumn;
     @FXML
-    private TableColumn<Recording, String> dateColumn;
-    @FXML
-    private TableColumn<Recording, String> durationColumn;
+    private TreeTableColumn<Recording, LocalDateTime> dateColumn;
 
     private Archivo mainApp;
 
     public RecordingListController(Archivo mainApp, List<Tivo> initialTivos) {
         this.mainApp = mainApp;
         tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(initialTivos));
-        recordings = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
     }
 
     @Override
@@ -77,12 +76,11 @@ public class RecordingListController implements Initializable {
                 }
         );
 
-        showColumn.setCellValueFactory(cellData -> cellData.getValue().seriesTitleProperty());
-        episodeColumn.setCellValueFactory(cellData -> cellData.getValue().episodeTitleProperty());
-        dateColumn.setCellValueFactory(cellData -> cellData.getValue().dateRecordedProperty().asString());
-        durationColumn.setCellValueFactory(cellData -> cellData.getValue().durationProperty().asString());
+        showColumn.setCellValueFactory(data -> data.getValue().getValue().seriesTitleProperty());
+        episodeColumn.setCellValueFactory(data -> data.getValue().getValue().episodeTitleProperty());
+        dateColumn.setCellValueFactory(data -> data.getValue().getValue().dateRecordedProperty());
+        dateColumn.setCellFactory(col -> new RecordedOnCellFactory());
 
-        recordingTable.setItems(recordings);
         tivoList.setItems(tivos);
 
         // When the list of TiVos is first populated, automatically select one
@@ -94,25 +92,50 @@ public class RecordingListController implements Initializable {
         }
     }
 
+    @SuppressWarnings("unused")
     public void fetchRecordingsFromSelectedTivo() {
         fetchRecordingsFrom(tivoList.getValue());
     }
 
     private void fetchRecordingsFrom(Tivo tivo) {
         mainApp.setStatusText("Fetching recordings...");
-        recordings.clear();
-        recordingTable.setDisable(true);
+        recordingTreeTable.setDisable(true);
 
         MindCommandRecordingFolderItemSearch command = new MindCommandRecordingFolderItemSearch();
         MindTask task = new MindTask(tivo.getClient(), command);
         task.setOnSucceeded(event -> {
-            recordings.addAll(command.getRecordings());
+            fillTreeTableView(command.getSeries());
             mainApp.clearStatusText();
-            recordingTable.setDisable(false);
+            recordingTreeTable.setDisable(false);
         });
         task.setOnFailed(event -> System.err.format("Error fetching recordings from %s: %s%n", tivo.getName(),
                 event.getSource().getException().getLocalizedMessage()));
         mainApp.getExecutor().submit(task);
+    }
+
+    private void fillTreeTableView(List<Series> series) {
+        TreeItem<Recording> root = new TreeItem<>(new Recording.Builder().seriesTitle("root").build());
+        for (Series s : series) {
+            List<Recording> recordings = s.getEpisodes();
+            TreeItem<Recording> item;
+            if (recordings.size() > 1) {
+                // Create a new tree node with children
+                // TODO Sort the recordings by date so we ensure recordedOn is set with the most-recent date
+                item = new TreeItem<>(new Recording.Builder().seriesTitle(s.getTitle())
+                        .recordedOn(recordings.get(0).getDateRecorded()).isSeriesHeading(true).build());
+                for (Recording recording : s.getEpisodes()) {
+                    item.getChildren().add(new TreeItem<>(recording));
+                }
+                item.setExpanded(true);
+            } else {
+                // Don't create children for this node
+                item = new TreeItem<>(recordings.get(0));
+            }
+
+            root.getChildren().add(item);
+        }
+        recordingTreeTable.setRoot(root);
+        recordingTreeTable.setShowRoot(false);
     }
 
     public void startTivoSearch() {
@@ -140,7 +163,7 @@ public class RecordingListController implements Initializable {
 
     private void setUIDisabled(boolean disabled) {
         toolbar.setDisable(disabled);
-        recordingTable.setDisable(disabled);
+        recordingTreeTable.setDisable(disabled);
     }
 
     /**
