@@ -35,7 +35,11 @@ class UserPrefs {
     public static final String MOST_RECENT_DEVICE = "lastTivo";
 
     public UserPrefs() {
-        prefs = Preferences.userNodeForPackage(Archivo.class);
+        try {
+            prefs = Preferences.userNodeForPackage(Archivo.class);
+        } catch (SecurityException e) {
+            System.err.println("Error accessing user preferences: " + e.getLocalizedMessage());
+        }
     }
 
     public String getMAK() {

@@ -85,7 +85,6 @@ public class Archivo extends Application {
     }
 
     private void cleanShutdown() {
-        prefs.sync();
         Platform.exit();
         System.exit(0);
     }
