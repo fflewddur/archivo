@@ -23,6 +23,9 @@ import javafx.beans.property.*;
 
 import java.time.LocalDateTime;
 
+/**
+ * Models a single recording from a TiVo device.
+ */
 public class Recording {
     private final StringProperty seriesTitle;
     private final StringProperty episodeTitle;
@@ -33,16 +36,20 @@ public class Recording {
     private final int episodeNumber;
     private final Channel channel;
 
+    private final boolean isSeriesHeading;
+
     private Recording(Builder builder) {
         seriesTitle = new SimpleStringProperty(builder.seriesTitle);
         episodeTitle = new SimpleStringProperty(builder.episodeTitle);
         dateRecorded = new SimpleObjectProperty<>(builder.dateRecorded);
         minutesLong = new SimpleIntegerProperty(builder.minutesLong);
 
-        // FIXME these need to become Properties
+        // FIXME these need to become Properties (maybe?)
         seriesNumber = builder.seriesNumber;
         episodeNumber = builder.episodeNumber;
         channel = builder.channel;
+
+        isSeriesHeading = builder.isSeriesHeading;
     }
 
     public String getSeriesTitle() {
@@ -88,7 +95,9 @@ public class Recording {
         return channel;
     }
 
-
+    public boolean isSeriesHeading() {
+        return isSeriesHeading;
+    }
 
     public static class Builder {
         private String seriesTitle;
@@ -98,6 +107,12 @@ public class Recording {
         private Channel channel;
         private int minutesLong;
         private LocalDateTime dateRecorded;
+        private boolean isSeriesHeading;
+
+        public Builder() {
+            // Set default values
+            isSeriesHeading = false;
+        }
 
         public Builder seriesTitle(String val) {
             seriesTitle = val;
@@ -131,6 +146,11 @@ public class Recording {
 
         public Builder recordedOn(LocalDateTime val) {
             dateRecorded = val;
+            return this;
+        }
+
+        public Builder isSeriesHeading(boolean val) {
+            isSeriesHeading = val;
             return this;
         }
 
