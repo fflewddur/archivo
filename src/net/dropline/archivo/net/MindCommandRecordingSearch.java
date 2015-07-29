@@ -26,6 +26,7 @@ import org.json.JSONObject;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.Collections;
 
 class MindCommandRecordingSearch extends MindCommand {
     private final static JSONArray templateList;
@@ -82,7 +83,7 @@ class MindCommandRecordingSearch extends MindCommand {
         // Only get the recording
         template = new JSONObject();
         template.put("type", "responseTemplate");
-        template.put("fieldName", Arrays.asList("recording"));
+        template.put("fieldName", Collections.singletonList("recording"));
         template.put("typeName", "recordingList");
         templates.put(template);
 

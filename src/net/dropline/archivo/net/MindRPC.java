@@ -61,15 +61,10 @@ public class MindRPC {
     public static final int SCHEMA_VER = 9;
     public static final String LINE_ENDING = "\r\n";
     private static final String KEY_PASSWORD = "LwrbLEFYvG";
-    private static final int DEFAULT_PORT = 1413;
     private static final int MAX_SESSION_ID_VAL = 0x27dc20;
 
     static {
         RESPONSE_HEAD = Pattern.compile("MRPC/2\\s+(\\d+)\\s+(\\d+)");
-    }
-
-    public MindRPC(InetAddress address, String mak) {
-        this(address, DEFAULT_PORT, mak);
     }
 
     public MindRPC(InetAddress address, int port, String mak) {
