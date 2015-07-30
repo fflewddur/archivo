@@ -19,11 +19,14 @@
 ~ along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.layout.*?>
 <GridPane xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1"
           fx:controller="net.straylightlabs.archivo.view.RecordingDetailsController">
-
+    <padding>
+        <Insets bottom="10" left="10" right="10" top="10"/>
+    </padding>
     <columnConstraints>
         <ColumnConstraints hgrow="SOMETIMES" minWidth="300"/>
         <ColumnConstraints hgrow="SOMETIMES"/>
@@ -34,7 +37,7 @@
         <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="ALWAYS"/>
     </rowConstraints>
     <children>
-        <Label fx:id="title" text="Label"/>
-        <Label fx:id="subtitle" text="Label" GridPane.rowIndex="1"/>
+        <Label fx:id="title" text="Label" style="-fx-font-size: 13pt; -fx-font-weight: bold;"/>
+        <Label fx:id="subtitle" text="Label" style="-fx-font-size: 12pt;" GridPane.rowIndex="1"/>
     </children>
 </GridPane>
