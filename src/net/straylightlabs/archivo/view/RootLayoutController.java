@@ -43,6 +43,7 @@ public class RootLayoutController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         menubar.setUseSystemMenuBar(true);
+        statusIndicator.setVisible(false);
     }
 
     public void setMainApp(Archivo app) {
