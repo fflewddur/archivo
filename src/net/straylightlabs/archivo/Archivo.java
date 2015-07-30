@@ -29,6 +29,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import net.straylightlabs.archivo.model.Tivo;
+import net.straylightlabs.archivo.view.RecordingDetailsController;
 import net.straylightlabs.archivo.view.RecordingListController;
 import net.straylightlabs.archivo.view.RootLayoutController;
 import net.straylightlabs.archivo.view.SetupDialog;
@@ -51,10 +52,13 @@ public class Archivo extends Application {
     private final ExecutorService executor;
     private final UserPrefs prefs;
     private RootLayoutController rootController;
+    private RecordingDetailsController recordingDetailsController;
 
-    public static final String ApplicationName = "Archivo";
-    public static final String ApplicationRDN = "net.straylightlabs.archivo";
-    public static final String ApplicationVersion = "0.1.0";
+    public static final String APPLICATION_NAME = "Archivo";
+    public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
+    public static final String APPLICATION_VERSION = "0.1.0";
+    public static final int WINDOW_MIN_HEIGHT = 300;
+    public static final int WINDOW_MIN_WIDTH = 450;
 
     public Archivo() {
         prefs = new UserPrefs();
@@ -65,7 +69,9 @@ public class Archivo extends Application {
     @Override
     public void start(Stage primaryStage) throws Exception {
         this.primaryStage = primaryStage;
-        this.primaryStage.setTitle(ApplicationName);
+        this.primaryStage.setTitle(APPLICATION_NAME);
+        this.primaryStage.setMinHeight(WINDOW_MIN_HEIGHT);
+        this.primaryStage.setMinWidth(WINDOW_MIN_WIDTH);
 
         initRootLayout();
 
@@ -82,6 +88,7 @@ public class Archivo extends Application {
         }
         List<Tivo> initialTivos = prefs.getKnownDevices(mak);
         initRecordingList(initialTivos);
+        initRecordingDetails();
 
         primaryStage.setOnCloseRequest(e -> cleanShutdown());
     }
@@ -116,9 +123,27 @@ public class Archivo extends Application {
             loader.setController(recordingListController);
 
             Pane recordingList = loader.load();
-            rootLayout.setCenter(recordingList);
+            rootController.getMainGrid().add(recordingList, 0, 0);
 
+            recordingListController.addRecordingChangedListener(
+                    (observable, oldValue, newValue) -> {
+                        recordingDetailsController.showRecording(newValue);
+                    }
+            );
             recordingListController.startTivoSearch();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void initRecordingDetails() {
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(Archivo.class.getResource("view/RecordingDetails.fxml"));
+
+            Pane recordingDetails = loader.load();
+            rootController.getMainGrid().add(recordingDetails, 0, 1);
+            recordingDetailsController = loader.getController();
         } catch (IOException e) {
             e.printStackTrace();
         }

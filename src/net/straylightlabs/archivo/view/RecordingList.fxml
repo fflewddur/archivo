@@ -32,7 +32,7 @@
             <ComboBox fx:id="tivoList" prefWidth="150.0"/>
             <Button mnemonicParsing="false" onAction="#fetchRecordingsFromSelectedTivo" text="Refresh"/>
         </HBox>
-        <TreeTableView fx:id="recordingTreeTable">
+        <TreeTableView fx:id="recordingTreeTable" VBox.vgrow="ALWAYS">
             <columns>
                 <TreeTableColumn fx:id="showColumn" minWidth="250.0" prefWidth="75.0" text="Show"/>
                 <TreeTableColumn fx:id="episodeColumn" minWidth="300.0" prefWidth="75.0" text="Episode"/>

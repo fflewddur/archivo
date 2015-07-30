@@ -22,16 +22,17 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<BorderPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="400.0"
-            prefWidth="600.0" xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1"
+<BorderPane prefHeight="600.0" prefWidth="800.0"
+            xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="net.straylightlabs.archivo.view.RootLayoutController">
    <top>
        <MenuBar id="menubar" fx:id="menubar" BorderPane.alignment="CENTER">
            <Menu mnemonicParsing="false" text="File">
                <MenuItem mnemonicParsing="false" text="Close"/>
            </Menu>
-           <Menu mnemonicParsing="false" text="Edit">
-               <MenuItem mnemonicParsing="false" text="Delete"/>
+           <Menu mnemonicParsing="false" text="View">
+               <CheckMenuItem mnemonicParsing="false" text="TiVo Recommendations"/>
+               <CheckMenuItem mnemonicParsing="false" text="Non-copyable Recordings"/>
            </Menu>
            <Menu mnemonicParsing="false" text="Help">
                <MenuItem mnemonicParsing="false" text="About"/>
@@ -39,7 +40,7 @@
        </MenuBar>
    </top>
    <bottom>
-       <HBox prefHeight="30.0" prefWidth="600.0" BorderPane.alignment="CENTER">
+       <HBox minHeight="30" prefHeight="30.0" prefWidth="600.0" BorderPane.alignment="CENTER">
            <ProgressIndicator fx:id="statusIndicator" prefHeight="20.0" prefWidth="20.0">
                <HBox.margin>
                    <Insets bottom="3.0" left="12.0" right="8.0" top="3.0"/>
@@ -48,4 +49,15 @@
            <Label fx:id="statusMessage" prefHeight="30.0" text="Status message"/>
        </HBox>
    </bottom>
+    <center>
+        <GridPane fx:id="mainGrid" BorderPane.alignment="CENTER">
+            <columnConstraints>
+                <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0"/>
+            </columnConstraints>
+            <rowConstraints>
+                <RowConstraints vgrow="ALWAYS"/>
+                <RowConstraints vgrow="NEVER"/>
+            </rowConstraints>
+        </GridPane>
+    </center>
 </BorderPane>

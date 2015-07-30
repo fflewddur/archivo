@@ -22,49 +22,34 @@ package net.straylightlabs.archivo.view;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
-import javafx.scene.control.MenuBar;
-import javafx.scene.control.ProgressIndicator;
-import javafx.scene.layout.GridPane;
-import net.straylightlabs.archivo.Archivo;
+import net.straylightlabs.archivo.model.Recording;
 
 import java.net.URL;
 import java.util.ResourceBundle;
 
+public class RecordingDetailsController implements Initializable {
+    @FXML
+    private Label title;
 
-public class RootLayoutController implements Initializable {
     @FXML
-    private MenuBar menubar;
-    @FXML
-    private GridPane mainGrid;
-    @FXML
-    private ProgressIndicator statusIndicator;
-    @FXML
-    private Label statusMessage;
-
-    private Archivo mainApp;
+    private Label subtitle;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        menubar.setUseSystemMenuBar(true);
-        statusIndicator.setVisible(false);
+        clearRecording();
     }
 
-    public void setMainApp(Archivo app) {
-        mainApp = app;
-        statusMessage.textProperty().bind(mainApp.statusTextProperty());
+    public void clearRecording() {
+        title.setText("");
+        subtitle.setText("");
     }
 
-    public void hideStatus() {
-        statusIndicator.setVisible(false);
-        statusMessage.setVisible(false);
-    }
+    public void showRecording(Recording recording) {
+        if (recording == null || recording.isSeriesHeading()) {
+            clearRecording();
+        }
 
-    public void showStatus() {
-        statusIndicator.setVisible(true);
-        statusMessage.setVisible(true);
-    }
-
-    public GridPane getMainGrid() {
-        return mainGrid;
+        title.setText(recording.getSeriesTitle());
+        subtitle.setText(recording.getEpisodeTitle());
     }
 }

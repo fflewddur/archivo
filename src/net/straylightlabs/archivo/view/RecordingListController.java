@@ -19,6 +19,8 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -75,13 +77,12 @@ public class RecordingListController implements Initializable {
                     fetchRecordingsFrom(curTivo);
                 }
         );
+        tivoList.setItems(tivos);
 
         showColumn.setCellValueFactory(data -> data.getValue().getValue().seriesTitleProperty());
         episodeColumn.setCellValueFactory(data -> data.getValue().getValue().episodeTitleProperty());
         dateColumn.setCellValueFactory(data -> data.getValue().getValue().dateRecordedProperty());
         dateColumn.setCellFactory(col -> new RecordedOnCellFactory());
-
-        tivoList.setItems(tivos);
 
         // When the list of TiVos is first populated, automatically select one
         tivos.addListener(new TivoListChangeListener());
@@ -164,6 +165,26 @@ public class RecordingListController implements Initializable {
     private void setUIDisabled(boolean disabled) {
         toolbar.setDisable(disabled);
         recordingTreeTable.setDisable(disabled);
+    }
+
+    public void addRecordingChangedListener(ChangeListener<Recording> listener) {
+        // Update our observable property when the selected recording changes
+        recordingTreeTable.getSelectionModel().selectedItemProperty().addListener(
+                (observable, oldValue, newValue) -> {
+                    ObservableValue<Recording> observableRecording = null;
+                    Recording oldRecording = null;
+                    Recording newRecording = null;
+                    if (oldValue != null) {
+                        oldRecording = oldValue.getValue();
+                    }
+                    if (newValue != null) {
+                        newRecording = newValue.getValue();
+                    }
+                    if (observable != null && observable.getValue() != null) {
+                        observableRecording = observable.getValue().valueProperty();
+                    }
+                    listener.changed(observableRecording, oldRecording, newRecording);
+                });
     }
 
     /**
