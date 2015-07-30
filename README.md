@@ -1,5 +1,5 @@
 # Archivo
-Archivo is a cross-platform app for archiving recordings from a TiVo to your computer. It has been designed to "just work" and require very little user input to perform its function.
+Archivo is a cross-platform app for archiving recordings from a TiVo to your computer. It is designed to "just work" and require very little user input to perform its function.
 
 ## Features
 Archivo is currently in development. It is intended to eventually support the following features:
