@@ -17,7 +17,7 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo;
+package net.straylightlabs.archivo;
 
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -34,9 +34,9 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import net.dropline.archivo.model.Tivo;
-import net.dropline.archivo.view.RecordingListController;
-import net.dropline.archivo.view.RootLayoutController;
+import net.straylightlabs.archivo.model.Tivo;
+import net.straylightlabs.archivo.view.RecordingListController;
+import net.straylightlabs.archivo.view.RootLayoutController;
 
 import java.io.IOException;
 import java.util.List;
@@ -59,7 +59,7 @@ public class Archivo extends Application {
     private RootLayoutController rootController;
 
     public static final String ApplicationName = "Archivo";
-    public static final String ApplicationRDN = "net.dropline.archivo";
+    public static final String ApplicationRDN = "net.straylightlabs.archivo";
     public static final String ApplicationVersion = "0.1.0";
 
     public Archivo() {

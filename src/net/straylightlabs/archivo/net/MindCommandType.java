@@ -17,12 +17,25 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.tests;
+package net.straylightlabs.archivo.net;
 
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+public enum MindCommandType {
+    UNKNOWN,
+    AUTH,
+    RECORDING_FOLDER_ITEM_SEARCH,
+    RECORDING_SEARCH;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses({RecordingTest.class, TivoTest.class})
-public class TestSuite {
+    @Override public String toString() {
+        // These strings must match the name of the command in the TiVo Mind API
+        switch(this) {
+            case AUTH:
+                return "bodyAuthenticate";
+            case RECORDING_FOLDER_ITEM_SEARCH:
+                return "recordingFolderItemSearch";
+            case RECORDING_SEARCH:
+                return "recordingSearch";
+        }
+
+        return "unknown";
+    }
 }

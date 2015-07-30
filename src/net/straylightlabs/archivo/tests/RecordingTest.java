@@ -17,10 +17,10 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.tests;
+package net.straylightlabs.archivo.tests;
 
-import net.dropline.archivo.model.Channel;
-import net.dropline.archivo.model.Recording;
+import net.straylightlabs.archivo.model.Channel;
+import net.straylightlabs.archivo.model.Recording;
 import org.junit.Assert;
 import org.junit.Test;
 

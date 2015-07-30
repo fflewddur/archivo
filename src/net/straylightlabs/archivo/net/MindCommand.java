@@ -17,9 +17,9 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.net;
+package net.straylightlabs.archivo.net;
 
-import net.dropline.archivo.Archivo;
+import net.straylightlabs.archivo.Archivo;
 import org.json.JSONObject;
 
 import java.io.IOException;

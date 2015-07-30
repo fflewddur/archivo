@@ -17,7 +17,7 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.view;
+package net.straylightlabs.archivo.view;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
@@ -29,13 +29,13 @@ import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.layout.HBox;
-import net.dropline.archivo.Archivo;
-import net.dropline.archivo.model.Recording;
-import net.dropline.archivo.model.Series;
-import net.dropline.archivo.model.Tivo;
-import net.dropline.archivo.net.MindCommandRecordingFolderItemSearch;
-import net.dropline.archivo.net.MindTask;
-import net.dropline.archivo.net.TivoSearchTask;
+import net.straylightlabs.archivo.Archivo;
+import net.straylightlabs.archivo.model.Recording;
+import net.straylightlabs.archivo.model.Series;
+import net.straylightlabs.archivo.model.Tivo;
+import net.straylightlabs.archivo.net.MindCommandRecordingFolderItemSearch;
+import net.straylightlabs.archivo.net.MindTask;
+import net.straylightlabs.archivo.net.TivoSearchTask;
 
 import java.net.URL;
 import java.time.LocalDateTime;

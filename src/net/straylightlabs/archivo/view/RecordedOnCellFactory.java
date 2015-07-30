@@ -17,10 +17,10 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.view;
+package net.straylightlabs.archivo.view;
 
 import javafx.scene.control.TreeTableCell;
-import net.dropline.archivo.model.Recording;
+import net.straylightlabs.archivo.model.Recording;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;

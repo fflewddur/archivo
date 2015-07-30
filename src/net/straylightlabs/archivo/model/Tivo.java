@@ -17,9 +17,9 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.model;
+package net.straylightlabs.archivo.model;
 
-import net.dropline.archivo.net.MindRPC;
+import net.straylightlabs.archivo.net.MindRPC;
 import org.json.JSONArray;
 import org.json.JSONObject;
 

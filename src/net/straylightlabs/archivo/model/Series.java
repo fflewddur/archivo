@@ -17,19 +17,28 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.net;
+package net.straylightlabs.archivo.model;
 
-import org.json.JSONObject;
+import java.util.Collections;
+import java.util.List;
 
-class MindCommandAuth extends MindCommand {
-    public MindCommandAuth(String mak) {
-        super();
-        commandType = MindCommandType.AUTH;
+/**
+ * Models a television series that consists of a list of episodes.
+ */
+public class Series {
+    private final String title;
+    private List<Recording> episodes;
 
-        JSONObject credential = new JSONObject();
-        credential.put("type", "makCredential");
-        credential.put("key", mak);
+    public Series(String title, List<Recording> episodes) {
+        this.title = title;
+        this.episodes = episodes;
+    }
 
-        bodyData.put("credential", credential);
+    public String getTitle() {
+        return title;
+    }
+
+    public List<Recording> getEpisodes() {
+        return Collections.unmodifiableList(episodes);
     }
 }

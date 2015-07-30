@@ -17,7 +17,7 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.model;
+package net.straylightlabs.archivo.model;
 
 import javafx.beans.property.*;
 

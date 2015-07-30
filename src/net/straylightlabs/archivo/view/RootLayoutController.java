@@ -17,14 +17,14 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.view;
+package net.straylightlabs.archivo.view;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.ProgressIndicator;
-import net.dropline.archivo.Archivo;
+import net.straylightlabs.archivo.Archivo;
 
 import java.net.URL;
 import java.util.ResourceBundle;

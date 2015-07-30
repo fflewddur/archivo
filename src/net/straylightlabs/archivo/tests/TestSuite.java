@@ -17,28 +17,12 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.model;
+package net.straylightlabs.archivo.tests;
 
-import java.util.Collections;
-import java.util.List;
+import org.junit.runner.RunWith;
+import org.junit.runners.Suite;
 
-/**
- * Models a television series that consists of a list of episodes.
- */
-public class Series {
-    private final String title;
-    private List<Recording> episodes;
-
-    public Series(String title, List<Recording> episodes) {
-        this.title = title;
-        this.episodes = episodes;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public List<Recording> getEpisodes() {
-        return Collections.unmodifiableList(episodes);
-    }
+@RunWith(Suite.class)
+@Suite.SuiteClasses({RecordingTest.class, TivoTest.class})
+public class TestSuite {
 }

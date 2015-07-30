@@ -17,12 +17,12 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.net;
+package net.straylightlabs.archivo.net;
 
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import net.dropline.archivo.model.Tivo;
+import net.straylightlabs.archivo.model.Tivo;
 import org.xbill.DNS.Message;
 import org.xbill.mDNS.*;
 

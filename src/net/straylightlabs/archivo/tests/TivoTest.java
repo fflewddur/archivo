@@ -17,28 +17,22 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo.net;
+package net.straylightlabs.archivo.tests;
 
-import javafx.concurrent.Task;
+import net.straylightlabs.archivo.model.Tivo;
+import org.junit.Test;
 
-import java.io.IOException;
+import static org.junit.Assert.assertEquals;
 
-public class MindTask extends Task<Void> {
-    private final MindCommand command;
-    private final MindRPC client;
+public class TivoTest {
+    @Test
+    public void testEquality() {
+        Tivo a = new Tivo.Builder().name("Foo").tsn("Bar").build();
+        Tivo aCopy = new Tivo.Builder().name("Foo").tsn("Bar").build();
+        Tivo b = new Tivo.Builder().name("Foo2").tsn("Bar2").build();
 
-    public MindTask(MindRPC client, MindCommand command) {
-        this.client = client;
-        this.command = command;
-    }
-
-    @Override
-    protected Void call() {
-        try {
-            command.executeOn(client);
-        } catch (IOException e) {
-            System.err.println("Error executing MindTask: " + e.getLocalizedMessage());
-        }
-        return null;
+        assertEquals("a equals aCopy", true, a.equals(aCopy));
+        assertEquals("a not equals b", false, a.equals(b));
+        assertEquals("aCopy not equals b", false, aCopy.equals(b));
     }
 }

@@ -17,9 +17,9 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.dropline.archivo;
+package net.straylightlabs.archivo;
 
-import net.dropline.archivo.model.Tivo;
+import net.straylightlabs.archivo.model.Tivo;
 
 import java.util.ArrayList;
 import java.util.Collections;
