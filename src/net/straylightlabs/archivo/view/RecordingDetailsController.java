@@ -66,11 +66,16 @@ public class RecordingDetailsController implements Initializable {
         channel.setText("");
         duration.setText("");
         description.setText("");
+        state.setText("");
+        reason.setText("");
+        copyable.setText("");
+        image.setImage(null);
     }
 
     public void showRecording(Recording recording) {
         if (recording == null || recording.isSeriesHeading()) {
             clearRecording();
+            return;
         }
 
         title.setText(recording.getSeriesTitle());
@@ -88,6 +93,6 @@ public class RecordingDetailsController implements Initializable {
         copyable.setText("Copyable: " + recording.isCopyable());
         if (recording.getImageURL() != null)
             image.setImage(new Image(recording.getImageURL().toString(),
-                    Recording.DESIRED_IMAGE_WIDTH, Recording.DESIRED_IMAGE_HEIGHT, true, true));
+                    Recording.DESIRED_IMAGE_WIDTH, Recording.DESIRED_IMAGE_HEIGHT, true, true, true));
     }
 }
