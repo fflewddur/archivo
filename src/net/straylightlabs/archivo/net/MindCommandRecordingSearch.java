@@ -29,6 +29,8 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -68,10 +70,8 @@ class MindCommandRecordingSearch extends MindCommand {
                     builder.episodeNumbers(parseEpisodeNumbers(recordingJSON));
                 if (recordingJSON.has("duration"))
                     builder.secondsLong(recordingJSON.getInt("duration"));
-                if (recordingJSON.has("startTime")) {
-                    builder.recordedOn(LocalDateTime.parse(recordingJSON.getString("startTime"),
-                            DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")));
-                }
+                if (recordingJSON.has("startTime"))
+                    builder.recordedOn(parseUTCDateTime(recordingJSON.getString("startTime")));
                 if (recordingJSON.has("description"))
                     builder.description(recordingJSON.getString("description"));
                 if (recordingJSON.has("image"))
@@ -99,6 +99,12 @@ class MindCommandRecordingSearch extends MindCommand {
         if (response == null) {
             throw new IllegalStateException("MindCommandRecordingSearch does not have a response.");
         }
+    }
+
+    private LocalDateTime parseUTCDateTime(String utcDateTime) {
+        ZonedDateTime utc = ZonedDateTime.parse(utcDateTime + " +0000",
+                DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss ZZ"));
+        return utc.withZoneSameInstant(ZoneId.systemDefault()).toLocalDateTime();
     }
 
     private List<Integer> parseEpisodeNumbers(JSONObject json) {
