@@ -105,8 +105,8 @@ abstract class MindCommand {
         headerLines.add(String.format("RequestType: %s", commandType));
         headerLines.add("ResponseCount: single");
         headerLines.add("BodyId: ");
-        headerLines.add(String.format("APPLICATION_NAME: %s", Archivo.APPLICATION_RDN));
-        headerLines.add(String.format("APPLICATION_VERSION: %s", Archivo.APPLICATION_VERSION));
+        headerLines.add(String.format("ApplicationName: %s", Archivo.APPLICATION_RDN));
+        headerLines.add(String.format("ApplicationVersion: %s", Archivo.APPLICATION_VERSION));
         headerLines.add(String.format("ApplicationSessionId: 0x%x", client.getSessionId()));
 
         // Header always ends with a blank line
