@@ -44,10 +44,12 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 public class RecordingListController implements Initializable {
     private final ObservableList<Tivo> tivos;
     private TivoSearchTask tivoSearchTask;
+    private boolean alreadyDefaultSorted;
 
     @FXML
     private HBox toolbar;
@@ -65,6 +67,7 @@ public class RecordingListController implements Initializable {
     private Archivo mainApp;
 
     public RecordingListController(Archivo mainApp, List<Tivo> initialTivos) {
+        alreadyDefaultSorted = false;
         this.mainApp = mainApp;
         tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(initialTivos));
     }
@@ -82,10 +85,11 @@ public class RecordingListController implements Initializable {
 
         recordingTreeTable.setShowRoot(false);
 
-        showColumn.setCellValueFactory(data -> data.getValue().getValue().seriesTitleProperty());
-        episodeColumn.setCellValueFactory(data -> data.getValue().getValue().episodeTitleProperty());
+        showColumn.setCellValueFactory(data -> data.getValue().getValue().titleProperty());
         dateColumn.setCellValueFactory(data -> data.getValue().getValue().dateRecordedProperty());
         dateColumn.setCellFactory(col -> new RecordedOnCellFactory());
+        dateColumn.setSortType(TreeTableColumn.SortType.DESCENDING);
+        dateColumn.setSortable(true);
 
         // When the list of TiVos is first populated, automatically select one
         tivos.addListener(new TivoListChangeListener());
@@ -118,6 +122,7 @@ public class RecordingListController implements Initializable {
     }
 
     private void fillTreeTableView(List<Series> series) {
+        List<TreeTableColumn<Recording, ?>> oldSortOrder = recordingTreeTable.getSortOrder().stream().collect(Collectors.toList());
         TreeItem<Recording> root = new TreeItem<>(new Recording.Builder().seriesTitle("root").build());
         TreeItem<Recording> suggestions = new TreeItem<>(new Recording.Builder().seriesTitle("TiVo Suggestions").build());
         for (Series s : series) {
@@ -132,6 +137,7 @@ public class RecordingListController implements Initializable {
                         .isSeriesHeading(true).image(recordings.get(0).getImageURL()).build());
                 for (Recording recording : s.getEpisodes()) {
                     allAreSuggestions &= recording.isSuggestion();
+                    recording.isChildRecording(true);
                     item.getChildren().add(new TreeItem<>(recording));
                 }
                 item.setExpanded(true);
@@ -150,8 +156,20 @@ public class RecordingListController implements Initializable {
         }
         root.getChildren().add(suggestions);
         recordingTreeTable.setRoot(root);
-        recordingTreeTable.getSelectionModel().selectFirst();
-        Platform.runLater(recordingTreeTable::requestFocus);
+
+        Platform.runLater(() -> {
+            // Restore the prior sort order
+            ObservableList<TreeTableColumn<Recording, ?>> sortOrder = recordingTreeTable.getSortOrder();
+            sortOrder.clear();
+            if (alreadyDefaultSorted) {
+                sortOrder.addAll(oldSortOrder);
+            } else {
+                sortOrder.add(dateColumn);
+                alreadyDefaultSorted = true;
+            }
+            recordingTreeTable.getSelectionModel().selectFirst();
+            recordingTreeTable.requestFocus();
+        });
     }
 
     public void startTivoSearch() {

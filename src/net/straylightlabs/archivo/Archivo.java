@@ -45,6 +45,7 @@ import java.util.concurrent.Executors;
 // TODO Add control for filtering DRM-protected recordings from the recording list
 // TODO Change output statements to use a logging system
 // TODO Cache images
+// TODO Remember the user's last sort column and restore it at startup
 
 public class Archivo extends Application {
     private Stage primaryStage;

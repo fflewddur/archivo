@@ -36,10 +36,12 @@ import java.util.List;
  */
 public class Recording {
     // Items displayed in the RecordingListView need to be observable properties
-    private final StringProperty seriesTitle;
-    private final StringProperty episodeTitle;
+    private final StringProperty title;
     private final ObjectProperty<LocalDateTime> dateRecorded;
+    // TODO add recording status
 
+    private final String seriesTitle;
+    private final String episodeTitle;
     private final Duration duration;
     private final int seriesNumber;
     private final List<Integer> episodeNumbers;
@@ -53,18 +55,20 @@ public class Recording {
 
     // Denotes Recordings used as the header line for the series in RecordingListView
     private final boolean isSeriesHeading;
+    // Denotes Recordings that are child nodes in the RecordingListView
+    private boolean isChildRecording;
     private final int numEpisodes;
     // Combine season and episode number(s) into a more useful string
     private final String seasonAndEpisode;
 
     public final static int DESIRED_IMAGE_WIDTH = 200;
     public final static int DESIRED_IMAGE_HEIGHT = 150;
+    public final static char EM_DASH = '\u2014';
+    public final static String UNTITLED_TEXT = "Untitled";
 
     private Recording(Builder builder) {
-        seriesTitle = new SimpleStringProperty(builder.seriesTitle);
-        episodeTitle = new SimpleStringProperty(builder.episodeTitle);
-        dateRecorded = new SimpleObjectProperty<>(builder.dateRecorded);
-
+        seriesTitle = builder.seriesTitle;
+        episodeTitle = builder.episodeTitle;
         duration = Duration.ofSeconds(builder.secondsLong);
         seriesNumber = builder.seriesNumber;
         episodeNumbers = builder.episodeNumbers;
@@ -77,10 +81,17 @@ public class Recording {
         isCopyable = builder.isCopyable;
 
         isSeriesHeading = builder.isSeriesHeading;
+        isChildRecording = builder.isChildRecording;
         numEpisodes = builder.numEpisodes;
         seasonAndEpisode = buildSeasonAndEpisode(seriesNumber, episodeNumbers);
+
+        title = new SimpleStringProperty(buildTitle());
+        dateRecorded = new SimpleObjectProperty<>(builder.dateRecorded);
     }
 
+    /**
+     * Build a UI-friendly String describing the season and episode number.
+     */
     private String buildSeasonAndEpisode(int seriesNumber, List<Integer> episodeNumbers) {
         StringBuilder sb = new StringBuilder();
         int numEpisodes = episodeNumbers.size();
@@ -104,28 +115,61 @@ public class Recording {
         return sb.toString();
     }
 
-    public String getSeriesTitle() {
-        return seriesTitle.get();
+    /**
+     * Build a UI-friendly title that consists of the series name + episode name for regular recordings,
+     * and just the series name for header recordings.
+     */
+    private String buildTitle() {
+        if (isSeriesHeading) {
+            return buildSeriesHeadingTitle();
+        } else if (isChildRecording) {
+            return buildChildRecordingTitle();
+        } else {
+            return buildSingleRecordingTitle();
+        }
     }
 
-    public StringProperty seriesTitleProperty() {
+    private String buildSeriesHeadingTitle() {
+        if (seriesTitle != null) {
+            return seriesTitle;
+        } else {
+            return UNTITLED_TEXT;
+        }
+    }
+
+    private String buildChildRecordingTitle() {
+        if (episodeTitle != null) {
+            return episodeTitle;
+        } else if (seriesTitle != null && hasSeasonAndEpisode()) {
+            return String.format("%s %c %s", seriesTitle, EM_DASH, seasonAndEpisode);
+        } else if (seriesTitle != null) {
+            return seriesTitle;
+        } else {
+            return UNTITLED_TEXT;
+        }
+    }
+
+    /**
+     * Build a title for a recording that is not grouped with others from the same series.
+     */
+    private String buildSingleRecordingTitle() {
+        if (seriesTitle != null && episodeTitle != null) {
+            return String.format("%s %c %s", seriesTitle, EM_DASH, episodeTitle);
+        } else if (seriesTitle != null) {
+            return seriesTitle;
+        } else if (episodeTitle != null) {
+            return episodeTitle;
+        } else {
+            return UNTITLED_TEXT;
+        }
+    }
+
+    public String getSeriesTitle() {
         return seriesTitle;
     }
 
     public String getEpisodeTitle() {
-        return episodeTitle.get();
-    }
-
-    public StringProperty episodeTitleProperty() {
         return episodeTitle;
-    }
-
-    public LocalDateTime getDateRecorded() {
-        return dateRecorded.get();
-    }
-
-    public ObjectProperty<LocalDateTime> dateRecordedProperty() {
-        return dateRecorded;
     }
 
     public Duration getDuration() {
@@ -176,8 +220,29 @@ public class Recording {
         return isSeriesHeading;
     }
 
+    public void isChildRecording(boolean val) {
+        isChildRecording = val;
+        title.setValue(buildTitle());
+    }
+
     public int getNumEpisodes() {
         return numEpisodes;
+    }
+
+    public String getTitle() {
+        return title.get();
+    }
+
+    public StringProperty titleProperty() {
+        return title;
+    }
+
+    public LocalDateTime getDateRecorded() {
+        return dateRecorded.get();
+    }
+
+    public ObjectProperty<LocalDateTime> dateRecordedProperty() {
+        return dateRecorded;
     }
 
     public static class Builder {
@@ -195,6 +260,7 @@ public class Recording {
         private RecordingReason reason;
         private boolean isCopyable;
         private boolean isSeriesHeading;
+        private boolean isChildRecording;
         private int numEpisodes;
 
         public Builder() {
@@ -203,7 +269,6 @@ public class Recording {
             description = "";
             state = RecordingState.UNKNOWN;
             reason = RecordingReason.UNKNOWN;
-            isSeriesHeading = false;
         }
 
         public Builder seriesTitle(String val) {
@@ -273,6 +338,11 @@ public class Recording {
 
         public Builder isSeriesHeading(boolean val) {
             isSeriesHeading = val;
+            return this;
+        }
+
+        public Builder isChildRecording(boolean val) {
+            isChildRecording = val;
             return this;
         }
 
