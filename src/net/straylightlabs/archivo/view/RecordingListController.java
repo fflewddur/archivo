@@ -128,7 +128,8 @@ public class RecordingListController implements Initializable {
                 // Create a new tree node with children
                 // TODO Sort the recordings by date so we ensure recordedOn is set with the most-recent date
                 item = new TreeItem<>(new Recording.Builder().seriesTitle(s.getTitle())
-                        .recordedOn(recordings.get(0).getDateRecorded()).isSeriesHeading(true).build());
+                        .numEpisodes(s.getEpisodes().size()).recordedOn(recordings.get(0).getDateRecorded())
+                        .isSeriesHeading(true).image(recordings.get(0).getImageURL()).build());
                 for (Recording recording : s.getEpisodes()) {
                     allAreSuggestions &= recording.isSuggestion();
                     item.getChildren().add(new TreeItem<>(recording));

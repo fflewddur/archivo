@@ -53,6 +53,7 @@ public class Recording {
 
     // Denotes Recordings used as the header line for the series in RecordingListView
     private final boolean isSeriesHeading;
+    private final int numEpisodes;
     // Combine season and episode number(s) into a more useful string
     private final String seasonAndEpisode;
 
@@ -76,6 +77,7 @@ public class Recording {
         isCopyable = builder.isCopyable;
 
         isSeriesHeading = builder.isSeriesHeading;
+        numEpisodes = builder.numEpisodes;
         seasonAndEpisode = buildSeasonAndEpisode(seriesNumber, episodeNumbers);
     }
 
@@ -174,6 +176,10 @@ public class Recording {
         return isSeriesHeading;
     }
 
+    public int getNumEpisodes() {
+        return numEpisodes;
+    }
+
     public static class Builder {
         private String seriesTitle;
         private int seriesNumber;
@@ -189,6 +195,7 @@ public class Recording {
         private RecordingReason reason;
         private boolean isCopyable;
         private boolean isSeriesHeading;
+        private int numEpisodes;
 
         public Builder() {
             // Set default values
@@ -266,6 +273,11 @@ public class Recording {
 
         public Builder isSeriesHeading(boolean val) {
             isSeriesHeading = val;
+            return this;
+        }
+
+        public Builder numEpisodes(int val) {
+            numEpisodes = val;
             return this;
         }
 

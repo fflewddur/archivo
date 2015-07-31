@@ -44,6 +44,7 @@ import java.util.concurrent.Executors;
 // TODO Add control for filtering TiVo recommendations from the recording list
 // TODO Add control for filtering DRM-protected recordings from the recording list
 // TODO Change output statements to use a logging system
+// TODO Cache images
 
 public class Archivo extends Application {
     private Stage primaryStage;

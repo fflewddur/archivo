@@ -73,11 +73,31 @@ public class RecordingDetailsController implements Initializable {
     }
 
     public void showRecording(Recording recording) {
-        if (recording == null || recording.isSeriesHeading()) {
+        if (recording == null) {
             clearRecording();
-            return;
+        } else if (recording.isSeriesHeading()) {
+            showRecordingOverview(recording);
+        } else {
+            showRecordingDetails(recording);
+        }
+    }
+
+    private void showRecordingOverview(Recording recording) {
+        clearRecording();
+
+        title.setText(recording.getSeriesTitle());
+        if (recording.getNumEpisodes() == 1) {
+            subtitle.setText(String.format("%d episode", recording.getNumEpisodes()));
+        } else {
+            subtitle.setText(String.format("%d episodes", recording.getNumEpisodes()));
         }
 
+        if (recording.getImageURL() != null)
+            image.setImage(new Image(recording.getImageURL().toString(),
+                    Recording.DESIRED_IMAGE_WIDTH, Recording.DESIRED_IMAGE_HEIGHT, true, true, true));
+    }
+
+    private void showRecordingDetails(Recording recording) {
         title.setText(recording.getSeriesTitle());
         subtitle.setText(recording.getEpisodeTitle());
         episode.setText(recording.getSeasonAndEpisode());
