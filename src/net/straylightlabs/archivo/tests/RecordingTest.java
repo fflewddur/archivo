@@ -24,28 +24,24 @@ import net.straylightlabs.archivo.model.Recording;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.ArrayList;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 
 public class RecordingTest {
     @Test
     public void testBuilder() {
-        Recording r = new Recording.Builder().seriesTitle("NOVA").seriesNumber(20).channel("OPB", 710).
-                episodeTitle("Chasing Pluto").episodeNumber(14).minutesLong(59).build();
+        Recording r = new Recording.Builder().seriesTitle("NOVA").seriesNumber(20).channel("OPB", "710").
+                episodeTitle("Chasing Pluto").episodeNumbers(new ArrayList<>(14)).secondsLong(59).build();
 
         assertEquals("Series title = 'NOVA'", "NOVA", r.getSeriesTitle());
-        assertEquals("Series number = 20", 20, r.getSeriesNumber());
         assertEquals("Episode title = 'Chasing Pluto'", "Chasing Pluto", r.getEpisodeTitle());
-        assertEquals("Episode number = 14", 14, r.getEpisodeNumber());
-        assertEquals("Duration = 59", 59, r.getDuration());
-        Assert.assertEquals("Channel = [OPB (710)]", new Channel("OPB", 710), r.getChannel());
+        Assert.assertEquals("Channel = [OPB (710)]", new Channel("OPB", "710"), r.getChannel());
 
         assertNotEquals("Series title != 'American Experience'", "American Experience", r.getSeriesTitle());
-        assertNotEquals("Series number != 4", 4, r.getSeriesNumber());
         assertNotEquals("Episode title != 'Dorothea Lange'", "Dorothea Lange", r.getEpisodeTitle());
-        assertNotEquals("Episode number != 12", 12, r.getEpisodeNumber());
-        assertNotEquals("Duration != 45", 45, r.getDuration());
-        assertNotEquals("Channel != [OPB (10)]", new Channel("OPB", 10), r.getChannel());
+        assertNotEquals("Channel != [OPB (10)]", new Channel("OPB", "10"), r.getChannel());
     }
 
 }

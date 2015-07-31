@@ -19,37 +19,17 @@
 
 package net.straylightlabs.archivo.model;
 
-public class Channel {
-    private final String name;
-    private final String number;
+public enum RecordingState {
+    UNKNOWN,
+    COMPLETE,
+    IN_PROGRESS;
 
-    public Channel(String name, String number) {
-        this.name = name;
-        this.number = number;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("%s (%s)", name, number);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof Channel)) {
-            return false;
-        }
-
-        Channel channel = (Channel)o;
-        return ((number.equals(channel.number)) && (name.equals(channel.name)));
-    }
-
-    @Override
-    public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + number.hashCode();
-        return result;
+    public static RecordingState parse(String state) {
+        if (state.equalsIgnoreCase("complete"))
+            return RecordingState.COMPLETE;
+        else if (state.equalsIgnoreCase("inProgress"))
+            return RecordingState.IN_PROGRESS;
+        else
+            return RecordingState.UNKNOWN;
     }
 }

@@ -87,8 +87,8 @@ public class Archivo extends Application {
             }
         }
         List<Tivo> initialTivos = prefs.getKnownDevices(mak);
-        initRecordingList(initialTivos);
         initRecordingDetails();
+        initRecordingList(initialTivos);
 
         primaryStage.setOnCloseRequest(e -> cleanShutdown());
     }

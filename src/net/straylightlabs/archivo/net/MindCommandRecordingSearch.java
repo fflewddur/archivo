@@ -20,13 +20,20 @@
 package net.straylightlabs.archivo.net;
 
 import net.straylightlabs.archivo.model.Recording;
+import net.straylightlabs.archivo.model.RecordingReason;
+import net.straylightlabs.archivo.model.RecordingState;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 class MindCommandRecordingSearch extends MindCommand {
     private final static JSONArray templateList;
@@ -56,15 +63,33 @@ class MindCommandRecordingSearch extends MindCommand {
                 if (recordingJSON.has("subtitle"))
                     builder.episodeTitle(recordingJSON.getString("subtitle"));
                 if (recordingJSON.has("seasonNumber"))
-                    builder.episodeNumber(recordingJSON.getInt("seasonNumber"));
-//                if (recordingJSON.has("episodeNum"))
-//                    builder.episodeNumber(Integer.parseInt(recordingJSON.getString("episodeNum")));
+                    builder.seriesNumber(recordingJSON.getInt("seasonNumber"));
+                if (recordingJSON.has("episodeNum"))
+                    builder.episodeNumbers(parseEpisodeNumbers(recordingJSON));
                 if (recordingJSON.has("duration"))
-                    builder.minutesLong(recordingJSON.getInt("duration") / 60);
+                    builder.secondsLong(recordingJSON.getInt("duration"));
                 if (recordingJSON.has("startTime")) {
                     builder.recordedOn(LocalDateTime.parse(recordingJSON.getString("startTime"),
                             DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm:ss")));
                 }
+                if (recordingJSON.has("description"))
+                    builder.description(recordingJSON.getString("description"));
+                if (recordingJSON.has("image"))
+                    builder.image(parseImages(recordingJSON));
+                if (recordingJSON.has("channel")) {
+                    JSONObject channel = recordingJSON.getJSONObject("channel");
+                    if (channel.has("channelNumber") && channel.has("name"))
+                        builder.channel(channel.getString("name"), channel.getString("channelNumber"));
+                }
+                if (recordingJSON.has("originalAirdate"))
+                    builder.originalAirDate(LocalDate.parse(recordingJSON.getString("originalAirdate"),
+                            DateTimeFormatter.ofPattern("uuuu-MM-dd")));
+                if (recordingJSON.has("state"))
+                    builder.state(RecordingState.parse(recordingJSON.getString("state")));
+                if (recordingJSON.has("subscriptionIdentifier"))
+                    builder.reason(parseReason(recordingJSON.getJSONArray("subscriptionIdentifier")));
+                if (recordingJSON.has("drm"))
+                    builder.copyable(parseCopyable(recordingJSON.getJSONObject("drm")));
             }
         }
         return builder.build();
@@ -76,22 +101,66 @@ class MindCommandRecordingSearch extends MindCommand {
         }
     }
 
+    private List<Integer> parseEpisodeNumbers(JSONObject json) {
+        JSONArray episodeNums = json.getJSONArray("episodeNum");
+        List<Integer> episodes = new ArrayList<>();
+        for (int i = 0; i < episodeNums.length(); i++) {
+            episodes.add(episodeNums.getInt(i));
+        }
+        return episodes;
+    }
+
+    private URL parseImages(JSONObject json) {
+        URL imageURL = null;
+        JSONArray images = json.getJSONArray("image");
+        for (int i = 0; i < images.length(); i++) {
+            JSONObject imageJSON = images.getJSONObject(i);
+            if (imageJSON.has("width") && imageJSON.has("height") && imageJSON.has("imageUrl")) {
+                int width = imageJSON.getInt("width");
+                int height = imageJSON.getInt("height");
+                if (width == Recording.DESIRED_IMAGE_WIDTH && height == Recording.DESIRED_IMAGE_HEIGHT) {
+                    try {
+                        imageURL = new URL(imageJSON.getString("imageUrl"));
+                    } catch (MalformedURLException e) {
+                        System.err.println("Error parsing image URL: " + e.getLocalizedMessage());
+                    }
+                }
+            }
+        }
+        return imageURL;
+    }
+
+    private RecordingReason parseReason(JSONArray array) {
+        for (int i = 0; i < array.length(); i++) {
+            JSONObject json = array.getJSONObject(i);
+            if (json.has("subscriptionType")) {
+                return RecordingReason.parse(json.getString("subscriptionType"));
+            }
+        }
+        return RecordingReason.UNKNOWN;
+    }
+
+    private boolean parseCopyable(JSONObject json) {
+        return (json.has("cgms") && json.getString("cgms").equalsIgnoreCase("copyFreely"));
+    }
+
     private static JSONArray buildTemplate() {
         JSONArray templates = new JSONArray();
         JSONObject template;
 
-        // Only get the recording
+        // Tell the recordingList to only include recording objects
         template = new JSONObject();
         template.put("type", "responseTemplate");
         template.put("fieldName", Collections.singletonList("recording"));
         template.put("typeName", "recordingList");
         templates.put(template);
 
-        // Get the channel
+        // Tell the recording object to only include info we need for our UI
         template = new JSONObject();
         template.put("type", "responseTemplate");
         template.put("fieldName", Arrays.asList("channel", "originalAirdate", "state", "subtitle",
-                "startTime", "episodeNum", "description", "title", "duration", "seasonNumber"));
+                "startTime", "episodeNum", "description", "title", "duration", "seasonNumber",
+                "image", "drm", "subscriptionIdentifier"));
         template.put("typeName", "recording");
         templates.put(template);
 
@@ -100,6 +169,20 @@ class MindCommandRecordingSearch extends MindCommand {
         template.put("type", "responseTemplate");
         template.put("fieldName", Arrays.asList("channelNumber", "name"));
         template.put("typeName", "channel");
+        templates.put(template);
+
+        // Only get useful DRM information
+        template = new JSONObject();
+        template.put("type", "responseTemplate");
+        template.put("fieldName", Collections.singletonList("cgms"));
+        template.put("typeName", "drm");
+        templates.put(template);
+
+        // Only get useful subscription information
+        template = new JSONObject();
+        template.put("type", "responseTemplate");
+        template.put("fieldName", Collections.singletonList("subscriptionType"));
+        template.put("typeName", "subscriptionIdentifier");
         templates.put(template);
 
         return templates;

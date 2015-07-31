@@ -19,37 +19,15 @@
 
 package net.straylightlabs.archivo.model;
 
-public class Channel {
-    private final String name;
-    private final String number;
+public enum RecordingReason {
+    UNKNOWN,
+    USER_INITIATED,
+    TIVO_SUGGESTION;
 
-    public Channel(String name, String number) {
-        this.name = name;
-        this.number = number;
-    }
-
-    @Override
-    public String toString() {
-        return String.format("%s (%s)", name, number);
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (!(o instanceof Channel)) {
-            return false;
-        }
-
-        Channel channel = (Channel)o;
-        return ((number.equals(channel.number)) && (name.equals(channel.name)));
-    }
-
-    @Override
-    public int hashCode() {
-        int result = name.hashCode();
-        result = 31 * result + number.hashCode();
-        return result;
+    public static RecordingReason parse(String reason) {
+        if (reason.equalsIgnoreCase("suggestions"))
+            return TIVO_SUGGESTION;
+        else
+            return USER_INITIATED;
     }
 }

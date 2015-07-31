@@ -22,6 +22,8 @@ package net.straylightlabs.archivo.view;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import net.straylightlabs.archivo.model.Recording;
 
 import java.net.URL;
@@ -30,9 +32,26 @@ import java.util.ResourceBundle;
 public class RecordingDetailsController implements Initializable {
     @FXML
     private Label title;
-
     @FXML
     private Label subtitle;
+    @FXML
+    private Label episode;
+    @FXML
+    private Label originalAirDate;
+    @FXML
+    private Label channel;
+    @FXML
+    private Label duration;
+    @FXML
+    private Label description;
+    @FXML
+    private Label state;
+    @FXML
+    private Label reason;
+    @FXML
+    private Label copyable;
+    @FXML
+    private ImageView image;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -42,6 +61,11 @@ public class RecordingDetailsController implements Initializable {
     public void clearRecording() {
         title.setText("");
         subtitle.setText("");
+        episode.setText("");
+        originalAirDate.setText("");
+        channel.setText("");
+        duration.setText("");
+        description.setText("");
     }
 
     public void showRecording(Recording recording) {
@@ -51,5 +75,19 @@ public class RecordingDetailsController implements Initializable {
 
         title.setText(recording.getSeriesTitle());
         subtitle.setText(recording.getEpisodeTitle());
+        episode.setText(recording.getSeasonAndEpisode());
+        if (recording.getOriginalAirDate() != null)
+            originalAirDate.setText("Original air date: " + recording.getOriginalAirDate().toString());
+        if (recording.getChannel() != null)
+            channel.setText(recording.getChannel().toString());
+        if (recording.getDuration() != null)
+            duration.setText(recording.getDuration().toString());
+        description.setText(recording.getDescription());
+        state.setText("State: " + recording.getState().toString());
+        reason.setText("Reason: " + recording.getReason().toString());
+        copyable.setText("Copyable: " + recording.isCopyable());
+        if (recording.getImageURL() != null)
+            image.setImage(new Image(recording.getImageURL().toString(),
+                    Recording.DESIRED_IMAGE_WIDTH, Recording.DESIRED_IMAGE_HEIGHT, true, true));
     }
 }

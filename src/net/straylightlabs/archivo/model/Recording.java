@@ -19,37 +19,87 @@
 
 package net.straylightlabs.archivo.model;
 
-import javafx.beans.property.*;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 
+import java.net.URL;
+import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * Models a single recording from a TiVo device.
  */
 public class Recording {
+    // Items displayed in the RecordingListView need to be observable properties
     private final StringProperty seriesTitle;
     private final StringProperty episodeTitle;
     private final ObjectProperty<LocalDateTime> dateRecorded;
-    private final IntegerProperty minutesLong;
 
+    private final Duration duration;
     private final int seriesNumber;
-    private final int episodeNumber;
+    private final List<Integer> episodeNumbers;
     private final Channel channel;
+    private final String description;
+    private final URL imageURL;
+    private final LocalDate originalAirDate;
+    private final RecordingState state;
+    private final RecordingReason reason;
+    private final boolean isCopyable;
 
+    // Denotes Recordings used as the header line for the series in RecordingListView
     private final boolean isSeriesHeading;
+    // Combine season and episode number(s) into a more useful string
+    private final String seasonAndEpisode;
+
+    public final static int DESIRED_IMAGE_WIDTH = 200;
+    public final static int DESIRED_IMAGE_HEIGHT = 150;
 
     private Recording(Builder builder) {
         seriesTitle = new SimpleStringProperty(builder.seriesTitle);
         episodeTitle = new SimpleStringProperty(builder.episodeTitle);
         dateRecorded = new SimpleObjectProperty<>(builder.dateRecorded);
-        minutesLong = new SimpleIntegerProperty(builder.minutesLong);
 
-        // FIXME these need to become Properties (maybe?)
+        duration = Duration.ofSeconds(builder.secondsLong);
         seriesNumber = builder.seriesNumber;
-        episodeNumber = builder.episodeNumber;
+        episodeNumbers = builder.episodeNumbers;
         channel = builder.channel;
+        description = builder.description;
+        imageURL = builder.imageURL;
+        originalAirDate = builder.originalAirDate;
+        state = builder.state;
+        reason = builder.reason;
+        isCopyable = builder.isCopyable;
 
         isSeriesHeading = builder.isSeriesHeading;
+        seasonAndEpisode = buildSeasonAndEpisode(seriesNumber, episodeNumbers);
+    }
+
+    private String buildSeasonAndEpisode(int seriesNumber, List<Integer> episodeNumbers) {
+        StringBuilder sb = new StringBuilder();
+        int numEpisodes = episodeNumbers.size();
+        if (seriesNumber > 0) {
+            sb.append(String.format("Season %d", seriesNumber));
+            if (numEpisodes > 0) {
+                sb.append(" ");
+            }
+        }
+        if (numEpisodes > 0) {
+            if (numEpisodes > 1) {
+                sb.append("Episodes ");
+                for (int i = 0; i < numEpisodes - 2; i++) {
+                    sb.append(String.format("%d, ", episodeNumbers.get(i)));
+                }
+                sb.append(String.format("%d & %d", episodeNumbers.get(numEpisodes - 2), episodeNumbers.get(numEpisodes - 1)));
+            } else {
+                sb.append(String.format("Episode %d", episodeNumbers.get(0)));
+            }
+        }
+        return sb.toString();
     }
 
     public String getSeriesTitle() {
@@ -76,23 +126,44 @@ public class Recording {
         return dateRecorded;
     }
 
-    public int getDuration() {
-        return minutesLong.get();
+    public Duration getDuration() {
+        return duration;
     }
 
-    public IntegerProperty durationProperty() {
-        return minutesLong;
+    public boolean hasSeasonAndEpisode() {
+        return (seriesNumber > 0 || episodeNumbers.size() > 0);
     }
 
-    public int getSeriesNumber() {
-        return seriesNumber;
-    }
-    public int getEpisodeNumber() {
-        return episodeNumber;
+    public String getSeasonAndEpisode() {
+        return seasonAndEpisode;
     }
 
     public Channel getChannel() {
         return channel;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public URL getImageURL() {
+        return imageURL;
+    }
+
+    public LocalDate getOriginalAirDate() {
+        return originalAirDate;
+    }
+
+    public RecordingState getState() {
+        return state;
+    }
+
+    public RecordingReason getReason() {
+        return reason;
+    }
+
+    public boolean isCopyable() {
+        return isCopyable;
     }
 
     public boolean isSeriesHeading() {
@@ -103,14 +174,24 @@ public class Recording {
         private String seriesTitle;
         private int seriesNumber;
         private String episodeTitle;
-        private int episodeNumber;
+        private List<Integer> episodeNumbers;
         private Channel channel;
-        private int minutesLong;
+        private int secondsLong;
         private LocalDateTime dateRecorded;
+        private String description;
+        private URL imageURL;
+        private LocalDate originalAirDate;
+        private RecordingState state;
+        private RecordingReason reason;
+        private boolean isCopyable;
         private boolean isSeriesHeading;
 
         public Builder() {
             // Set default values
+            episodeNumbers = Collections.emptyList();
+            description = "";
+            state = RecordingState.UNKNOWN;
+            reason = RecordingReason.UNKNOWN;
             isSeriesHeading = false;
         }
 
@@ -129,23 +210,53 @@ public class Recording {
             return this;
         }
 
-        public Builder episodeNumber(int val) {
-            episodeNumber = val;
+        public Builder episodeNumbers(List<Integer> val) {
+            episodeNumbers = val;
             return this;
         }
 
-        public Builder channel(String name, int number) {
+        public Builder channel(String name, String number) {
             channel = new Channel(name, number);
             return this;
         }
 
-        public Builder minutesLong(int val) {
-            minutesLong = val;
+        public Builder secondsLong(int val) {
+            secondsLong = val;
             return this;
         }
 
         public Builder recordedOn(LocalDateTime val) {
             dateRecorded = val;
+            return this;
+        }
+
+        public Builder description(String val) {
+            description = val;
+            return this;
+        }
+
+        public Builder image(URL val) {
+            imageURL = val;
+            return this;
+        }
+
+        public Builder originalAirDate(LocalDate val) {
+            originalAirDate = val;
+            return this;
+        }
+
+        public Builder state(RecordingState val) {
+            state = val;
+            return this;
+        }
+
+        public Builder reason(RecordingReason val) {
+            reason = val;
+            return this;
+        }
+
+        public Builder copyable(boolean val) {
+            isCopyable = val;
             return this;
         }
 
