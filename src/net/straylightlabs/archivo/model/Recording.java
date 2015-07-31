@@ -166,6 +166,10 @@ public class Recording {
         return isCopyable;
     }
 
+    public boolean isSuggestion() {
+        return reason == RecordingReason.TIVO_SUGGESTION;
+    }
+
     public boolean isSeriesHeading() {
         return isSeriesHeading;
     }

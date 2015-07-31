@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.application.Platform;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -79,6 +80,8 @@ public class RecordingListController implements Initializable {
         );
         tivoList.setItems(tivos);
 
+        recordingTreeTable.setShowRoot(false);
+
         showColumn.setCellValueFactory(data -> data.getValue().getValue().seriesTitleProperty());
         episodeColumn.setCellValueFactory(data -> data.getValue().getValue().episodeTitleProperty());
         dateColumn.setCellValueFactory(data -> data.getValue().getValue().dateRecordedProperty());
@@ -116,27 +119,38 @@ public class RecordingListController implements Initializable {
 
     private void fillTreeTableView(List<Series> series) {
         TreeItem<Recording> root = new TreeItem<>(new Recording.Builder().seriesTitle("root").build());
+        TreeItem<Recording> suggestions = new TreeItem<>(new Recording.Builder().seriesTitle("TiVo Suggestions").build());
         for (Series s : series) {
             List<Recording> recordings = s.getEpisodes();
             TreeItem<Recording> item;
+            boolean allAreSuggestions = true;
             if (recordings.size() > 1) {
                 // Create a new tree node with children
                 // TODO Sort the recordings by date so we ensure recordedOn is set with the most-recent date
                 item = new TreeItem<>(new Recording.Builder().seriesTitle(s.getTitle())
                         .recordedOn(recordings.get(0).getDateRecorded()).isSeriesHeading(true).build());
                 for (Recording recording : s.getEpisodes()) {
+                    allAreSuggestions &= recording.isSuggestion();
                     item.getChildren().add(new TreeItem<>(recording));
                 }
                 item.setExpanded(true);
             } else {
                 // Don't create children for this node
+                allAreSuggestions = recordings.get(0).isSuggestion();
                 item = new TreeItem<>(recordings.get(0));
             }
 
-            root.getChildren().add(item);
+            if (allAreSuggestions) {
+                // If all of the recordings are TiVo Suggestions, put them under the Suggestions node
+                suggestions.getChildren().add(item);
+            } else {
+                root.getChildren().add(item);
+            }
         }
+        root.getChildren().add(suggestions);
         recordingTreeTable.setRoot(root);
-        recordingTreeTable.setShowRoot(false);
+        recordingTreeTable.getSelectionModel().selectFirst();
+        Platform.runLater(recordingTreeTable::requestFocus);
     }
 
     public void startTivoSearch() {
