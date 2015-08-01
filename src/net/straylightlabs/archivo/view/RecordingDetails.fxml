@@ -23,35 +23,34 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
-<GridPane xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1"
-          fx:controller="net.straylightlabs.archivo.view.RecordingDetailsController">
+<HBox xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="net.straylightlabs.archivo.view.RecordingDetailsController"
+      spacing="20">
     <padding>
         <Insets bottom="10" left="10" right="10" top="10"/>
     </padding>
-    <columnConstraints>
-        <ColumnConstraints hgrow="SOMETIMES" minWidth="200"/>
-        <ColumnConstraints hgrow="SOMETIMES" minWidth="200"/>
-        <ColumnConstraints hgrow="SOMETIMES" minWidth="200"/>
-    </columnConstraints>
-    <rowConstraints>
-        <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="30.0" prefHeight="30.0" vgrow="SOMETIMES"/>
-        <RowConstraints minHeight="150.0" prefHeight="30.0" vgrow="ALWAYS"/>
-    </rowConstraints>
-    <children>
-        <Label fx:id="title" text="Label" style="-fx-font-size: 13pt; -fx-font-weight: bold;" GridPane.rowIndex="0"
-               GridPane.columnIndex="0"/>
-        <Label fx:id="originalAirDate" text="Label" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
-        <Label fx:id="episode" text="Label" GridPane.rowIndex="0" GridPane.columnIndex="2"/>
-        <Label fx:id="subtitle" text="Label" style="-fx-font-size: 12pt;" GridPane.rowIndex="1"
-               GridPane.columnIndex="0"/>
-        <Label fx:id="channel" text="Label" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
-        <Label fx:id="description" text="Label" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
-        <Label fx:id="duration" text="Label" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
-        <Label fx:id="state" text="Label" GridPane.rowIndex="1" GridPane.columnIndex="2"/>
-        <Label fx:id="reason" text="Label" GridPane.rowIndex="2" GridPane.columnIndex="2"/>
-        <Label fx:id="copyable" text="Label" GridPane.rowIndex="3" GridPane.columnIndex="2"/>
-        <ImageView fx:id="image" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
-    </children>
-</GridPane>
+    <ImageView fx:id="image" HBox.hgrow="NEVER"/>
+    <VBox spacing="5" HBox.hgrow="NEVER">
+        <Label fx:id="title" text="Title" style="-fx-font-size: 13pt; -fx-font-weight: bold;"/>
+        <Label fx:id="subtitle" text="Subtitle" style="-fx-font-size: 12pt;"/>
+        <Label fx:id="description" text="Description" wrapText="true">
+            <VBox.margin>
+                <Insets top="10"/>
+            </VBox.margin>
+        </Label>
+        <HBox spacing="30">
+            <VBox.margin>
+                <Insets top="10"/>
+            </VBox.margin>
+            <VBox spacing="10">
+                <Label fx:id="date" text="Recorded on"/>
+                <Label fx:id="duration" text="Duration"/>
+                <Label fx:id="channel" text="Channel"/>
+            </VBox>
+            <VBox spacing="10">
+                <Label fx:id="episode" text="Episode"/>
+                <Label fx:id="originalAirDate" text="Original air date"/>
+            </VBox>
+        </HBox>
+    </VBox>
+</HBox>

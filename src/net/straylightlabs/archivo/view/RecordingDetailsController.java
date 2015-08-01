@@ -39,36 +39,32 @@ public class RecordingDetailsController implements Initializable {
     @FXML
     private Label originalAirDate;
     @FXML
+    private Label date;
+    @FXML
     private Label channel;
     @FXML
     private Label duration;
     @FXML
     private Label description;
     @FXML
-    private Label state;
-    @FXML
-    private Label reason;
-    @FXML
-    private Label copyable;
-    @FXML
     private ImageView image;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         clearRecording();
+        image.setFitWidth(Recording.DESIRED_IMAGE_WIDTH);
+        image.setFitHeight(Recording.DESIRED_IMAGE_HEIGHT);
     }
 
     public void clearRecording() {
-        title.setText("");
-        subtitle.setText("");
-        episode.setText("");
-        originalAirDate.setText("");
-        channel.setText("");
-        duration.setText("");
-        description.setText("");
-        state.setText("");
-        reason.setText("");
-        copyable.setText("");
+        setLabelText(title, "");
+        setLabelText(subtitle, "");
+        setLabelText(episode, "");
+        setLabelText(date, "");
+        setLabelText(originalAirDate, "");
+        setLabelText(channel, "");
+        setLabelText(duration, "");
+        setLabelText(description, "");
         image.setImage(null);
     }
 
@@ -85,11 +81,11 @@ public class RecordingDetailsController implements Initializable {
     private void showRecordingOverview(Recording recording) {
         clearRecording();
 
-        title.setText(recording.getSeriesTitle());
+        setLabelText(title, recording.getSeriesTitle());
         if (recording.getNumEpisodes() == 1) {
-            subtitle.setText(String.format("%d episode", recording.getNumEpisodes()));
+            setLabelText(subtitle, String.format("%d episode", recording.getNumEpisodes()));
         } else {
-            subtitle.setText(String.format("%d episodes", recording.getNumEpisodes()));
+            setLabelText(subtitle, String.format("%d episodes", recording.getNumEpisodes()));
         }
 
         if (recording.getImageURL() != null)
@@ -98,21 +94,32 @@ public class RecordingDetailsController implements Initializable {
     }
 
     private void showRecordingDetails(Recording recording) {
-        title.setText(recording.getSeriesTitle());
-        subtitle.setText(recording.getEpisodeTitle());
-        episode.setText(recording.getSeasonAndEpisode());
+        setLabelText(title, recording.getSeriesTitle());
+        setLabelText(subtitle, recording.getEpisodeTitle());
+
+        setLabelText(episode, recording.getSeasonAndEpisode());
+        setLabelText(date, recording.getDateRecorded().toString());
         if (recording.getOriginalAirDate() != null)
-            originalAirDate.setText("Original air date: " + recording.getOriginalAirDate().toString());
+            setLabelText(originalAirDate, "Originally aired on " + recording.getOriginalAirDate().toString());
         if (recording.getChannel() != null)
-            channel.setText(recording.getChannel().toString());
+            setLabelText(channel, recording.getChannel().toString());
         if (recording.getDuration() != null)
-            duration.setText(recording.getDuration().toString());
-        description.setText(recording.getDescription());
-        state.setText("State: " + recording.getState().toString());
-        reason.setText("Reason: " + recording.getReason().toString());
-        copyable.setText("Copyable: " + recording.isCopyable());
+            setLabelText(duration, recording.getDuration().toString());
+        setLabelText(description, recording.getDescription());
         if (recording.getImageURL() != null)
             image.setImage(new Image(recording.getImageURL().toString(),
                     Recording.DESIRED_IMAGE_WIDTH, Recording.DESIRED_IMAGE_HEIGHT, true, true, true));
+    }
+
+    private void setLabelText(Label label, String text) {
+        if (text != null && text.trim().length() > 0) {
+            label.setText(text);
+            label.setVisible(true);
+            label.setManaged(true);
+        } else {
+            // Hide this label and remove it from our layout
+            label.setVisible(false);
+            label.setManaged(false);
+        }
     }
 }

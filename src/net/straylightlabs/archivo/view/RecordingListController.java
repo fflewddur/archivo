@@ -107,6 +107,7 @@ public class RecordingListController implements Initializable {
 
     private void fetchRecordingsFrom(Tivo tivo) {
         mainApp.setStatusText("Fetching recordings...");
+        recordingTreeTable.getSelectionModel().clearSelection();
         recordingTreeTable.setDisable(true);
 
         MindCommandRecordingFolderItemSearch command = new MindCommandRecordingFolderItemSearch();

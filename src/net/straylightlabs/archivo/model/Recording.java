@@ -266,7 +266,7 @@ public class Recording {
         public Builder() {
             // Set default values
             episodeNumbers = Collections.emptyList();
-            description = "";
+            description = "No description available";
             state = RecordingState.UNKNOWN;
             reason = RecordingReason.UNKNOWN;
         }

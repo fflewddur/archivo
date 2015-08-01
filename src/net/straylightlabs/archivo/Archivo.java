@@ -40,12 +40,16 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 // TODO Display details of the selected recording below the recording list
+// TODO Display status column showing recordings that are still in progress or copy-protected
 // TODO Add control for downloading the selected recording
 // TODO Add control for filtering TiVo recommendations from the recording list
 // TODO Add control for filtering DRM-protected recordings from the recording list
 // TODO Change output statements to use a logging system
 // TODO Cache images
 // TODO Remember the user's last sort column and restore it at startup
+// TODO Remember the main window's dimensions and restore them at startup
+// TODO Implement collection of paths to tools for decoding, stripping commercials, and encoding video
+// TODO Implement queue of archival tasks that can be started, maybe paused?, and canceled
 
 public class Archivo extends Application {
     private Stage primaryStage;
@@ -59,8 +63,8 @@ public class Archivo extends Application {
     public static final String APPLICATION_NAME = "Archivo";
     public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
     public static final String APPLICATION_VERSION = "0.1.0";
-    public static final int WINDOW_MIN_HEIGHT = 300;
-    public static final int WINDOW_MIN_WIDTH = 450;
+    public static final int WINDOW_MIN_HEIGHT = 400;
+    public static final int WINDOW_MIN_WIDTH = 555;
 
     public Archivo() {
         prefs = new UserPrefs();
