@@ -23,18 +23,8 @@ import javafx.scene.control.TreeTableCell;
 import net.straylightlabs.archivo.model.Recording;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-
-// TODO If the recording is from the prior year, append the year to the date
-// TODO Recordings from today and yesterday should use those terms instead of a formatted date
 
 public class RecordedOnCellFactory extends TreeTableCell<Recording, LocalDateTime> {
-    private static DateTimeFormatter formatter;
-
-    static {
-        formatter = DateTimeFormatter.ofPattern("EEE MMM dd");
-    }
-
     @Override
     protected void updateItem(LocalDateTime date, boolean isEmpty) {
         super.updateItem(date, isEmpty);
@@ -43,11 +33,15 @@ public class RecordedOnCellFactory extends TreeTableCell<Recording, LocalDateTim
         if (getTreeTableRow() != null && getTreeTableRow().getTreeItem() != null) {
             recording = getTreeTableRow().getTreeItem().getValue();
         }
-        if (date == null || isEmpty || (recording != null && recording.isSeriesHeading())) {
+        if (date == null || recording == null || isEmpty || recording.isSeriesHeading()) {
             setText(null);
             setStyle("");
         } else {
-            setText(formatter.format(date));
+            if (recording.isInProgress()) {
+                setText("In progress");
+            } else {
+                setText(DateUtils.formatRecordedOnDate(date));
+            }
         }
     }
 }

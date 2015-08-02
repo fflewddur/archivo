@@ -35,7 +35,7 @@
         <TreeTableView fx:id="recordingTreeTable" VBox.vgrow="ALWAYS">
             <columns>
                 <TreeTableColumn fx:id="showColumn" minWidth="400.0" text="Show"/>
-                <TreeTableColumn fx:id="dateColumn" minWidth="150.0" text="Recorded on"/>
+                <TreeTableColumn fx:id="dateColumn" minWidth="100.0" text="Recorded"/>
             </columns>
         </TreeTableView>
     </VBox>

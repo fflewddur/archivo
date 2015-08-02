@@ -29,25 +29,14 @@ import net.straylightlabs.archivo.model.Recording;
 
 import java.net.URL;
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.util.ResourceBundle;
 
 // TODO Only show original air date when it differs from recorded on date
-// TODO Generalize recorded on date formatting for use in the RecordingList view
 // TODO Duration should let the user know the show is still recording unless it is completed
 // FIXME TiVo Suggestions header item continues to show details of last selected item
 // FIXME Movies keep showing the image of the last selected item
 
 public class RecordingDetailsController implements Initializable {
-    private final static DateTimeFormatter DATE_RECORDED_LONG_DATE_FORMATTER;
-    private final static DateTimeFormatter DATE_RECORDED_SHORT_DATE_FORMATTER;
-    private final static DateTimeFormatter DATE_RECORDED_TIME_FORMATTER;
-    private final static DateTimeFormatter DATE_AIRED_FORMATTER;
-    private final static int currentYear;
-    private final static int currentDay;
-
     @FXML
     private Label title;
     @FXML
@@ -68,15 +57,6 @@ public class RecordingDetailsController implements Initializable {
     private ImageView image;
     @FXML
     private HBox imagePane;
-
-    static {
-        DATE_RECORDED_LONG_DATE_FORMATTER = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
-        DATE_RECORDED_SHORT_DATE_FORMATTER = DateTimeFormatter.ofPattern("MMM d");
-        DATE_RECORDED_TIME_FORMATTER = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT);
-        DATE_AIRED_FORMATTER = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
-        currentYear = LocalDateTime.now().getYear();
-        currentDay = LocalDateTime.now().getDayOfYear();
-    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -111,10 +91,13 @@ public class RecordingDetailsController implements Initializable {
         clearRecording();
 
         setLabelText(title, recording.getSeriesTitle());
-        if (recording.getNumEpisodes() == 1) {
-            setLabelText(subtitle, String.format("%d episode", recording.getNumEpisodes()));
+        int numEpisodes = recording.getNumEpisodes();
+        if (numEpisodes == 1) {
+            setLabelText(subtitle, String.format("%d episode", numEpisodes));
+        } else if (numEpisodes > 1) {
+            setLabelText(subtitle, String.format("%d episodes", numEpisodes));
         } else {
-            setLabelText(subtitle, String.format("%d episodes", recording.getNumEpisodes()));
+            setLabelText(subtitle, "");
         }
 
         setImage(recording.getImageURL());
@@ -125,7 +108,7 @@ public class RecordingDetailsController implements Initializable {
         setLabelText(subtitle, recording.getEpisodeTitle());
         setLabelText(description, recording.getDescription());
 
-        setLabelText(date, formatDateTime(recording.getDateRecorded()));
+        setLabelText(date, DateUtils.formatRecordedOnDateTime(recording.getDateRecorded()));
         if (recording.getDuration() != null)
             setLabelText(duration, formatDuration(recording.getDuration()));
         if (recording.getChannel() != null)
@@ -134,7 +117,7 @@ public class RecordingDetailsController implements Initializable {
         setLabelText(episode, recording.getSeasonAndEpisode());
         if (recording.getOriginalAirDate() != null) {
             setLabelText(originalAirDate, "Originally aired on " +
-                    recording.getOriginalAirDate().format(DATE_AIRED_FORMATTER));
+                    recording.getOriginalAirDate().format(DateUtils.DATE_AIRED_FORMATTER));
         }
         setImage(recording.getImageURL());
     }
@@ -163,26 +146,7 @@ public class RecordingDetailsController implements Initializable {
         }
     }
 
-    private static String formatDateTime(LocalDateTime dateTime) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("Recorded ");
 
-        if (dateTime.getDayOfYear() == currentDay) {
-            sb.append("today");
-        } else if (dateTime.getDayOfYear() == currentDay - 1) {
-            sb.append("yesterday");
-        } else if (dateTime.getYear() == currentYear) {
-            // Don't include the year for recordings from the current year
-            sb.append(dateTime.format(DATE_RECORDED_SHORT_DATE_FORMATTER));
-        } else {
-            sb.append(dateTime.format(DATE_RECORDED_LONG_DATE_FORMATTER));
-        }
-
-        sb.append(" at ");
-        sb.append(dateTime.format(DATE_RECORDED_TIME_FORMATTER));
-
-        return sb.toString();
-    }
 
     private static String formatDuration(Duration duration) {
         int hours = (int) duration.toHours();

@@ -60,8 +60,6 @@ public class RecordingListController implements Initializable {
     @FXML
     private TreeTableColumn<Recording, String> showColumn;
     @FXML
-    private TreeTableColumn<Recording, String> episodeColumn;
-    @FXML
     private TreeTableColumn<Recording, LocalDateTime> dateColumn;
 
     private Archivo mainApp;
@@ -125,7 +123,8 @@ public class RecordingListController implements Initializable {
     private void fillTreeTableView(List<Series> series) {
         List<TreeTableColumn<Recording, ?>> oldSortOrder = recordingTreeTable.getSortOrder().stream().collect(Collectors.toList());
         TreeItem<Recording> root = new TreeItem<>(new Recording.Builder().seriesTitle("root").build());
-        TreeItem<Recording> suggestions = new TreeItem<>(new Recording.Builder().seriesTitle("TiVo Suggestions").build());
+        TreeItem<Recording> suggestions = new TreeItem<>(new Recording.Builder().seriesTitle("TiVo Suggestions")
+                .isSeriesHeading(true).build());
         for (Series s : series) {
             List<Recording> recordings = s.getEpisodes();
             TreeItem<Recording> item;

@@ -216,6 +216,10 @@ public class Recording {
         return reason == RecordingReason.TIVO_SUGGESTION;
     }
 
+    public boolean isInProgress() {
+        return state == RecordingState.IN_PROGRESS;
+    }
+
     public boolean isSeriesHeading() {
         return isSeriesHeading;
     }
