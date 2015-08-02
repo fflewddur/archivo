@@ -24,6 +24,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.HBox;
 import net.straylightlabs.archivo.model.Recording;
 
 import java.net.URL;
@@ -65,6 +66,8 @@ public class RecordingDetailsController implements Initializable {
     private Label description;
     @FXML
     private ImageView image;
+    @FXML
+    private HBox imagePane;
 
     static {
         DATE_RECORDED_LONG_DATE_FORMATTER = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
@@ -91,7 +94,7 @@ public class RecordingDetailsController implements Initializable {
         setLabelText(channel, "");
         setLabelText(duration, "");
         setLabelText(description, "");
-        image.setImage(null);
+        setImage(null);
     }
 
     public void showRecording(Recording recording) {
@@ -114,9 +117,7 @@ public class RecordingDetailsController implements Initializable {
             setLabelText(subtitle, String.format("%d episodes", recording.getNumEpisodes()));
         }
 
-        if (recording.getImageURL() != null)
-            image.setImage(new Image(recording.getImageURL().toString(),
-                    Recording.DESIRED_IMAGE_WIDTH, Recording.DESIRED_IMAGE_HEIGHT, true, true, true));
+        setImage(recording.getImageURL());
     }
 
     private void showRecordingDetails(Recording recording) {
@@ -135,11 +136,7 @@ public class RecordingDetailsController implements Initializable {
             setLabelText(originalAirDate, "Originally aired on " +
                     recording.getOriginalAirDate().format(DATE_AIRED_FORMATTER));
         }
-
-        if (recording.getImageURL() != null) {
-            image.setImage(new Image(recording.getImageURL().toString(),
-                    Recording.DESIRED_IMAGE_WIDTH, Recording.DESIRED_IMAGE_HEIGHT, true, true, true));
-        }
+        setImage(recording.getImageURL());
     }
 
     private void setLabelText(Label label, String text) {
@@ -151,6 +148,18 @@ public class RecordingDetailsController implements Initializable {
             // Hide this label and remove it from our layout
             label.setVisible(false);
             label.setManaged(false);
+        }
+    }
+
+    private void setImage(URL url) {
+        if (url != null) {
+            image.setImage(new Image(url.toString(),
+                    Recording.DESIRED_IMAGE_WIDTH, Recording.DESIRED_IMAGE_HEIGHT, true, true, true));
+            imagePane.setVisible(true);
+            imagePane.setManaged(true);
+        } else {
+            imagePane.setVisible(false);
+            imagePane.setManaged(false);
         }
     }
 
