@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo.net;
 
+import net.straylightlabs.archivo.model.Channel;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.RecordingReason;
 import net.straylightlabs.archivo.model.RecordingState;
@@ -48,6 +49,7 @@ class MindCommandRecordingSearch extends MindCommand {
         super();
         commandType = MindCommandType.RECORDING_SEARCH;
         bodyData.put("responseTemplate", templateList);
+//        bodyData.put("levelOfDetail", "high");
         bodyData.put("recordingId", recordingId);
         bodyData.put("bodyId", bodyId);
     }
@@ -76,11 +78,8 @@ class MindCommandRecordingSearch extends MindCommand {
                     builder.description(recordingJSON.getString("description"));
                 if (recordingJSON.has("image"))
                     builder.image(parseImages(recordingJSON));
-                if (recordingJSON.has("channel")) {
-                    JSONObject channel = recordingJSON.getJSONObject("channel");
-                    if (channel.has("channelNumber") && channel.has("name"))
-                        builder.channel(channel.getString("name"), channel.getString("channelNumber"));
-                }
+                if (recordingJSON.has("channel"))
+                    builder.channel(parseChannel(recordingJSON));
                 if (recordingJSON.has("originalAirdate"))
                     builder.originalAirDate(LocalDate.parse(recordingJSON.getString("originalAirdate"),
                             DateTimeFormatter.ofPattern("uuuu-MM-dd")));
@@ -136,6 +135,26 @@ class MindCommandRecordingSearch extends MindCommand {
         return imageURL;
     }
 
+    private Channel parseChannel(JSONObject json) {
+        JSONObject channel = json.getJSONObject("channel");
+        if (channel.has("channelNumber") && channel.has("name")) {
+            URL logoURL = null;
+            if (channel.has("logoIndex")) {
+                int logoIndex = channel.getInt("logoIndex");
+                String logoURLString = String.format("http://%s/ChannelLogo/icon-%d-1.png",
+                        client.getAddress().getHostAddress(), logoIndex);
+                try {
+                    logoURL = new URL(logoURLString);
+                } catch (MalformedURLException e) {
+                    System.err.println("Error building channel logo URL: " + e.getLocalizedMessage());
+                }
+            }
+            return new Channel(channel.getString("name"), channel.getString("channelNumber"), logoURL);
+        }
+
+        return null;
+    }
+
     private RecordingReason parseReason(JSONArray array) {
         for (int i = 0; i < array.length(); i++) {
             JSONObject json = array.getJSONObject(i);
@@ -173,7 +192,7 @@ class MindCommandRecordingSearch extends MindCommand {
         // Only get useful channel information
         template = new JSONObject();
         template.put("type", "responseTemplate");
-        template.put("fieldName", Arrays.asList("channelNumber", "name"));
+        template.put("fieldName", Arrays.asList("channelNumber", "name", "logoIndex"));
         template.put("typeName", "channel");
         templates.put(template);
 

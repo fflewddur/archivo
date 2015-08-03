@@ -131,7 +131,6 @@ public class RecordingListController implements Initializable {
             boolean allAreSuggestions = true;
             if (recordings.size() > 1) {
                 // Create a new tree node with children
-                // TODO Sort the recordings by date so we ensure recordedOn is set with the most-recent date
                 item = new TreeItem<>(new Recording.Builder().seriesTitle(s.getTitle())
                         .numEpisodes(s.getEpisodes().size()).recordedOn(recordings.get(0).getDateRecorded())
                         .isSeriesHeading(true).image(recordings.get(0).getImageURL()).build());

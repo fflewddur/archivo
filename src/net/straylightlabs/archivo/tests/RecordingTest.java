@@ -32,16 +32,16 @@ import static org.junit.Assert.assertNotEquals;
 public class RecordingTest {
     @Test
     public void testBuilder() {
-        Recording r = new Recording.Builder().seriesTitle("NOVA").seriesNumber(20).channel("OPB", "710").
+        Recording r = new Recording.Builder().seriesTitle("NOVA").seriesNumber(20).channel("OPB", "710", null).
                 episodeTitle("Chasing Pluto").episodeNumbers(new ArrayList<>(14)).secondsLong(59).build();
 
         assertEquals("Series title = 'NOVA'", "NOVA", r.getSeriesTitle());
         assertEquals("Episode title = 'Chasing Pluto'", "Chasing Pluto", r.getEpisodeTitle());
-        Assert.assertEquals("Channel = [OPB (710)]", new Channel("OPB", "710"), r.getChannel());
+        Assert.assertEquals("Channel = [OPB (710)]", new Channel("OPB", "710", null), r.getChannel());
 
         assertNotEquals("Series title != 'American Experience'", "American Experience", r.getSeriesTitle());
         assertNotEquals("Episode title != 'Dorothea Lange'", "Dorothea Lange", r.getEpisodeTitle());
-        assertNotEquals("Channel != [OPB (10)]", new Channel("OPB", "10"), r.getChannel());
+        assertNotEquals("Channel != [OPB (10)]", new Channel("OPB", "10", null), r.getChannel());
     }
 
 }

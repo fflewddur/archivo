@@ -24,7 +24,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import net.straylightlabs.archivo.model.Recording;
 
 import java.net.URL;
@@ -33,8 +33,7 @@ import java.util.ResourceBundle;
 
 // TODO Only show original air date when it differs from recorded on date
 // TODO Duration should let the user know the show is still recording unless it is completed
-// FIXME TiVo Suggestions header item continues to show details of last selected item
-// FIXME Movies keep showing the image of the last selected item
+// FIXME Movies keep showing the poster of the last selected item
 
 public class RecordingDetailsController implements Initializable {
     @FXML
@@ -50,19 +49,21 @@ public class RecordingDetailsController implements Initializable {
     @FXML
     private Label channel;
     @FXML
+    private ImageView channelLogo;
+    @FXML
     private Label duration;
     @FXML
     private Label description;
     @FXML
-    private ImageView image;
+    private ImageView poster;
     @FXML
-    private HBox imagePane;
+    private Pane posterPane;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         clearRecording();
-        image.setFitWidth(Recording.DESIRED_IMAGE_WIDTH);
-        image.setFitHeight(Recording.DESIRED_IMAGE_HEIGHT);
+        poster.setFitWidth(Recording.DESIRED_IMAGE_WIDTH);
+        poster.setFitHeight(Recording.DESIRED_IMAGE_HEIGHT);
     }
 
     public void clearRecording() {
@@ -74,7 +75,8 @@ public class RecordingDetailsController implements Initializable {
         setLabelText(channel, "");
         setLabelText(duration, "");
         setLabelText(description, "");
-        setImage(null);
+        setPoster(null);
+        setChannelLogo(null);
     }
 
     public void showRecording(Recording recording) {
@@ -99,11 +101,12 @@ public class RecordingDetailsController implements Initializable {
         } else {
             setLabelText(subtitle, "");
         }
-
-        setImage(recording.getImageURL());
+        setPoster(recording.getImageURL());
     }
 
     private void showRecordingDetails(Recording recording) {
+        setPoster(recording.getImageURL());
+
         setLabelText(title, recording.getSeriesTitle());
         setLabelText(subtitle, recording.getEpisodeTitle());
         setLabelText(description, recording.getDescription());
@@ -111,15 +114,17 @@ public class RecordingDetailsController implements Initializable {
         setLabelText(date, DateUtils.formatRecordedOnDateTime(recording.getDateRecorded()));
         if (recording.getDuration() != null)
             setLabelText(duration, formatDuration(recording.getDuration()));
-        if (recording.getChannel() != null)
+        if (recording.getChannel() != null) {
             setLabelText(channel, recording.getChannel().toString());
+            setChannelLogo(recording.getChannel().getLogoURL());
+        }
 
         setLabelText(episode, recording.getSeasonAndEpisode());
         if (recording.getOriginalAirDate() != null) {
             setLabelText(originalAirDate, "Originally aired on " +
                     recording.getOriginalAirDate().format(DateUtils.DATE_AIRED_FORMATTER));
         }
-        setImage(recording.getImageURL());
+
     }
 
     private void setLabelText(Label label, String text) {
@@ -134,19 +139,28 @@ public class RecordingDetailsController implements Initializable {
         }
     }
 
-    private void setImage(URL url) {
+    private void setPoster(URL url) {
         if (url != null) {
-            image.setImage(new Image(url.toString(),
+            poster.setImage(new Image(url.toString(),
                     Recording.DESIRED_IMAGE_WIDTH, Recording.DESIRED_IMAGE_HEIGHT, true, true, true));
-            imagePane.setVisible(true);
-            imagePane.setManaged(true);
+            posterPane.setVisible(true);
+            posterPane.setManaged(true);
         } else {
-            imagePane.setVisible(false);
-            imagePane.setManaged(false);
+            posterPane.setVisible(false);
+            posterPane.setManaged(false);
         }
     }
 
-
+    private void setChannelLogo(URL url) {
+        if (url != null) {
+//            channelLogo.setImage(new Image(url.toString(), 60, 60, true, true, true));
+//            channelLogo.setVisible(true);
+//            channelLogo.setManaged(true);
+        } else {
+            channelLogo.setVisible(false);
+            channelLogo.setManaged(false);
+        }
+    }
 
     private static String formatDuration(Duration duration) {
         int hours = (int) duration.toHours();

@@ -19,13 +19,21 @@
 
 package net.straylightlabs.archivo.model;
 
+import java.net.URL;
+
 public class Channel {
     private final String name;
     private final String number;
+    private final URL logoURL;
 
-    public Channel(String name, String number) {
+    public Channel(String name, String number, URL logoURL) {
         this.name = name;
         this.number = number;
+        this.logoURL = logoURL;
+    }
+
+    public URL getLogoURL() {
+        return logoURL;
     }
 
     @Override

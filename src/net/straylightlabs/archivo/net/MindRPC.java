@@ -76,6 +76,10 @@ public class MindRPC {
         socketFactory = createSecureSocketFactory();
     }
 
+    public InetAddress getAddress() {
+        return address;
+    }
+
     public int getSessionId() {
         return sessionId;
     }

@@ -295,8 +295,13 @@ public class Recording {
             return this;
         }
 
-        public Builder channel(String name, String number) {
-            channel = new Channel(name, number);
+        public Builder channel(String name, String number, URL logoURL) {
+            channel = new Channel(name, number, logoURL);
+            return this;
+        }
+
+        public Builder channel(Channel val) {
+            channel = val;
             return this;
         }
 
