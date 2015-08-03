@@ -32,6 +32,14 @@ public class Channel {
         this.logoURL = logoURL;
     }
 
+    public String getNumber() {
+        return number;
+    }
+
+    public String getName() {
+        return name;
+    }
+
     public URL getLogoURL() {
         return logoURL;
     }

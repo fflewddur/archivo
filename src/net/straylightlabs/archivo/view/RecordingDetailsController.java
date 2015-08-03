@@ -31,8 +31,6 @@ import java.net.URL;
 import java.time.Duration;
 import java.util.ResourceBundle;
 
-// TODO Only show original air date when it differs from recorded on date
-// TODO Duration should let the user know the show is still recording unless it is completed
 // FIXME Movies keep showing the poster of the last selected item
 
 public class RecordingDetailsController implements Initializable {
@@ -105,6 +103,8 @@ public class RecordingDetailsController implements Initializable {
     }
 
     private void showRecordingDetails(Recording recording) {
+        clearRecording();
+
         setPoster(recording.getImageURL());
 
         setLabelText(title, recording.getSeriesTitle());
@@ -113,18 +113,18 @@ public class RecordingDetailsController implements Initializable {
 
         setLabelText(date, DateUtils.formatRecordedOnDateTime(recording.getDateRecorded()));
         if (recording.getDuration() != null)
-            setLabelText(duration, formatDuration(recording.getDuration()));
+            setLabelText(duration, formatDuration(recording.getDuration(), recording.isInProgress()));
         if (recording.getChannel() != null) {
-            setLabelText(channel, recording.getChannel().toString());
+            setLabelText(channel, String.format(
+                    "Channel %s (%s)", recording.getChannel().getNumber(), recording.getChannel().getName()));
             setChannelLogo(recording.getChannel().getLogoURL());
         }
 
         setLabelText(episode, recording.getSeasonAndEpisode());
-        if (recording.getOriginalAirDate() != null) {
+        if (!recording.isOriginalRecording()) {
             setLabelText(originalAirDate, "Originally aired on " +
                     recording.getOriginalAirDate().format(DateUtils.DATE_AIRED_FORMATTER));
         }
-
     }
 
     private void setLabelText(Label label, String text) {
@@ -162,7 +162,7 @@ public class RecordingDetailsController implements Initializable {
         }
     }
 
-    private static String formatDuration(Duration duration) {
+    private static String formatDuration(Duration duration, boolean inProgress) {
         int hours = (int) duration.toHours();
         int minutes = (int) duration.toMinutes() - (hours * 60);
         int seconds = (int) (duration.getSeconds() % 60);
@@ -176,14 +176,20 @@ public class RecordingDetailsController implements Initializable {
             minutes = 0;
         }
 
-        String formatted;
+        StringBuilder sb = new StringBuilder();
         if (hours > 0) {
-            formatted = String.format("%d:%02d hour", hours, minutes);
+            sb.append(String.format("%d:%02d hour", hours, minutes));
             if (hours > 1 || minutes > 0)
-                formatted += "s";
+                sb.append("s");
         } else {
-            formatted = String.format("%d minutes", minutes);
+            sb.append(String.format("%d minute", minutes));
+            if (minutes != 1) {
+                sb.append("s");
+            }
         }
-        return formatted;
+        if (inProgress)
+            sb.append(" (still recording)");
+
+        return sb.toString();
     }
 }

@@ -30,7 +30,7 @@ public class DateUtils {
     public final static DateTimeFormatter DATE_AIRED_FORMATTER;
 
     private static int currentYear;
-    private static int currentDay;
+    private static int today;
     private static int yesterday;
 
     static {
@@ -39,7 +39,7 @@ public class DateUtils {
         DATE_RECORDED_TIME_FORMATTER = DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT);
         DATE_AIRED_FORMATTER = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);
         currentYear = LocalDateTime.now().getYear();
-        currentDay = LocalDateTime.now().getDayOfYear();
+        today = LocalDateTime.now().getDayOfYear();
         yesterday = LocalDateTime.now().minusDays(1).getDayOfYear();
     }
 
@@ -51,7 +51,7 @@ public class DateUtils {
         StringBuilder sb = new StringBuilder();
         sb.append("Recorded ");
 
-        if (dateTime.getDayOfYear() == currentDay) {
+        if (dateTime.getDayOfYear() == today) {
             sb.append("today");
         } else if (dateTime.getDayOfYear() == yesterday) {
             sb.append("yesterday");
@@ -69,7 +69,7 @@ public class DateUtils {
     }
 
     public static String formatRecordedOnDate(LocalDateTime dateTime) {
-        if (dateTime.getDayOfYear() == currentDay) {
+        if (dateTime.getDayOfYear() == today) {
             return "Today";
         } else if (dateTime.getDayOfYear() == yesterday) {
             return "Yesterday";

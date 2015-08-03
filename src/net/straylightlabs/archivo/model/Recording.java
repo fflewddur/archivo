@@ -224,6 +224,21 @@ public class Recording {
         return isSeriesHeading;
     }
 
+    /**
+     * Returns true if this recording matches the originalAirDate, or there was no original air date.
+     */
+    public boolean isOriginalRecording() {
+        assert (dateRecorded != null);
+        assert (dateRecorded.getValue() != null);
+
+        if (originalAirDate == null) {
+            return true;
+        }
+
+        return (originalAirDate.getYear() == dateRecorded.getValue().getYear() &&
+                originalAirDate.getDayOfYear() == dateRecorded.getValue().getDayOfYear());
+    }
+
     public void isChildRecording(boolean val) {
         isChildRecording = val;
         title.setValue(buildTitle());
