@@ -118,6 +118,7 @@ class MindCommandRecordingSearch extends MindCommand {
     private URL parseImages(JSONObject json) {
         URL imageURL = null;
         JSONArray images = json.getJSONArray("image");
+        int smallestHeightDiff = Integer.MAX_VALUE;
         for (int i = 0; i < images.length(); i++) {
             JSONObject imageJSON = images.getJSONObject(i);
             if (imageJSON.has("width") && imageJSON.has("height") && imageJSON.has("imageUrl")) {
@@ -125,9 +126,22 @@ class MindCommandRecordingSearch extends MindCommand {
                 int height = imageJSON.getInt("height");
                 if (width == Recording.DESIRED_IMAGE_WIDTH && height == Recording.DESIRED_IMAGE_HEIGHT) {
                     try {
+                        // We found exactly what we wanted, hurray!
                         imageURL = new URL(imageJSON.getString("imageUrl"));
+                        break;
                     } catch (MalformedURLException e) {
                         System.err.println("Error parsing image URL: " + e.getLocalizedMessage());
+                    }
+                } else {
+                    int diff = Math.abs(height - Recording.DESIRED_IMAGE_HEIGHT);
+                    if (diff < smallestHeightDiff) {
+                        try {
+                            // This is the best runner-up image we've found
+                            imageURL = new URL(imageJSON.getString("imageUrl"));
+                            smallestHeightDiff = diff;
+                        } catch (MalformedURLException e) {
+                            System.err.println("Error parsing image URL: " + e.getLocalizedMessage());
+                        }
                     }
                 }
             }
