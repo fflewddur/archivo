@@ -39,13 +39,11 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// TODO Display details of the selected recording below the recording list
 // TODO Display status column showing recordings that are still in progress or copy-protected
 // TODO Add control for downloading the selected recording
 // TODO Add control for filtering TiVo recommendations from the recording list
 // TODO Add control for filtering DRM-protected recordings from the recording list
 // TODO Change output statements to use a logging system
-// TODO Cache images
 // TODO Remember the user's last sort column and restore it at startup
 // TODO Remember the main window's dimensions and restore them at startup
 // TODO Implement collection of paths to tools for decoding, stripping commercials, and encoding video
@@ -53,7 +51,6 @@ import java.util.concurrent.Executors;
 
 public class Archivo extends Application {
     private Stage primaryStage;
-    private BorderPane rootLayout;
     private final StringProperty statusText;
     private final ExecutorService executor;
     private final UserPrefs prefs;
@@ -108,7 +105,7 @@ public class Archivo extends Application {
         try {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(Archivo.class.getResource("view/RootLayout.fxml"));
-            rootLayout = loader.load();
+            BorderPane rootLayout = loader.load();
 
             rootController = loader.getController();
             rootController.setMainApp(this);
@@ -132,9 +129,7 @@ public class Archivo extends Application {
             rootController.getMainGrid().add(recordingList, 0, 0);
 
             recordingListController.addRecordingChangedListener(
-                    (observable, oldValue, newValue) -> {
-                        recordingDetailsController.showRecording(newValue);
-                    }
+                    (observable, oldValue, newValue) -> recordingDetailsController.showRecording(newValue)
             );
             recordingListController.startTivoSearch();
         } catch (IOException e) {
@@ -147,9 +142,11 @@ public class Archivo extends Application {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(Archivo.class.getResource("view/RecordingDetails.fxml"));
 
+            recordingDetailsController = new RecordingDetailsController(this);
+            loader.setController(recordingDetailsController);
+
             Pane recordingDetails = loader.load();
             rootController.getMainGrid().add(recordingDetails, 0, 1);
-            recordingDetailsController = loader.getController();
         } catch (IOException e) {
             e.printStackTrace();
         }

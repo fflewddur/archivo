@@ -25,15 +25,21 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
+import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Recording;
 
 import java.net.URL;
 import java.time.Duration;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 // FIXME Movies keep showing the poster of the last selected item
 
 public class RecordingDetailsController implements Initializable {
+    private final Archivo mainApp;
+    private Map<URL, Image> imageCache;
+
     @FXML
     private Label title;
     @FXML
@@ -47,8 +53,6 @@ public class RecordingDetailsController implements Initializable {
     @FXML
     private Label channel;
     @FXML
-    private ImageView channelLogo;
-    @FXML
     private Label duration;
     @FXML
     private Label description;
@@ -57,10 +61,15 @@ public class RecordingDetailsController implements Initializable {
     @FXML
     private Pane posterPane;
 
+    public RecordingDetailsController(Archivo mainApp) {
+        this.mainApp = mainApp;
+        imageCache = new HashMap<>();
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         clearRecording();
-        poster.setFitWidth(Recording.DESIRED_IMAGE_WIDTH);
+//        poster.setFitWidth(Recording.DESIRED_IMAGE_WIDTH);
         poster.setFitHeight(Recording.DESIRED_IMAGE_HEIGHT);
     }
 
@@ -73,8 +82,7 @@ public class RecordingDetailsController implements Initializable {
         setLabelText(channel, "");
         setLabelText(duration, "");
         setLabelText(description, "");
-        setPoster(null);
-        setChannelLogo(null);
+        setPosterFromURL(null);
     }
 
     public void showRecording(Recording recording) {
@@ -99,13 +107,13 @@ public class RecordingDetailsController implements Initializable {
         } else {
             setLabelText(subtitle, "");
         }
-        setPoster(recording.getImageURL());
+        setPosterFromURL(recording.getImageURL());
     }
 
     private void showRecordingDetails(Recording recording) {
         clearRecording();
 
-        setPoster(recording.getImageURL());
+        setPosterFromURL(recording.getImageURL());
 
         setLabelText(title, recording.getSeriesTitle());
         setLabelText(subtitle, recording.getEpisodeTitle());
@@ -117,7 +125,6 @@ public class RecordingDetailsController implements Initializable {
         if (recording.getChannel() != null) {
             setLabelText(channel, String.format(
                     "Channel %s (%s)", recording.getChannel().getNumber(), recording.getChannel().getName()));
-            setChannelLogo(recording.getChannel().getLogoURL());
         }
 
         setLabelText(episode, recording.getSeasonAndEpisode());
@@ -139,26 +146,43 @@ public class RecordingDetailsController implements Initializable {
         }
     }
 
-    private void setPoster(URL url) {
+    private void setPosterFromURL(URL url) {
         if (url != null) {
-            poster.setImage(new Image(url.toString(),
-                    Recording.DESIRED_IMAGE_WIDTH, Recording.DESIRED_IMAGE_HEIGHT, true, true, true));
+            Image posterImage = loadImageFromURL(url);
+            if (posterImage != null) {
+                setPosterFromImage(posterImage);
+            }
+        } else {
+            setPosterFromImage(null);
+        }
+    }
+
+    private Image loadImageFromURL(URL url) {
+        Image cachedImage = imageCache.get(url);
+        if (cachedImage == null) {
+            ImageDownloadTask downloadTask = new ImageDownloadTask(url);
+            // Download and cache the requested image
+            downloadTask.setOnSucceeded(event -> {
+                Image image = (Image) event.getSource().getValue();
+                if (image == null) {
+                    throw new NullPointerException();
+                }
+                setPosterFromImage(image);
+                imageCache.put(url, image);
+            });
+            mainApp.getExecutor().submit(downloadTask);
+        }
+        return cachedImage;
+    }
+
+    private void setPosterFromImage(Image image) {
+        if (image != null) {
+            poster.setImage(image);
             posterPane.setVisible(true);
             posterPane.setManaged(true);
         } else {
             posterPane.setVisible(false);
             posterPane.setManaged(false);
-        }
-    }
-
-    private void setChannelLogo(URL url) {
-        if (url != null) {
-//            channelLogo.setImage(new Image(url.toString(), 60, 60, true, true, true));
-//            channelLogo.setVisible(true);
-//            channelLogo.setManaged(true);
-        } else {
-            channelLogo.setVisible(false);
-            channelLogo.setManaged(false);
         }
     }
 

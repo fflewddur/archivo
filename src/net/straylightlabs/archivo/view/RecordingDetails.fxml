@@ -24,13 +24,12 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 <HBox xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="net.straylightlabs.archivo.view.RecordingDetailsController"
       spacing="10">
     <padding>
         <Insets bottom="10" left="10" right="10" top="10"/>
     </padding>
     <HBox fx:id="posterPane" style="-fx-border-color: dimgray; -fx-border-width: 1;" HBox.hgrow="NEVER">
-        <ImageView fx:id="poster" HBox.hgrow="NEVER"/>
+        <ImageView fx:id="poster" preserveRatio="true" smooth="true" HBox.hgrow="NEVER"/>
     </HBox>
     <VBox spacing="3" HBox.hgrow="NEVER">
         <Label fx:id="title" text="Title" style="-fx-font-size: 13pt; -fx-font-weight: bold;"/>
@@ -45,7 +44,6 @@
                 <Label fx:id="date" text="Recorded on"/>
                 <Label fx:id="duration" text="Duration"/>
                 <Label fx:id="channel" text="Channel"/>
-                <ImageView fx:id="channelLogo"/>
             </VBox>
             <VBox spacing="3">
                 <Label fx:id="episode" text="Episode"/>
