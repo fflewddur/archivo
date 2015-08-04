@@ -31,8 +31,8 @@
                <MenuItem mnemonicParsing="false" text="Close"/>
            </Menu>
            <Menu mnemonicParsing="false" text="View">
-               <CheckMenuItem mnemonicParsing="false" text="TiVo Recommendations"/>
-               <CheckMenuItem mnemonicParsing="false" text="Non-copyable Recordings"/>
+               <CheckMenuItem mnemonicParsing="false" text="TiVo Suggestions" selected="true"/>
+               <CheckMenuItem mnemonicParsing="false" text="Copy-Protected Recordings" selected="true"/>
            </Menu>
            <Menu mnemonicParsing="false" text="Help">
                <MenuItem mnemonicParsing="false" text="About"/>

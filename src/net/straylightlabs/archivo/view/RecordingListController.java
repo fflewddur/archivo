@@ -106,17 +106,20 @@ public class RecordingListController implements Initializable {
     private void fetchRecordingsFrom(Tivo tivo) {
         mainApp.setStatusText("Fetching recordings...");
         recordingTreeTable.getSelectionModel().clearSelection();
-        recordingTreeTable.setDisable(true);
+        disableUI();
 
         MindCommandRecordingFolderItemSearch command = new MindCommandRecordingFolderItemSearch();
         MindTask task = new MindTask(tivo.getClient(), command);
         task.setOnSucceeded(event -> {
             fillTreeTableView(command.getSeries());
             mainApp.clearStatusText();
-            recordingTreeTable.setDisable(false);
+            enableUI();
         });
-        task.setOnFailed(event -> System.err.format("Error fetching recordings from %s: %s%n", tivo.getName(),
-                event.getSource().getException().getLocalizedMessage()));
+        task.setOnFailed(event -> {
+            System.err.format("Error fetching recordings from %s: %s%n", tivo.getName(),
+                    event.getSource().getException().getLocalizedMessage());
+            enableUI();
+        });
         mainApp.getExecutor().submit(task);
     }
 
