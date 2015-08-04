@@ -34,8 +34,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.ResourceBundle;
 
-// FIXME Movies keep showing the poster of the last selected item
-
 public class RecordingDetailsController implements Initializable {
     private final Archivo mainApp;
     private Map<URL, Image> imageCache;
@@ -57,6 +55,8 @@ public class RecordingDetailsController implements Initializable {
     @FXML
     private Label description;
     @FXML
+    private Label copyProtected;
+    @FXML
     private ImageView poster;
     @FXML
     private Pane posterPane;
@@ -69,7 +69,8 @@ public class RecordingDetailsController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         clearRecording();
-//        poster.setFitWidth(Recording.DESIRED_IMAGE_WIDTH);
+
+        // Only set the preferred height; the width will scale appropriately
         poster.setFitHeight(Recording.DESIRED_IMAGE_HEIGHT);
     }
 
@@ -82,6 +83,7 @@ public class RecordingDetailsController implements Initializable {
         setLabelText(channel, "");
         setLabelText(duration, "");
         setLabelText(description, "");
+        setLabelText(copyProtected, "");
         setPosterFromURL(null);
     }
 
@@ -131,6 +133,9 @@ public class RecordingDetailsController implements Initializable {
         if (!recording.isOriginalRecording()) {
             setLabelText(originalAirDate, "Originally aired on " +
                     recording.getOriginalAirDate().format(DateUtils.DATE_AIRED_FORMATTER));
+        }
+        if (recording.isCopyProtected()) {
+            setLabelText(copyProtected, "Copy-protected");
         }
     }
 

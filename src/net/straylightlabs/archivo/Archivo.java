@@ -39,7 +39,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-// TODO Display status column showing recordings that are still in progress or copy-protected
+// TODO Display status column showing recording status: already archived, archiving, queued for archiving, still recording, and copy-protected
 // TODO Add control for downloading the selected recording
 // TODO Add control for filtering TiVo recommendations from the recording list
 // TODO Add control for filtering DRM-protected recordings from the recording list

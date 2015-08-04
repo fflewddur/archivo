@@ -48,6 +48,8 @@
             <VBox spacing="3">
                 <Label fx:id="episode" text="Episode"/>
                 <Label fx:id="originalAirDate" text="Original air date"/>
+                <Label fx:id="copyProtected" text="Copy-protected"
+                       style="-fx-text-fill: darkred; -fx-font-weight: bold;"/>
             </VBox>
         </HBox>
     </VBox>

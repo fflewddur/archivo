@@ -208,8 +208,8 @@ public class Recording {
         return reason;
     }
 
-    public boolean isCopyable() {
-        return isCopyable;
+    public boolean isCopyProtected() {
+        return !isCopyable;
     }
 
     public boolean isSuggestion() {
