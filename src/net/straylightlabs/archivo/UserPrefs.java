@@ -24,6 +24,7 @@ import net.straylightlabs.archivo.model.Tivo;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
@@ -38,12 +39,14 @@ class UserPrefs {
         try {
             prefs = Preferences.userNodeForPackage(Archivo.class);
         } catch (SecurityException e) {
-            System.err.println("Error accessing user preferences: " + e.getLocalizedMessage());
+            Archivo.logger.log(Level.SEVERE, "Error accessing user preferences: " + e.getLocalizedMessage(), e);
         }
     }
 
     public String getMAK() {
-        return prefs.get(MAK, null);
+        String mak = prefs.get(MAK, null);
+        Archivo.logger.info("MAK = " + mak);
+        return mak;
     }
 
     public void setMAK(String val) {
@@ -66,15 +69,16 @@ class UserPrefs {
             for (String key : deviceNode.keys()) {
                 String json = deviceNode.get(key, null);
                 try {
+                    Archivo.logger.info("Known device = " + json);
                     tivos.add(Tivo.fromJSON(json, mak));
                 } catch (IllegalArgumentException e) {
-                    System.err.println("Error building Tivo object from JSON: " + e.getLocalizedMessage());
+                    Archivo.logger.log(Level.SEVERE, "Error building Tivo object from JSON: " + e.getLocalizedMessage(), e);
                 }
             }
             return tivos;
 
         } catch (BackingStoreException e) {
-            System.err.println("Error reading user preferences: " + e.getLocalizedMessage());
+            Archivo.logger.log(Level.SEVERE, "Error accessing user preferences: " + e.getLocalizedMessage(), e);
         }
 
         return Collections.emptyList();
@@ -99,7 +103,7 @@ class UserPrefs {
                 deviceNode.put(key, tivo.toJSON().toString());
             }
         } catch (BackingStoreException e) {
-            System.err.println("Error reading user preferences: " + e.getLocalizedMessage());
+            Archivo.logger.log(Level.SEVERE, "Error accessing user preferences: " + e.getLocalizedMessage(), e);
         }
     }
 
@@ -108,9 +112,10 @@ class UserPrefs {
         String json = prefs.get(MOST_RECENT_DEVICE, null);
         if (json != null) {
             try {
+                Archivo.logger.info("Last device = " + json);
                 lastDevice = Tivo.fromJSON(json, mak);
             } catch (IllegalArgumentException e) {
-                System.err.println("Error parsing most recent device: " + e.getLocalizedMessage());
+                Archivo.logger.log(Level.SEVERE, "Error parsing most recent device: " + e.getLocalizedMessage(), e);
             }
         }
         return lastDevice;

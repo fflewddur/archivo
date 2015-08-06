@@ -44,6 +44,7 @@ import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.ResourceBundle;
+import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class RecordingListController implements Initializable {
@@ -116,8 +117,9 @@ public class RecordingListController implements Initializable {
             enableUI();
         });
         task.setOnFailed(event -> {
-            System.err.format("Error fetching recordings from %s: %s%n", tivo.getName(),
-                    event.getSource().getException().getLocalizedMessage());
+            Throwable e = event.getSource().getException();
+            Archivo.logger.log(Level.SEVERE,
+                    String.format("Error fetching recordings from %s: %s", tivo.getName(), e.getLocalizedMessage()), e);
             enableUI();
         });
         mainApp.getExecutor().submit(task);

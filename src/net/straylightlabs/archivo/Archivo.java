@@ -38,7 +38,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
+// TODO Make default logging level SEVERE and add command-line switch for verbose logging
+// TODO Add timeout for connecting to TiVo
 // TODO Display status column showing recording status: already archived, archiving, queued for archiving, still recording, and copy-protected
 // TODO Add control for downloading the selected recording
 // TODO Add control for filtering TiVo recommendations from the recording list
@@ -51,11 +55,14 @@ import java.util.concurrent.Executors;
 
 public class Archivo extends Application {
     private Stage primaryStage;
+    private String mak;
     private final StringProperty statusText;
     private final ExecutorService executor;
     private final UserPrefs prefs;
     private RootLayoutController rootController;
     private RecordingDetailsController recordingDetailsController;
+
+    public static final Logger logger = Logger.getLogger(Archivo.class.getName());
 
     public static final String APPLICATION_NAME = "Archivo";
     public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
@@ -67,10 +74,13 @@ public class Archivo extends Application {
         prefs = new UserPrefs();
         statusText = new SimpleStringProperty();
         executor = Executors.newSingleThreadExecutor();
+        logger.setLevel(Level.INFO);
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        logger.info("Starting up...");
+
         this.primaryStage = primaryStage;
         this.primaryStage.setTitle(APPLICATION_NAME);
         this.primaryStage.setMinHeight(WINDOW_MIN_HEIGHT);
@@ -78,14 +88,14 @@ public class Archivo extends Application {
 
         initRootLayout();
 
-        String mak = prefs.getMAK();
+        mak = prefs.getMAK();
         if (mak == null) {
             try {
                 SetupDialog dialog = new SetupDialog(primaryStage);
                 mak = dialog.promptUser();
                 prefs.setMAK(mak);
             } catch (IllegalStateException e) {
-                System.err.println("Error: " + e.getLocalizedMessage());
+                logger.severe("Error getting MAK from user: " + e.getLocalizedMessage());
                 cleanShutdown();
             }
         }
@@ -97,6 +107,7 @@ public class Archivo extends Application {
     }
 
     private void cleanShutdown() {
+        logger.info("Shutting down...");
         Platform.exit();
         System.exit(0);
     }
@@ -113,7 +124,7 @@ public class Archivo extends Application {
             primaryStage.setScene(new Scene(rootLayout));
             primaryStage.show();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Error initializing main window: " + e.getLocalizedMessage(), e);
         }
     }
 
@@ -133,7 +144,7 @@ public class Archivo extends Application {
             );
             recordingListController.startTivoSearch();
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Error initializing recording list: " + e.getLocalizedMessage(), e);
         }
     }
 
@@ -148,7 +159,7 @@ public class Archivo extends Application {
             Pane recordingDetails = loader.load();
             rootController.getMainGrid().add(recordingDetails, 0, 1);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.log(Level.SEVERE, "Error initializing recording details: " + e.getLocalizedMessage(), e);
         }
     }
 
@@ -156,25 +167,23 @@ public class Archivo extends Application {
         return executor;
     }
 
-//    public Stage getPrimaryStage() {
-//        return primaryStage;
-//    }
-
     public StringProperty statusTextProperty() {
         return statusText;
     }
 
     public void setStatusText(String status) {
+        logger.info(String.format("Setting status to '%s'", status));
         statusText.set(status);
         rootController.showStatus();
     }
 
     public void clearStatusText() {
+        logger.info("Status cleared");
         rootController.hideStatus();
     }
 
     public String getMak() {
-        return prefs.getMAK();
+        return mak;
     }
 
     public void setLastDevice(Tivo tivo) {
@@ -182,7 +191,7 @@ public class Archivo extends Application {
     }
 
     public Tivo getLastDevice() {
-        return prefs.getLastDevice(prefs.getMAK());
+        return prefs.getLastDevice(mak);
     }
 
     public void setKnownDevices(List<Tivo> tivos) {
