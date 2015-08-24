@@ -21,6 +21,8 @@ package net.straylightlabs.archivo.view;
 
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Node;
+import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -60,6 +62,8 @@ public class RecordingDetailsController implements Initializable {
     private ImageView poster;
     @FXML
     private Pane posterPane;
+    @FXML
+    private Button archiveButton;
 
     public RecordingDetailsController(Archivo mainApp) {
         this.mainApp = mainApp;
@@ -85,6 +89,7 @@ public class RecordingDetailsController implements Initializable {
         setLabelText(description, "");
         setLabelText(copyProtected, "");
         setPosterFromURL(null);
+        hideNode(archiveButton);
     }
 
     public void showRecording(Recording recording) {
@@ -137,18 +142,32 @@ public class RecordingDetailsController implements Initializable {
         if (recording.isCopyProtected()) {
             setLabelText(copyProtected, "Copy-protected");
         }
+
+        if (recording.isCopyProtected() || recording.isInProgress()) {
+            archiveButton.setDisable(true);
+        } else {
+            archiveButton.setDisable(false);
+        }
+        showNode(archiveButton);
     }
 
     private void setLabelText(Label label, String text) {
         if (text != null && text.trim().length() > 0) {
             label.setText(text);
-            label.setVisible(true);
-            label.setManaged(true);
+            showNode(label);
         } else {
-            // Hide this label and remove it from our layout
-            label.setVisible(false);
-            label.setManaged(false);
+            hideNode(label);
         }
+    }
+
+    private void hideNode(Node node) {
+        node.setVisible(false);
+        node.setManaged(false);
+    }
+
+    private void showNode(Node node) {
+        node.setVisible(true);
+        node.setManaged(true);
     }
 
     private void setPosterFromURL(URL url) {
@@ -183,11 +202,9 @@ public class RecordingDetailsController implements Initializable {
     private void setPosterFromImage(Image image) {
         if (image != null) {
             poster.setImage(image);
-            posterPane.setVisible(true);
-            posterPane.setManaged(true);
+            showNode(posterPane);
         } else {
-            posterPane.setVisible(false);
-            posterPane.setManaged(false);
+            hideNode(posterPane);
         }
     }
 

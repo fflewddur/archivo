@@ -28,9 +28,11 @@
     <padding>
         <Insets bottom="10" left="10" right="10" top="10"/>
     </padding>
-    <HBox fx:id="posterPane" style="-fx-border-color: dimgray; -fx-border-width: 1;" HBox.hgrow="NEVER">
-        <ImageView fx:id="poster" preserveRatio="true" smooth="true" HBox.hgrow="NEVER"/>
-    </HBox>
+    <VBox>
+        <VBox fx:id="posterPane" style="-fx-border-color: dimgray; -fx-border-width: 1;" HBox.hgrow="NEVER">
+            <ImageView fx:id="poster" preserveRatio="true" smooth="true"/>
+        </VBox>
+    </VBox>
     <VBox spacing="3" HBox.hgrow="NEVER">
         <Label fx:id="title" text="Title" style="-fx-font-size: 13pt; -fx-font-weight: bold;"/>
         <Label fx:id="subtitle" text="Subtitle" style="-fx-font-size: 12pt;"/>
@@ -40,6 +42,9 @@
             </VBox.margin>
         </Label>
         <HBox spacing="30">
+            <VBox spacing="3">
+                <Button fx:id="archiveButton">Archive</Button>
+            </VBox>
             <VBox spacing="3">
                 <Label fx:id="date" text="Recorded on"/>
                 <Label fx:id="duration" text="Duration"/>
