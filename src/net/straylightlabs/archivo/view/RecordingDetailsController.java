@@ -83,7 +83,7 @@ public class RecordingDetailsController implements Initializable {
     @FXML
     public void archive(ActionEvent event) {
         Archivo.logger.info(String.format("Archive recording %s...", recording.getTitle()));
-        Archivo.logger.severe("Archiving not yet implemented :(");
+        mainApp.enqueueRecordingForArchiving(recording);
     }
 
     public void clearRecording() {

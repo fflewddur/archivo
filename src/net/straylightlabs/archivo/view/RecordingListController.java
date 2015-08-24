@@ -99,6 +99,10 @@ public class RecordingListController implements Initializable {
         }
     }
 
+    public Tivo getSelectedTivo() {
+        return tivoList.getSelectionModel().getSelectedItem();
+    }
+
     @SuppressWarnings("unused")
     public void fetchRecordingsFromSelectedTivo() {
         fetchRecordingsFrom(tivoList.getValue());

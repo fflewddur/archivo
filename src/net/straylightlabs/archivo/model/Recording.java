@@ -40,6 +40,8 @@ public class Recording {
     private final ObjectProperty<LocalDateTime> dateRecorded;
     // TODO add recording status
 
+    private final String recordingId;
+    private final String bodyId;
     private final String seriesTitle;
     private final String episodeTitle;
     private final Duration duration;
@@ -67,6 +69,8 @@ public class Recording {
     public final static String UNTITLED_TEXT = "Untitled";
 
     private Recording(Builder builder) {
+        recordingId = builder.recordingId;
+        bodyId = builder.bodyId;
         seriesTitle = builder.seriesTitle;
         episodeTitle = builder.episodeTitle;
         duration = Duration.ofSeconds(builder.secondsLong);
@@ -162,6 +166,14 @@ public class Recording {
         } else {
             return UNTITLED_TEXT;
         }
+    }
+
+    public String getRecordingId() {
+        return recordingId;
+    }
+
+    public String getBodyId() {
+        return bodyId;
     }
 
     public String getSeriesTitle() {
@@ -265,6 +277,8 @@ public class Recording {
     }
 
     public static class Builder {
+        private String recordingId;
+        private String bodyId;
         private String seriesTitle;
         private int seriesNumber;
         private String episodeTitle;
@@ -288,6 +302,16 @@ public class Recording {
             description = "No description available";
             state = RecordingState.UNKNOWN;
             reason = RecordingReason.UNKNOWN;
+        }
+
+        public Builder recordingId(String val) {
+            recordingId = val;
+            return this;
+        }
+
+        public Builder bodyId(String val) {
+            bodyId = val;
+            return this;
         }
 
         public Builder seriesTitle(String val) {

@@ -28,6 +28,8 @@ import javafx.scene.Scene;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import net.straylightlabs.archivo.controller.ArchiveQueueManager;
+import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
 import net.straylightlabs.archivo.view.RecordingDetailsController;
 import net.straylightlabs.archivo.view.RecordingListController;
@@ -36,8 +38,10 @@ import net.straylightlabs.archivo.view.SetupDialog;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -58,7 +62,9 @@ public class Archivo extends Application {
     private final ExecutorService executor;
     private final UserPrefs prefs;
     private RootLayoutController rootController;
+    private RecordingListController recordingListController;
     private RecordingDetailsController recordingDetailsController;
+    private final BlockingQueue<Recording> archiveQueue;
 
     public static final Logger logger = Logger.getLogger(Archivo.class.getName());
 
@@ -73,6 +79,7 @@ public class Archivo extends Application {
         prefs = new UserPrefs();
         statusText = new SimpleStringProperty();
         executor = Executors.newSingleThreadExecutor();
+        archiveQueue = new LinkedBlockingQueue<>();
     }
 
     private void setLogLevel() {
@@ -113,6 +120,7 @@ public class Archivo extends Application {
         List<Tivo> initialTivos = prefs.getKnownDevices(mak);
         initRecordingDetails();
         initRecordingList(initialTivos);
+        new Thread(new ArchiveQueueManager(this, archiveQueue)).start();
 
         primaryStage.setOnCloseRequest(e -> cleanShutdown());
     }
@@ -144,7 +152,7 @@ public class Archivo extends Application {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(Archivo.class.getResource("view/RecordingList.fxml"));
 
-            RecordingListController recordingListController = new RecordingListController(this, initialTivos);
+            recordingListController = new RecordingListController(this, initialTivos);
             loader.setController(recordingListController);
 
             Pane recordingList = loader.load();
@@ -172,6 +180,16 @@ public class Archivo extends Application {
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error initializing recording details: " + e.getLocalizedMessage(), e);
         }
+    }
+
+    public void enqueueRecordingForArchiving(Recording recording) {
+        if (!archiveQueue.offer(recording)) {
+            logger.severe("Error adding recording to queue");
+        }
+    }
+
+    public Tivo getActiveTivo() {
+        return recordingListController.getSelectedTivo();
     }
 
     public ExecutorService getExecutor() {

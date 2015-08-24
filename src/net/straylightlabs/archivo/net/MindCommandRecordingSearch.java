@@ -63,6 +63,10 @@ class MindCommandRecordingSearch extends MindCommand {
             JSONArray recordingsJSON = response.getJSONArray("recording");
             for (Object obj : recordingsJSON) {
                 JSONObject recordingJSON = (JSONObject) obj;
+                if (recordingJSON.has("recordingId"))
+                    builder.recordingId(recordingJSON.getString("recordingId"));
+                if (recordingJSON.has("bodyId"))
+                    builder.bodyId(recordingJSON.getString("bodyId"));
                 if (recordingJSON.has("title"))
                     builder.seriesTitle(recordingJSON.getString("title"));
                 if (recordingJSON.has("subtitle"))
@@ -198,9 +202,9 @@ class MindCommandRecordingSearch extends MindCommand {
         // Tell the recording object to only include info we need for our UI
         template = new JSONObject();
         template.put("type", "responseTemplate");
-        template.put("fieldName", Arrays.asList("channel", "originalAirdate", "state", "subtitle",
+        template.put("fieldName", Arrays.asList("recordingId", "channel", "originalAirdate", "state", "subtitle",
                 "startTime", "episodeNum", "description", "title", "duration", "seasonNumber",
-                "image", "drm", "subscriptionIdentifier"));
+                "image", "drm", "subscriptionIdentifier", "bodyId"));
         template.put("typeName", "recording");
         templates.put(template);
 

@@ -27,11 +27,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
-abstract class MindCommand {
+public abstract class MindCommand {
     protected MindRPC client;
     protected MindCommandType commandType;
     protected final JSONObject bodyData;
     protected JSONObject response;
+
+    public final String RPC_ENCODING = "UTF-8";
 
     protected MindCommand() {
         this.commandType = MindCommandType.UNKNOWN;
