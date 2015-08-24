@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo.net;
 
+import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Channel;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.RecordingReason;
@@ -57,7 +58,7 @@ class MindCommandRecordingSearch extends MindCommand {
     public Recording getRecording() {
         failOnInvalidState();
         Recording.Builder builder = new Recording.Builder();
-        System.out.println("Response: " + response);
+        Archivo.logger.info("Response: " + response);
         if (response.has("recording")) {
             JSONArray recordingsJSON = response.getJSONArray("recording");
             for (Object obj : recordingsJSON) {
@@ -130,7 +131,7 @@ class MindCommandRecordingSearch extends MindCommand {
                         imageURL = new URL(imageJSON.getString("imageUrl"));
                         break;
                     } catch (MalformedURLException e) {
-                        System.err.println("Error parsing image URL: " + e.getLocalizedMessage());
+                        Archivo.logger.severe("Error parsing image URL: " + e.getLocalizedMessage());
                     }
                 } else {
                     int diff = Math.abs(height - Recording.DESIRED_IMAGE_HEIGHT);
@@ -140,7 +141,7 @@ class MindCommandRecordingSearch extends MindCommand {
                             imageURL = new URL(imageJSON.getString("imageUrl"));
                             smallestHeightDiff = diff;
                         } catch (MalformedURLException e) {
-                            System.err.println("Error parsing image URL: " + e.getLocalizedMessage());
+                            Archivo.logger.severe("Error parsing image URL: " + e.getLocalizedMessage());
                         }
                     }
                 }
@@ -160,7 +161,7 @@ class MindCommandRecordingSearch extends MindCommand {
                 try {
                     logoURL = new URL(logoURLString);
                 } catch (MalformedURLException e) {
-                    System.err.println("Error building channel logo URL: " + e.getLocalizedMessage());
+                    Archivo.logger.severe("Error building channel logo URL: " + e.getLocalizedMessage());
                 }
             }
             return new Channel(channel.getString("name"), channel.getString("channelNumber"), logoURL);

@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo.net;
 
+import net.straylightlabs.archivo.Archivo;
 import org.json.JSONObject;
 
 import javax.net.ssl.*;
@@ -119,7 +120,7 @@ public class MindRPC {
             context.init(keyManagerFactory.getKeyManagers(), trustManagers, null);
             return context.getSocketFactory();
         } catch (GeneralSecurityException e) {
-            System.err.println("Error creating custom SSLSocketFactory: " + e.getLocalizedMessage());
+            Archivo.logger.severe("Error creating custom SSLSocketFactory: " + e.getLocalizedMessage());
         }
         throw new AssertionError();
     }
@@ -130,13 +131,13 @@ public class MindRPC {
         try (InputStream key = Files.newInputStream(keyPath)) {
             store.load(key, KEY_PASSWORD.toCharArray());
         } catch (IOException e) {
-            System.err.println("Error accessing key file: " + e.getLocalizedMessage());
+            Archivo.logger.severe("Error accessing key file: " + e.getLocalizedMessage());
         }
         return store;
     }
 
     public JSONObject send(String request) throws IOException {
-        System.out.print("Request to send:\n" + request);
+        Archivo.logger.info("Request to send:\n " + request);
 
         connectAndAuthenticate();
         socketWriter.print(request);

@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo.net;
 
+import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Series;
 import org.json.JSONArray;
@@ -75,7 +76,7 @@ public class MindCommandRecordingFolderItemSearch extends MindCommand {
                     seriesToRecordings.put(seriesTitle, recordings);
                 }
             } catch (IOException e) {
-                System.err.println("Error: " + e.getLocalizedMessage());
+                Archivo.logger.severe("Error: " + e.getLocalizedMessage());
             }
         }
         return seriesToRecordings;

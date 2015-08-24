@@ -20,6 +20,7 @@
 package net.straylightlabs.archivo.net;
 
 import javafx.concurrent.Task;
+import net.straylightlabs.archivo.Archivo;
 
 import java.io.IOException;
 
@@ -37,7 +38,7 @@ public class MindTask extends Task<Void> {
         try {
             command.executeOn(client);
         } catch (IOException e) {
-            System.err.println("Error executing MindTask: " + e.getLocalizedMessage());
+            Archivo.logger.severe("Error executing MindTask: " + e.getLocalizedMessage());
         }
         return null;
     }

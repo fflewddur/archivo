@@ -46,7 +46,6 @@ import java.util.logging.Logger;
 // TODO Add control for downloading the selected recording
 // TODO Add control for filtering TiVo recommendations from the recording list
 // TODO Add control for filtering DRM-protected recordings from the recording list
-// TODO Change output statements to use a logging system
 // TODO Remember the user's last sort column and restore it at startup
 // TODO Remember the main window's dimensions and restore them at startup
 // TODO Implement collection of paths to tools for decoding, stripping commercials, and encoding video

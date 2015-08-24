@@ -22,6 +22,7 @@ package net.straylightlabs.archivo.net;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
+import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Tivo;
 import org.xbill.DNS.Message;
 import org.xbill.mDNS.*;
@@ -69,7 +70,7 @@ public class TivoSearchTask extends Task<Void> {
                         return;
                     }
 
-                    System.out.println("Discovered: " + serviceInstance);
+                    Archivo.logger.info("Discovered: " + serviceInstance);
 
                     try {
                         Tivo tivo = buildTivoFromServiceInstance(serviceInstance);
@@ -80,7 +81,7 @@ public class TivoSearchTask extends Task<Void> {
                             }
                         });
                     } catch (IllegalArgumentException e) {
-                        System.err.println("Discovered a device, but it doesn't look like a supported TiVo");
+                        Archivo.logger.info("Discovered a device, but it doesn't look like a supported TiVo");
                     }
                 }
 
@@ -90,14 +91,14 @@ public class TivoSearchTask extends Task<Void> {
                         return;
                     }
 
-                    System.out.println("Removed: " + serviceInstance);
+                    Archivo.logger.info("Removed: " + serviceInstance);
 
                     try {
                         Tivo tivo = buildTivoFromServiceInstance(serviceInstance);
                         // Add this device to our list, but use the JavaFX thread to do it.
                         Platform.runLater(() -> tivos.remove(tivo));
                     } catch (IllegalArgumentException e) {
-                        System.err.println("Tried to remove a device, but it doesn't look like a supported TiVo");
+                        Archivo.logger.info("Tried to remove a device, but it doesn't look like a supported TiVo");
                     }
                 }
 
@@ -109,21 +110,21 @@ public class TivoSearchTask extends Task<Void> {
 
                 @Override
                 public void handleException(Object o, Exception e) {
-                    System.err.println("Error while looking for TiVo devices: " + e.getLocalizedMessage());
+                    Archivo.logger.severe("Error while looking for TiVo devices: " + e.getLocalizedMessage());
                 }
             });
         } else {
-            System.err.println("Cannot start mDNS service because querier is not set up.");
+            Archivo.logger.severe("Cannot start mDNS service because querier is not set up.");
         }
     }
 
     private boolean checkForCancellation(MulticastDNSService service) {
         if (isCancelled()) {
-            System.out.println("Cancellation requested, closing mDNS service...");
+            Archivo.logger.info("Cancellation requested, closing mDNS service...");
             try {
                 service.close();
             } catch (IOException e) {
-                System.err.println("Error stopping mDNS service: " + e.getLocalizedMessage());
+                Archivo.logger.severe("Error stopping mDNS service: " + e.getLocalizedMessage());
             }
             return true;
         }
