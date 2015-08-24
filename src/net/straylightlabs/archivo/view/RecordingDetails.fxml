@@ -43,7 +43,7 @@
         </Label>
         <HBox spacing="30">
             <VBox spacing="3">
-                <Button fx:id="archiveButton">Archive</Button>
+                <Button fx:id="archiveButton" onAction="#archive">Archive</Button>
             </VBox>
             <VBox spacing="3">
                 <Label fx:id="date" text="Recorded on"/>

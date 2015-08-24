@@ -41,7 +41,6 @@ import java.util.concurrent.Executors;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-// TODO Make default logging level SEVERE and add command-line switch for verbose logging
 // TODO Add timeout for connecting to TiVo
 // TODO Display status column showing recording status: already archived, archiving, queued for archiving, still recording, and copy-protected
 // TODO Add control for downloading the selected recording

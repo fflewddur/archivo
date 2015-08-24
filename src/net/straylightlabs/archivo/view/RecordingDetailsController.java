@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Node;
@@ -39,6 +40,7 @@ import java.util.ResourceBundle;
 public class RecordingDetailsController implements Initializable {
     private final Archivo mainApp;
     private Map<URL, Image> imageCache;
+    private Recording recording;
 
     @FXML
     private Label title;
@@ -78,6 +80,12 @@ public class RecordingDetailsController implements Initializable {
         poster.setFitHeight(Recording.DESIRED_IMAGE_HEIGHT);
     }
 
+    @FXML
+    public void archive(ActionEvent event) {
+        Archivo.logger.info(String.format("Archive recording %s...", recording.getTitle()));
+        Archivo.logger.severe("Archiving not yet implemented :(");
+    }
+
     public void clearRecording() {
         setLabelText(title, "");
         setLabelText(subtitle, "");
@@ -93,6 +101,8 @@ public class RecordingDetailsController implements Initializable {
     }
 
     public void showRecording(Recording recording) {
+        this.recording = recording;
+
         if (recording == null) {
             clearRecording();
         } else if (recording.isSeriesHeading()) {
