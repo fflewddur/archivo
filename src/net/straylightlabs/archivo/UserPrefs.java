@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo;
 
+import javafx.application.Application;
 import net.straylightlabs.archivo.model.Tivo;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ import java.util.prefs.Preferences;
 
 class UserPrefs {
     private Preferences prefs;
+    private boolean logVerbose;
 
     public static final String MAK = "mak";
     public static final String DEVICE_LIST = "knownTivos";
@@ -41,6 +43,29 @@ class UserPrefs {
         } catch (SecurityException e) {
             Archivo.logger.log(Level.SEVERE, "Error accessing user preferences: " + e.getLocalizedMessage(), e);
         }
+    }
+
+    /**
+     * Parse command-line arguments into user preferences.
+     *
+     * @param parameters The Application parameters
+     * @return false if an unrecognized parameter was passed
+     */
+    public boolean parseParameters(Application.Parameters parameters) {
+        boolean allParsed = true;
+        for (String parameter : parameters.getUnnamed()) {
+            if (parameter.equalsIgnoreCase("-verbose")) {
+                logVerbose = true;
+            } else {
+                Archivo.logger.log(Level.SEVERE, "Unrecognized parameter: " + parameter);
+                allParsed = false;
+            }
+        }
+        return allParsed;
+    }
+
+    public boolean isLogVerbose() {
+        return logVerbose;
     }
 
     public String getMAK() {

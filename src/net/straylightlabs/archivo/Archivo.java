@@ -71,14 +71,27 @@ public class Archivo extends Application {
     public static final int WINDOW_MIN_WIDTH = 555;
 
     public Archivo() {
+        super();
         prefs = new UserPrefs();
         statusText = new SimpleStringProperty();
         executor = Executors.newSingleThreadExecutor();
-        logger.setLevel(Level.INFO);
+    }
+
+    private void setLogLevel() {
+        if (prefs.isLogVerbose()) {
+            logger.setLevel(Level.INFO);
+        } else {
+            logger.setLevel(Level.SEVERE);
+        }
     }
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        if (!prefs.parseParameters(getParameters())) {
+            cleanShutdown();
+        }
+        setLogLevel();
+
         logger.info("Starting up...");
 
         this.primaryStage = primaryStage;
