@@ -23,7 +23,18 @@ import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
 import net.straylightlabs.archivo.net.MindCommandIdSearch;
+import org.apache.http.auth.AuthScope;
+import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.CredentialsProvider;
+import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.BasicCookieStore;
+import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClients;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.util.concurrent.BlockingQueue;
@@ -59,8 +70,42 @@ public class ArchiveQueueManager implements Runnable {
             command.executeOn(tivo.getClient());
             URL url = command.getDownloadUrl();
             Archivo.logger.info("URL: " + url);
+
+            // FIXME Make this user-configurable
+            File destination = new File("./download.tivo");
+            getRecording(url, destination);
         } catch (IOException e) {
             Archivo.logger.severe("Error fetching recording information: " + e.getLocalizedMessage());
+        }
+    }
+
+    private void getRecording(URL url, File destination) {
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        credsProvider.setCredentials(
+                new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
+                new UsernamePasswordCredentials("tivo", mainApp.getMak()));
+        CookieStore cookieStore = new BasicCookieStore();
+
+        try (CloseableHttpClient client = HttpClients.custom()
+                .setDefaultCredentialsProvider(credsProvider)
+                .setDefaultCookieStore(cookieStore)
+                .build()) {
+            HttpGet get = new HttpGet(url.toString());
+            // Initial request to set the session cookie
+            try (CloseableHttpResponse response = client.execute(get)) {
+                response.close(); // Not needed, but clears up a warning
+            }
+            // Now fetch the file
+            try (CloseableHttpResponse response = client.execute(get)) {
+                if (response.getStatusLine().getStatusCode() != 200) {
+                    Archivo.logger.severe("Error downloading recording: " + response.getStatusLine());
+                }
+
+                // TODO parse TiVo-Estimated-Length header for progress indicator (in bytes)
+                // TODO save file to disk
+            }
+        } catch (IOException e) {
+            Archivo.logger.severe("Error downloading recording: " + e.getLocalizedMessage());
         }
     }
 }
