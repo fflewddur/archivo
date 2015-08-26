@@ -19,10 +19,12 @@
 
 package net.straylightlabs.archivo.controller;
 
+import javafx.application.Platform;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
 import net.straylightlabs.archivo.net.MindCommandIdSearch;
+import org.apache.http.Header;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CookieStore;
@@ -64,6 +66,7 @@ public class ArchiveQueueManager implements Runnable {
 
     private void archive(Recording recording) {
         Archivo.logger.info("Starting archive task for " + recording.getTitle());
+        Platform.runLater(() -> mainApp.setStatusText("Archiving " + recording.getTitle()));
         try {
             Tivo tivo = mainApp.getActiveTivo();
             MindCommandIdSearch command = new MindCommandIdSearch(recording, tivo);
@@ -77,6 +80,7 @@ public class ArchiveQueueManager implements Runnable {
         } catch (IOException e) {
             Archivo.logger.severe("Error fetching recording information: " + e.getLocalizedMessage());
         }
+        Platform.runLater(mainApp::clearStatusText);
     }
 
     private void getRecording(URL url, File destination) {
@@ -101,11 +105,27 @@ public class ArchiveQueueManager implements Runnable {
                     Archivo.logger.severe("Error downloading recording: " + response.getStatusLine());
                 }
 
-                // TODO parse TiVo-Estimated-Length header for progress indicator (in bytes)
+                long estimatedLength = getEstimatedLengthFromHeaders(response);
                 // TODO save file to disk
             }
         } catch (IOException e) {
             Archivo.logger.severe("Error downloading recording: " + e.getLocalizedMessage());
         }
+    }
+
+    private long getEstimatedLengthFromHeaders(CloseableHttpResponse response) {
+        long length = -1;
+        for (Header header : response.getAllHeaders()) {
+            if (header.getName().equalsIgnoreCase("TiVo-Estimated-Length")) {
+                try {
+                    length = Long.parseLong(header.getValue());
+                } catch (NumberFormatException e) {
+                    Archivo.logger.severe(String.format("Error parsing estimated length (%s): %s%n",
+                                    header.getValue(), e.getLocalizedMessage())
+                    );
+                }
+            }
+        }
+        return length;
     }
 }
