@@ -36,9 +36,13 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import java.io.File;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -47,6 +51,8 @@ import java.util.concurrent.BlockingQueue;
 public class ArchiveQueueManager implements Runnable {
     private final BlockingQueue<Recording> archiveQueue;
     private final Archivo mainApp;
+
+    private static final int BUFFER_SIZE = 8192;
 
     public ArchiveQueueManager(Archivo mainApp, BlockingQueue<Recording> queue) {
         this.mainApp = mainApp;
@@ -66,7 +72,7 @@ public class ArchiveQueueManager implements Runnable {
 
     private void archive(Recording recording) {
         Archivo.logger.info("Starting archive task for " + recording.getTitle());
-        Platform.runLater(() -> mainApp.setStatusText("Archiving " + recording.getTitle()));
+        Platform.runLater(() -> mainApp.setStatusText(String.format("Archiving %s...", recording.getTitle())));
         try {
             Tivo tivo = mainApp.getActiveTivo();
             MindCommandIdSearch command = new MindCommandIdSearch(recording, tivo);
@@ -75,7 +81,7 @@ public class ArchiveQueueManager implements Runnable {
             Archivo.logger.info("URL: " + url);
 
             // FIXME Make this user-configurable
-            File destination = new File("./download.tivo");
+            Path destination = Paths.get(System.getProperty("user.home"), "download.tivo");
             getRecording(url, destination);
         } catch (IOException e) {
             Archivo.logger.severe("Error fetching recording information: " + e.getLocalizedMessage());
@@ -83,7 +89,7 @@ public class ArchiveQueueManager implements Runnable {
         Platform.runLater(mainApp::clearStatusText);
     }
 
-    private void getRecording(URL url, File destination) {
+    private void getRecording(URL url, Path destination) {
         CredentialsProvider credsProvider = new BasicCredentialsProvider();
         credsProvider.setCredentials(
                 new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
@@ -106,7 +112,30 @@ public class ArchiveQueueManager implements Runnable {
                 }
 
                 long estimatedLength = getEstimatedLengthFromHeaders(response);
-                // TODO save file to disk
+                double priorPercent = 0;
+                try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(destination))) {
+                    try (BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent())) {
+                        byte[] buffer = new byte[BUFFER_SIZE + 1];
+                        long totalBytesRead = 0;
+                        for (int bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE);
+                             bytesRead >= 0;
+                             bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE)) {
+                            totalBytesRead += bytesRead;
+                            outputStream.write(buffer, 0, bytesRead);
+                            double percent = totalBytesRead / (double) estimatedLength;
+                            if (percent - priorPercent >= 0.01) {
+                                System.out.printf("Read %d bytes of %d expected bytes (%d%%)%n",
+                                        totalBytesRead, estimatedLength, (int) (percent * 100));
+                                priorPercent = percent;
+                            }
+                        }
+                        System.out.println("Download complete.");
+                    } catch (IOException e) {
+                        Archivo.logger.severe("Error reading file from network: " + e.getLocalizedMessage());
+                    }
+                } catch (IOException e) {
+                    Archivo.logger.severe("Error creating file: " + e.getLocalizedMessage());
+                }
             }
         } catch (IOException e) {
             Archivo.logger.severe("Error downloading recording: " + e.getLocalizedMessage());
