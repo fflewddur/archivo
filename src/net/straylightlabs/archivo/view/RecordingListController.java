@@ -33,6 +33,7 @@ import javafx.scene.control.TreeTableColumn;
 import javafx.scene.control.TreeTableView;
 import javafx.scene.layout.HBox;
 import net.straylightlabs.archivo.Archivo;
+import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Series;
 import net.straylightlabs.archivo.model.Tivo;
@@ -62,6 +63,8 @@ public class RecordingListController implements Initializable {
     private TreeTableColumn<Recording, String> showColumn;
     @FXML
     private TreeTableColumn<Recording, LocalDateTime> dateColumn;
+    @FXML
+    private TreeTableColumn<Recording, ArchiveStatus> statusColumn;
 
     private Archivo mainApp;
 
@@ -89,6 +92,8 @@ public class RecordingListController implements Initializable {
         dateColumn.setCellFactory(col -> new RecordedOnCellFactory());
         dateColumn.setSortType(TreeTableColumn.SortType.DESCENDING);
         dateColumn.setSortable(true);
+        statusColumn.setCellValueFactory(data -> data.getValue().getValue().statusProperty());
+        statusColumn.setCellFactory(col -> new StatusCellFactory());
 
         // When the list of TiVos is first populated, automatically select one
         tivos.addListener(new TivoListChangeListener());

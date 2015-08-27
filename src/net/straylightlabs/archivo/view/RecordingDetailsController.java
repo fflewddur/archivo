@@ -29,6 +29,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
 import net.straylightlabs.archivo.Archivo;
+import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 
 import java.net.URL;
@@ -83,6 +84,7 @@ public class RecordingDetailsController implements Initializable {
     @FXML
     public void archive(ActionEvent event) {
         Archivo.logger.info(String.format("Archive recording %s...", recording.getTitle()));
+        recording.statusProperty().setValue(ArchiveStatus.QUEUED);
         mainApp.enqueueRecordingForArchiving(recording);
     }
 

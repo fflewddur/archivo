@@ -21,6 +21,7 @@ package net.straylightlabs.archivo.controller;
 
 import javafx.application.Platform;
 import net.straylightlabs.archivo.Archivo;
+import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
 import net.straylightlabs.archivo.net.MindCommandIdSearch;
@@ -53,6 +54,7 @@ public class ArchiveQueueManager implements Runnable {
     private final Archivo mainApp;
 
     private static final int BUFFER_SIZE = 8192;
+    private static final double MIN_PROGRESS_INCREMENT = 0.01;
 
     public ArchiveQueueManager(Archivo mainApp, BlockingQueue<Recording> queue) {
         this.mainApp = mainApp;
@@ -72,7 +74,10 @@ public class ArchiveQueueManager implements Runnable {
 
     private void archive(Recording recording) {
         Archivo.logger.info("Starting archive task for " + recording.getTitle());
-        Platform.runLater(() -> mainApp.setStatusText(String.format("Archiving %s...", recording.getTitle())));
+        Platform.runLater(() -> {
+            mainApp.setStatusText(String.format("Archiving %s...", recording.getTitle()));
+            recording.statusProperty().setValue(ArchiveStatus.createDownloadingStatus(0));
+        });
         try {
             Tivo tivo = mainApp.getActiveTivo();
             MindCommandIdSearch command = new MindCommandIdSearch(recording, tivo);
@@ -82,14 +87,17 @@ public class ArchiveQueueManager implements Runnable {
 
             // FIXME Make this user-configurable
             Path destination = Paths.get(System.getProperty("user.home"), "download.tivo");
-            getRecording(url, destination);
+            getRecording(recording, url, destination);
         } catch (IOException e) {
             Archivo.logger.severe("Error fetching recording information: " + e.getLocalizedMessage());
         }
-        Platform.runLater(mainApp::clearStatusText);
+        Platform.runLater(() -> {
+            mainApp.clearStatusText();
+            recording.statusProperty().setValue(ArchiveStatus.FINISHED);
+        });
     }
 
-    private void getRecording(URL url, Path destination) {
+    private void getRecording(Recording recording, URL url, Path destination) {
         CredentialsProvider credsProvider = new BasicCredentialsProvider();
         credsProvider.setCredentials(
                 new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
@@ -123,13 +131,14 @@ public class ArchiveQueueManager implements Runnable {
                             totalBytesRead += bytesRead;
                             outputStream.write(buffer, 0, bytesRead);
                             double percent = totalBytesRead / (double) estimatedLength;
-                            if (percent - priorPercent >= 0.01) {
-                                System.out.printf("Read %d bytes of %d expected bytes (%d%%)%n",
-                                        totalBytesRead, estimatedLength, (int) (percent * 100));
+                            if (percent - priorPercent >= MIN_PROGRESS_INCREMENT) {
+                                Archivo.logger.info(String.format("Read %d bytes of %d expected bytes (%d%%)",
+                                        totalBytesRead, estimatedLength, (int) (percent * 100)));
+                                Platform.runLater(() -> recording.statusProperty().setValue(ArchiveStatus.createDownloadingStatus(percent)));
                                 priorPercent = percent;
                             }
                         }
-                        System.out.println("Download complete.");
+                        Archivo.logger.info("Download complete.");
                     } catch (IOException e) {
                         Archivo.logger.severe("Error reading file from network: " + e.getLocalizedMessage());
                     }

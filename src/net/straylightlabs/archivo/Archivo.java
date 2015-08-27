@@ -207,7 +207,7 @@ public class Archivo extends Application {
     }
 
     public void clearStatusText() {
-        logger.info("Status cleared");
+        logger.info("TaskStatus cleared");
         rootController.hideStatus();
     }
 

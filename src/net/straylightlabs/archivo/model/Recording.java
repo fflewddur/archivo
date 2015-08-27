@@ -38,7 +38,7 @@ public class Recording {
     // Items displayed in the RecordingListView need to be observable properties
     private final StringProperty title;
     private final ObjectProperty<LocalDateTime> dateRecorded;
-    // TODO add recording status
+    private ObjectProperty<ArchiveStatus> status;
 
     private final String recordingId;
     private final String bodyId;
@@ -91,6 +91,7 @@ public class Recording {
 
         title = new SimpleStringProperty(buildTitle());
         dateRecorded = new SimpleObjectProperty<>(builder.dateRecorded);
+        status = new SimpleObjectProperty<>(ArchiveStatus.EMPTY);
     }
 
     /**
@@ -274,6 +275,14 @@ public class Recording {
 
     public ObjectProperty<LocalDateTime> dateRecordedProperty() {
         return dateRecorded;
+    }
+
+    public ArchiveStatus getStatus() {
+        return status.get();
+    }
+
+    public ObjectProperty<ArchiveStatus> statusProperty() {
+        return status;
     }
 
     public static class Builder {
