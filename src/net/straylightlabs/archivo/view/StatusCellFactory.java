@@ -34,11 +34,10 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
     private ProgressIndicator getProgressIndicator() {
         if (progressIndicator == null) {
             progressIndicator = new ProgressIndicator();
-            progressIndicator.setPrefHeight(40);
-            progressIndicator.setPrefWidth(40);
-            progressIndicator.setMaxHeight(40);
-            progressIndicator.setMaxWidth(40);
-            progressIndicator.getStyleClass().add("recording-progress-indicator");
+            progressIndicator.setPrefHeight(20);
+            progressIndicator.setPrefWidth(20);
+            progressIndicator.setSkin(new TaskProgressIndicatorSkin(progressIndicator));
+//            progressIndicator.getStyleClass().add("recording-progress-indicator");
         }
         return progressIndicator;
     }

@@ -32,6 +32,7 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.config.ConnectionConfig;
 import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
@@ -44,6 +45,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -53,7 +56,7 @@ public class ArchiveQueueManager implements Runnable {
     private final BlockingQueue<Recording> archiveQueue;
     private final Archivo mainApp;
 
-    private static final int BUFFER_SIZE = 8192;
+    private static final int BUFFER_SIZE = 2048;
     private static final double MIN_PROGRESS_INCREMENT = 0.01;
 
     public ArchiveQueueManager(Archivo mainApp, BlockingQueue<Recording> queue) {
@@ -103,11 +106,16 @@ public class ArchiveQueueManager implements Runnable {
                 new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
                 new UsernamePasswordCredentials("tivo", mainApp.getMak()));
         CookieStore cookieStore = new BasicCookieStore();
+        ConnectionConfig connConfig = ConnectionConfig.custom().setBufferSize(BUFFER_SIZE).build();
 
         try (CloseableHttpClient client = HttpClients.custom()
+                .useSystemProperties()
+                .setDefaultConnectionConfig(connConfig)
                 .setDefaultCredentialsProvider(credsProvider)
                 .setDefaultCookieStore(cookieStore)
+                .setUserAgent(Archivo.USER_AGENT)
                 .build()) {
+
             HttpGet get = new HttpGet(url.toString());
             // Initial request to set the session cookie
             try (CloseableHttpResponse response = client.execute(get)) {
@@ -119,21 +127,27 @@ public class ArchiveQueueManager implements Runnable {
                     Archivo.logger.severe("Error downloading recording: " + response.getStatusLine());
                 }
 
+                Archivo.logger.info("Status line: " + response.getStatusLine());
+
                 long estimatedLength = getEstimatedLengthFromHeaders(response);
                 double priorPercent = 0;
                 try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(destination))) {
-                    try (BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent())) {
+                    try (BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent(), BUFFER_SIZE)) {
                         byte[] buffer = new byte[BUFFER_SIZE + 1];
                         long totalBytesRead = 0;
+                        LocalDateTime startTime = LocalDateTime.now();
                         for (int bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE);
                              bytesRead >= 0;
                              bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE)) {
                             totalBytesRead += bytesRead;
+//                            Archivo.logger.info("Bytes read: " + bytesRead);
                             outputStream.write(buffer, 0, bytesRead);
                             double percent = totalBytesRead / (double) estimatedLength;
                             if (percent - priorPercent >= MIN_PROGRESS_INCREMENT) {
-                                Archivo.logger.info(String.format("Read %d bytes of %d expected bytes (%d%%)",
-                                        totalBytesRead, estimatedLength, (int) (percent * 100)));
+                                Duration elapsedTime = Duration.between(startTime, LocalDateTime.now());
+                                double kbs = (totalBytesRead / 1024) / elapsedTime.getSeconds();
+                                Archivo.logger.info(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
+                                        totalBytesRead, estimatedLength, (int) (percent * 100), elapsedTime, kbs));
                                 Platform.runLater(() -> recording.statusProperty().setValue(ArchiveStatus.createDownloadingStatus(percent)));
                                 priorPercent = percent;
                             }
