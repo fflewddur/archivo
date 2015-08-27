@@ -47,27 +47,22 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
         super.updateItem(status, isEmpty);
 
         if (status != null && status.getStatus() != ArchiveStatus.TaskStatus.NONE) {
-            ProgressIndicator indicator;
             switch (status.getStatus()) {
                 case QUEUED:
                     setText("Queued...");
                     setGraphic(null);
                     break;
                 case DOWNLOADING:
-                    setText("Downloading...");
-                    indicator = getProgressIndicator();
-                    indicator.setProgress(status.getProgress());
-                    setGraphic(indicator);
+                    setText(String.format("Downloading... (%s)", formatTime(status.getSecondsRemaining())));
+                    setProgress(status.getProgress());
                     break;
                 case TRANSCODING:
-                    setText("Transcoding...");
-                    indicator = getProgressIndicator();
-                    indicator.setProgress(status.getProgress());
-                    setGraphic(indicator);
+                    setText(String.format("Transcoding... (%s)", formatTime(status.getSecondsRemaining())));
+                    setProgress(status.getProgress());
                     break;
                 case FINISHED:
-                    setText("Finished!");
-                    setGraphic(null);
+                    setText("Archived");
+                    setProgress(1.0);
                     break;
                 default:
                     setText(status.getStatus().toString());
@@ -78,6 +73,29 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
             setText(null);
             setGraphic(null);
             setStyle("");
+        }
+    }
+
+    private void setProgress(double value) {
+        ProgressIndicator indicator = getProgressIndicator();
+        indicator.setProgress(value);
+        setGraphic(indicator);
+    }
+
+    private String formatTime(int seconds) {
+        if (seconds == ArchiveStatus.TIME_UNKNOWN) {
+            return "time remaining unknown";
+        } else if (seconds < 60) {
+            return "about 1 minute remaining";
+        } else if (seconds < (60 * 60)) {
+            return "" + seconds / 60 + " minutes remaining";
+        } else {
+            int hours = seconds / 60 / 60;
+            if (hours > 1) {
+                return String.format("more than %d hours remaining", hours);
+            } else {
+                return "more than 1 hour remaining";
+            }
         }
     }
 }

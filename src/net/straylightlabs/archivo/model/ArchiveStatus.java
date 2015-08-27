@@ -25,14 +25,23 @@ package net.straylightlabs.archivo.model;
 public class ArchiveStatus {
     private final TaskStatus status;
     private final double progress;
+    private final int secondsRemaining;
 
-    public static ArchiveStatus EMPTY = new ArchiveStatus(TaskStatus.NONE, 0);
-    public static ArchiveStatus QUEUED = new ArchiveStatus(TaskStatus.QUEUED, 0);
-    public static ArchiveStatus FINISHED = new ArchiveStatus(TaskStatus.FINISHED, 0);
+    public final static int TIME_UNKNOWN = -1;
+    public final static ArchiveStatus EMPTY = new ArchiveStatus(TaskStatus.NONE);
+    public final static ArchiveStatus QUEUED = new ArchiveStatus(TaskStatus.QUEUED);
+    public final static ArchiveStatus FINISHED = new ArchiveStatus(TaskStatus.FINISHED);
 
-    private ArchiveStatus(TaskStatus status, double progress) {
+    private ArchiveStatus(TaskStatus status) {
+        this.status = status;
+        progress = 0;
+        secondsRemaining = 0;
+    }
+
+    private ArchiveStatus(TaskStatus status, double progress, int secondsRemaining) {
         this.status = status;
         this.progress = progress;
+        this.secondsRemaining = secondsRemaining;
     }
 
     public TaskStatus getStatus() {
@@ -43,12 +52,16 @@ public class ArchiveStatus {
         return progress;
     }
 
-    public static ArchiveStatus createDownloadingStatus(double progress) {
-        return new ArchiveStatus(TaskStatus.DOWNLOADING, progress);
+    public int getSecondsRemaining() {
+        return secondsRemaining;
     }
 
-    public static ArchiveStatus createTranscodingStatus(double progress) {
-        return new ArchiveStatus(TaskStatus.TRANSCODING, progress);
+    public static ArchiveStatus createDownloadingStatus(double progress, int secondsRemaining) {
+        return new ArchiveStatus(TaskStatus.DOWNLOADING, progress, secondsRemaining);
+    }
+
+    public static ArchiveStatus createTranscodingStatus(double progress, int secondsRemaining) {
+        return new ArchiveStatus(TaskStatus.TRANSCODING, progress, secondsRemaining);
     }
 
     public enum TaskStatus {

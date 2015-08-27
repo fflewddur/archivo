@@ -79,7 +79,7 @@ public class ArchiveQueueManager implements Runnable {
         Archivo.logger.info("Starting archive task for " + recording.getTitle());
         Platform.runLater(() -> {
             mainApp.setStatusText(String.format("Archiving %s...", recording.getTitle()));
-            recording.statusProperty().setValue(ArchiveStatus.createDownloadingStatus(0));
+            recording.statusProperty().setValue(ArchiveStatus.createDownloadingStatus(0, ArchiveStatus.TIME_UNKNOWN));
         });
         try {
             Tivo tivo = mainApp.getActiveTivo();
@@ -101,21 +101,7 @@ public class ArchiveQueueManager implements Runnable {
     }
 
     private void getRecording(Recording recording, URL url, Path destination) {
-        CredentialsProvider credsProvider = new BasicCredentialsProvider();
-        credsProvider.setCredentials(
-                new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
-                new UsernamePasswordCredentials("tivo", mainApp.getMak()));
-        CookieStore cookieStore = new BasicCookieStore();
-        ConnectionConfig connConfig = ConnectionConfig.custom().setBufferSize(BUFFER_SIZE).build();
-
-        try (CloseableHttpClient client = HttpClients.custom()
-                .useSystemProperties()
-                .setDefaultConnectionConfig(connConfig)
-                .setDefaultCredentialsProvider(credsProvider)
-                .setDefaultCookieStore(cookieStore)
-                .setUserAgent(Archivo.USER_AGENT)
-                .build()) {
-
+        try (CloseableHttpClient client = buildHttpClient()) {
             HttpGet get = new HttpGet(url.toString());
             // Initial request to set the session cookie
             try (CloseableHttpResponse response = client.execute(get)) {
@@ -128,40 +114,63 @@ public class ArchiveQueueManager implements Runnable {
                 }
 
                 Archivo.logger.info("Status line: " + response.getStatusLine());
-
-                long estimatedLength = getEstimatedLengthFromHeaders(response);
-                double priorPercent = 0;
-                try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(destination))) {
-                    try (BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent(), BUFFER_SIZE)) {
-                        byte[] buffer = new byte[BUFFER_SIZE + 1];
-                        long totalBytesRead = 0;
-                        LocalDateTime startTime = LocalDateTime.now();
-                        for (int bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE);
-                             bytesRead >= 0;
-                             bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE)) {
-                            totalBytesRead += bytesRead;
-//                            Archivo.logger.info("Bytes read: " + bytesRead);
-                            outputStream.write(buffer, 0, bytesRead);
-                            double percent = totalBytesRead / (double) estimatedLength;
-                            if (percent - priorPercent >= MIN_PROGRESS_INCREMENT) {
-                                Duration elapsedTime = Duration.between(startTime, LocalDateTime.now());
-                                double kbs = (totalBytesRead / 1024) / elapsedTime.getSeconds();
-                                Archivo.logger.info(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
-                                        totalBytesRead, estimatedLength, (int) (percent * 100), elapsedTime, kbs));
-                                Platform.runLater(() -> recording.statusProperty().setValue(ArchiveStatus.createDownloadingStatus(percent)));
-                                priorPercent = percent;
-                            }
-                        }
-                        Archivo.logger.info("Download complete.");
-                    } catch (IOException e) {
-                        Archivo.logger.severe("Error reading file from network: " + e.getLocalizedMessage());
-                    }
-                } catch (IOException e) {
-                    Archivo.logger.severe("Error creating file: " + e.getLocalizedMessage());
-                }
+                handleResponse(response, destination, recording);
             }
         } catch (IOException e) {
             Archivo.logger.severe("Error downloading recording: " + e.getLocalizedMessage());
+        }
+    }
+
+    private CloseableHttpClient buildHttpClient() {
+        CredentialsProvider credsProvider = new BasicCredentialsProvider();
+        credsProvider.setCredentials(
+                new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
+                new UsernamePasswordCredentials("tivo", mainApp.getMak()));
+        CookieStore cookieStore = new BasicCookieStore();
+        ConnectionConfig connConfig = ConnectionConfig.custom().setBufferSize(BUFFER_SIZE).build();
+        return HttpClients.custom()
+                .useSystemProperties()
+                .setDefaultConnectionConfig(connConfig)
+                .setDefaultCredentialsProvider(credsProvider)
+                .setDefaultCookieStore(cookieStore)
+                .setUserAgent(Archivo.USER_AGENT)
+                .build();
+    }
+
+    private void handleResponse(CloseableHttpResponse response, Path destination, Recording recording) {
+        long estimatedLength = getEstimatedLengthFromHeaders(response);
+        double priorPercent = 0;
+        try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(destination))) {
+            try (BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent(), BUFFER_SIZE)) {
+                byte[] buffer = new byte[BUFFER_SIZE + 1];
+                long totalBytesRead = 0;
+                LocalDateTime startTime = LocalDateTime.now();
+                for (int bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE);
+                     bytesRead >= 0;
+                     bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE)) {
+                    totalBytesRead += bytesRead;
+//                            Archivo.logger.info("Bytes read: " + bytesRead);
+                    outputStream.write(buffer, 0, bytesRead);
+                    double percent = totalBytesRead / (double) estimatedLength;
+                    if (percent - priorPercent >= MIN_PROGRESS_INCREMENT) {
+                        Duration elapsedTime = Duration.between(startTime, LocalDateTime.now());
+                        double kbs = (totalBytesRead / 1024) / elapsedTime.getSeconds();
+                        long kbRemaining = (estimatedLength - totalBytesRead) / 1024;
+                        int secondsRemaining = (int) (kbRemaining / kbs);
+                        Archivo.logger.info(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
+                                totalBytesRead, estimatedLength, (int) (percent * 100), elapsedTime, kbs));
+                        Platform.runLater(() -> recording.statusProperty().setValue(
+                                ArchiveStatus.createDownloadingStatus(percent, secondsRemaining)
+                        ));
+                        priorPercent = percent;
+                    }
+                }
+                Archivo.logger.info("Download complete.");
+            } catch (IOException e) {
+                Archivo.logger.severe("Error reading file from network: " + e.getLocalizedMessage());
+            }
+        } catch (IOException e) {
+            Archivo.logger.severe("Error creating file: " + e.getLocalizedMessage());
         }
     }
 
