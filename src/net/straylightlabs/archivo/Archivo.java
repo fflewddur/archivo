@@ -140,7 +140,9 @@ public class Archivo extends Application {
             rootController = loader.getController();
             rootController.setMainApp(this);
 
-            primaryStage.setScene(new Scene(rootLayout));
+            Scene scene = new Scene(rootLayout);
+            scene.getStylesheets().add("style.css");
+            primaryStage.setScene(scene);
             primaryStage.show();
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Error initializing main window: " + e.getLocalizedMessage(), e);

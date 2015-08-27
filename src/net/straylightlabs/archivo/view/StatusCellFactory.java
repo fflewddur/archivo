@@ -19,19 +19,65 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.TreeTableCell;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 
 public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
+    private ProgressIndicator progressIndicator;
+
+    public StatusCellFactory() {
+        super();
+    }
+
+    private ProgressIndicator getProgressIndicator() {
+        if (progressIndicator == null) {
+            progressIndicator = new ProgressIndicator();
+            progressIndicator.setPrefHeight(40);
+            progressIndicator.setPrefWidth(40);
+            progressIndicator.setMaxHeight(40);
+            progressIndicator.setMaxWidth(40);
+            progressIndicator.getStyleClass().add("recording-progress-indicator");
+        }
+        return progressIndicator;
+    }
+
     @Override
     protected void updateItem(ArchiveStatus status, boolean isEmpty) {
         super.updateItem(status, isEmpty);
 
         if (status != null && status.getStatus() != ArchiveStatus.TaskStatus.NONE) {
-            setText(String.format("%s - %f", status.getStatus(), status.getProgress()));
+            ProgressIndicator indicator;
+            switch (status.getStatus()) {
+                case QUEUED:
+                    setText("Queued...");
+                    setGraphic(null);
+                    break;
+                case DOWNLOADING:
+                    setText("Downloading...");
+                    indicator = getProgressIndicator();
+                    indicator.setProgress(status.getProgress());
+                    setGraphic(indicator);
+                    break;
+                case TRANSCODING:
+                    setText("Transcoding...");
+                    indicator = getProgressIndicator();
+                    indicator.setProgress(status.getProgress());
+                    setGraphic(indicator);
+                    break;
+                case FINISHED:
+                    setText("Finished!");
+                    setGraphic(null);
+                    break;
+                default:
+                    setText(status.getStatus().toString());
+                    setGraphic(null);
+                    break;
+            }
         } else {
             setText(null);
+            setGraphic(null);
             setStyle("");
         }
     }
