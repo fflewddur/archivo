@@ -30,7 +30,8 @@ import java.net.URL;
 import java.net.URLEncoder;
 
 /**
- * Created by todd on 8/24/15.
+ * Get the ObjectId associated with a given recording, and use it to build an HTTP URL to access the recording's
+ * transport stream file.
  */
 public class MindCommandIdSearch extends MindCommand {
     private final Recording recording;
@@ -56,15 +57,11 @@ public class MindCommandIdSearch extends MindCommand {
                 JSONArray ids = response.getJSONArray("objectId");
                 String id = ids.getString(0).replaceFirst("mfs:rc\\.", "");
                 String title = URLEncoder.encode(recording.getSeriesTitle(), RPC_ENCODING);
-                StringBuilder sb = new StringBuilder();
-                sb.append("http://");
-                sb.append(tivo.getClient().getAddress().getHostAddress());
-                sb.append("/download/");
-                sb.append(title);
-                sb.append(".TiVo?Container=%2FNowPlaying&id=");
-                sb.append(id);
-                sb.append("&Format=video/x-tivo-mpeg-ts");
-                return new URL(sb.toString());
+                String url = String.format(
+                        "http://%s/download/%s.TiVo?Container=%%2FNowPlaying&id=%s&Format=video/x-tivo-mpeg-ts",
+                        tivo.getClient().getAddress().getHostAddress(), title, id
+                );
+                return new URL(url);
             }
         } catch (UnsupportedEncodingException | MalformedURLException e) {
             Archivo.logger.severe("Error building download URL: " + e.getLocalizedMessage());

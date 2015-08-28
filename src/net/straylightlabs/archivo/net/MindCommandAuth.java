@@ -21,6 +21,10 @@ package net.straylightlabs.archivo.net;
 
 import org.json.JSONObject;
 
+/**
+ * Authorize ourselves using the TiVo's MAK. This needs to happen before any other RPC commands can be sent over
+ * the socket.
+ */
 class MindCommandAuth extends MindCommand {
     public MindCommandAuth(String mak) {
         super();

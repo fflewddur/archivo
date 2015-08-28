@@ -27,6 +27,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringJoiner;
 
+/**
+ * Base class for all TiVo RPC commands.
+ */
+
 public abstract class MindCommand {
     protected MindRPC client;
     protected MindCommandType commandType;
