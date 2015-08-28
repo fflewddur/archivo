@@ -67,6 +67,7 @@ public class ArchiveQueueManager implements Runnable {
     @Override
     public void run() {
         try {
+            //noinspection InfiniteLoopStatement
             while (true) {
                 archive(archiveQueue.take());
             }
@@ -154,15 +155,7 @@ public class ArchiveQueueManager implements Runnable {
                     outputStream.write(buffer, 0, bytesRead);
                     double percent = totalBytesRead / (double) estimatedLength;
                     if (percent - priorPercent >= MIN_PROGRESS_INCREMENT) {
-                        Duration elapsedTime = Duration.between(startTime, LocalDateTime.now());
-                        double kbs = (totalBytesRead / 1024) / elapsedTime.getSeconds();
-                        long kbRemaining = (estimatedLength - totalBytesRead) / 1024;
-                        int secondsRemaining = (int) (kbRemaining / kbs);
-                        Archivo.logger.info(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
-                                totalBytesRead, estimatedLength, (int) (percent * 100), elapsedTime, kbs));
-                        Platform.runLater(() -> recording.statusProperty().setValue(
-                                ArchiveStatus.createDownloadingStatus(percent, secondsRemaining)
-                        ));
+                        updateProgress(recording, percent, startTime, totalBytesRead, estimatedLength);
                         priorPercent = percent;
                     }
                 }
@@ -189,5 +182,17 @@ public class ArchiveQueueManager implements Runnable {
             }
         }
         return length;
+    }
+
+    private void updateProgress(Recording recording, double percent, LocalDateTime startTime, long totalBytesRead, long estimatedLength) {
+        Duration elapsedTime = Duration.between(startTime, LocalDateTime.now());
+        double kbs = (totalBytesRead / 1024) / elapsedTime.getSeconds();
+        long kbRemaining = (estimatedLength - totalBytesRead) / 1024;
+        int secondsRemaining = (int) (kbRemaining / kbs);
+        Archivo.logger.info(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
+                totalBytesRead, estimatedLength, (int) (percent * 100), elapsedTime, kbs));
+        Platform.runLater(() -> recording.statusProperty().setValue(
+                ArchiveStatus.createDownloadingStatus(percent, secondsRemaining)
+        ));
     }
 }

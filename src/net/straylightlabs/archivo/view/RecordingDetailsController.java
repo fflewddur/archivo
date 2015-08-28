@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -42,6 +43,8 @@ public class RecordingDetailsController implements Initializable {
     private final Archivo mainApp;
     private Map<URL, Image> imageCache;
     private Recording recording;
+
+    private ChangeListener statusChangeListener;
 
     @FXML
     private Label title;
@@ -67,10 +70,19 @@ public class RecordingDetailsController implements Initializable {
     private Pane posterPane;
     @FXML
     private Button archiveButton;
+    @FXML
+    private Button cancelButton;
 
     public RecordingDetailsController(Archivo mainApp) {
         this.mainApp = mainApp;
         imageCache = new HashMap<>();
+        statusChangeListener = (observable, oldValue, newValue) -> {
+            ArchiveStatus oldStatus = (ArchiveStatus) oldValue;
+            ArchiveStatus newStatus = (ArchiveStatus) newValue;
+            if (oldStatus.getStatus() != newStatus.getStatus()) {
+                updateControls();
+            }
+        };
     }
 
     @Override
@@ -88,6 +100,13 @@ public class RecordingDetailsController implements Initializable {
         mainApp.enqueueRecordingForArchiving(recording);
     }
 
+    @FXML
+    public void cancel(ActionEvent event) {
+        Archivo.logger.info(String.format("Cancel archiving of recording %s...", recording.getTitle()));
+        mainApp.cancelArchiving(recording);
+        recording.statusProperty().setValue(ArchiveStatus.EMPTY);
+    }
+
     public void clearRecording() {
         setLabelText(title, "");
         setLabelText(subtitle, "");
@@ -100,10 +119,17 @@ public class RecordingDetailsController implements Initializable {
         setLabelText(copyProtected, "");
         setPosterFromURL(null);
         hideNode(archiveButton);
+        hideNode(cancelButton);
     }
 
     public void showRecording(Recording recording) {
+        if (this.recording != null) {
+            this.recording.statusProperty().removeListener(statusChangeListener);
+        }
         this.recording = recording;
+        if (this.recording != null) {
+            this.recording.statusProperty().addListener(statusChangeListener);
+        }
 
         if (recording == null) {
             clearRecording();
@@ -155,12 +181,7 @@ public class RecordingDetailsController implements Initializable {
             setLabelText(copyProtected, "Copy-protected");
         }
 
-        if (recording.isCopyProtected() || recording.isInProgress()) {
-            archiveButton.setDisable(true);
-        } else {
-            archiveButton.setDisable(false);
-        }
-        showNode(archiveButton);
+        updateControls();
     }
 
     private void setLabelText(Label label, String text) {
@@ -249,5 +270,23 @@ public class RecordingDetailsController implements Initializable {
             sb.append(" (still recording)");
 
         return sb.toString();
+    }
+
+    private void updateControls() {
+        if (recording == null || recording.isSeriesHeading()) {
+            hideNode(archiveButton);
+        } else {
+            if (recording.isCopyProtected() || recording.isInProgress()) {
+
+                archiveButton.setDisable(true);
+            } else if (recording.getStatus().getStatus() != ArchiveStatus.TaskStatus.NONE) {
+                archiveButton.setDisable(true);
+                showNode(cancelButton);
+            } else {
+                archiveButton.setDisable(false);
+                hideNode(cancelButton);
+            }
+            showNode(archiveButton);
+        }
     }
 }

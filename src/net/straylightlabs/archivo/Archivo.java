@@ -195,6 +195,13 @@ public class Archivo extends Application {
         return primaryStage;
     }
 
+    public void cancelArchiving(Recording recording) {
+        if (!archiveQueue.remove(recording)) {
+            // We didn't find the recording in the queue, it must already be in progress
+            // TODO cancel archive operation
+        }
+    }
+
     public Tivo getActiveTivo() {
         return recordingListController.getSelectedTivo();
     }
