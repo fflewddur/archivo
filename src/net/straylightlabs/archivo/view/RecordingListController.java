@@ -131,7 +131,7 @@ public class RecordingListController implements Initializable {
                     String.format("Error fetching recordings from %s: %s", tivo.getName(), e.getLocalizedMessage()), e);
             enableUI();
         });
-        mainApp.getExecutor().submit(task);
+        mainApp.getRpcExecutor().submit(task);
     }
 
     private void fillTreeTableView(List<Series> series) {
@@ -197,7 +197,7 @@ public class RecordingListController implements Initializable {
             disableUI();
         }
 
-        mainApp.getExecutor().submit(tivoSearchTask);
+        mainApp.getRpcExecutor().submit(tivoSearchTask);
     }
 
     private void disableUI() {

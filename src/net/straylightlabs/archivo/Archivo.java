@@ -38,10 +38,8 @@ import net.straylightlabs.archivo.view.SetupDialog;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -59,12 +57,12 @@ public class Archivo extends Application {
     private Stage primaryStage;
     private String mak;
     private final StringProperty statusText;
-    private final ExecutorService executor;
+    private final ExecutorService rpcExecutor;
     private final UserPrefs prefs;
     private RootLayoutController rootController;
     private RecordingListController recordingListController;
     private RecordingDetailsController recordingDetailsController;
-    private final BlockingQueue<Recording> archiveQueue;
+    private final ArchiveQueueManager archiveQueueManager;
 
     public static final Logger logger = Logger.getLogger(Archivo.class.getName());
 
@@ -79,8 +77,8 @@ public class Archivo extends Application {
         super();
         prefs = new UserPrefs();
         statusText = new SimpleStringProperty();
-        executor = Executors.newSingleThreadExecutor();
-        archiveQueue = new LinkedBlockingQueue<>();
+        rpcExecutor = Executors.newSingleThreadExecutor();
+        archiveQueueManager = new ArchiveQueueManager(this);
     }
 
     private void setLogLevel() {
@@ -121,13 +119,27 @@ public class Archivo extends Application {
         List<Tivo> initialTivos = prefs.getKnownDevices(mak);
         initRecordingDetails();
         initRecordingList(initialTivos);
-        new Thread(new ArchiveQueueManager(this, archiveQueue)).start();
+//        new Thread(new ArchiveQueueManager(this, archiveQueue)).start();
 
         primaryStage.setOnCloseRequest(e -> cleanShutdown());
     }
 
     private void cleanShutdown() {
-        logger.info("Shutting down...");
+        int waitTimeMS = 100;
+        int msLimit = 5000;
+        if (archiveQueueManager.hasTasks()) {
+            try {
+                int msWaited = 0;
+                archiveQueueManager.cancelAllArchiveTasks();
+                while (archiveQueueManager.hasTasks() && msWaited < msLimit) {
+                    Thread.sleep(waitTimeMS);
+                    msWaited += waitTimeMS;
+                }
+            } catch (InterruptedException e) {
+                logger.severe("Interrupted while waiting for archive tasks to shutdown: " + e.getLocalizedMessage());
+            }
+        }
+        logger.info("Shutting down.");
         Platform.exit();
         System.exit(0);
     }
@@ -186,28 +198,25 @@ public class Archivo extends Application {
     }
 
     public void enqueueRecordingForArchiving(Recording recording) {
-        if (!archiveQueue.offer(recording)) {
+        if (!archiveQueueManager.enqueueArchiveTask(recording, getActiveTivo(), getMak())) {
             logger.severe("Error adding recording to queue");
         }
+    }
+
+    public void cancelArchiving(Recording recording) {
+        archiveQueueManager.cancelArchiveTask(recording);
     }
 
     public Stage getPrimaryStage() {
         return primaryStage;
     }
 
-    public void cancelArchiving(Recording recording) {
-        if (!archiveQueue.remove(recording)) {
-            // We didn't find the recording in the queue, it must already be in progress
-            // TODO cancel archive operation
-        }
-    }
-
     public Tivo getActiveTivo() {
         return recordingListController.getSelectedTivo();
     }
 
-    public ExecutorService getExecutor() {
-        return executor;
+    public ExecutorService getRpcExecutor() {
+        return rpcExecutor;
     }
 
     public StringProperty statusTextProperty() {

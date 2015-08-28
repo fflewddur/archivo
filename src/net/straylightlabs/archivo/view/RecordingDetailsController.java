@@ -227,7 +227,7 @@ public class RecordingDetailsController implements Initializable {
                 setPosterFromImage(image);
                 imageCache.put(url, image);
             });
-            mainApp.getExecutor().submit(downloadTask);
+            mainApp.getRpcExecutor().submit(downloadTask);
         }
         return cachedImage;
     }

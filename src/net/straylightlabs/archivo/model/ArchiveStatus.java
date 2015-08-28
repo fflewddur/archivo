@@ -31,6 +31,7 @@ public class ArchiveStatus {
     public final static ArchiveStatus EMPTY = new ArchiveStatus(TaskStatus.NONE);
     public final static ArchiveStatus QUEUED = new ArchiveStatus(TaskStatus.QUEUED);
     public final static ArchiveStatus FINISHED = new ArchiveStatus(TaskStatus.FINISHED);
+    public final static ArchiveStatus ERROR = new ArchiveStatus(TaskStatus.ERROR);
 
     private ArchiveStatus(TaskStatus status) {
         this.status = status;
@@ -69,6 +70,7 @@ public class ArchiveStatus {
         QUEUED,
         DOWNLOADING,
         TRANSCODING,
-        FINISHED
+        FINISHED,
+        ERROR
     }
 }
