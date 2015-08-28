@@ -50,13 +50,13 @@ import java.time.LocalDateTime;
 import java.util.concurrent.BlockingQueue;
 
 /**
- * Created by todd on 8/24/15.
+ * Handle each archive request.
  */
 public class ArchiveQueueManager implements Runnable {
     private final BlockingQueue<Recording> archiveQueue;
     private final Archivo mainApp;
 
-    private static final int BUFFER_SIZE = 2048;
+    private static final int BUFFER_SIZE = 8192;
     private static final double MIN_PROGRESS_INCREMENT = 0.01;
 
     public ArchiveQueueManager(Archivo mainApp, BlockingQueue<Recording> queue) {
@@ -90,6 +90,7 @@ public class ArchiveQueueManager implements Runnable {
 
             // FIXME Make this user-configurable
             Path destination = Paths.get(System.getProperty("user.home"), "download.tivo");
+            Archivo.logger.info("Saving file to " + destination);
             getRecording(recording, url, destination);
         } catch (IOException e) {
             Archivo.logger.severe("Error fetching recording information: " + e.getLocalizedMessage());

@@ -84,17 +84,17 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
 
     private String formatTime(int seconds) {
         if (seconds == ArchiveStatus.TIME_UNKNOWN) {
-            return "time remaining unknown";
+            return "calculating time left";
         } else if (seconds < 60) {
-            return "about 1 minute remaining";
+            return "about 1 minute left";
         } else if (seconds < (60 * 60)) {
-            return "" + seconds / 60 + " minutes remaining";
+            return "" + seconds / 60 + " minutes left";
         } else {
             int hours = seconds / 60 / 60;
             if (hours > 1) {
-                return String.format("more than %d hours remaining", hours);
+                return String.format("more than %d hours left", hours);
             } else {
-                return "more than 1 hour remaining";
+                return "more than 1 hour left";
             }
         }
     }
