@@ -58,7 +58,7 @@ public class MindCommandIdSearch extends MindCommand {
                 String title = URLEncoder.encode(recording.getSeriesTitle(), RPC_ENCODING);
                 StringBuilder sb = new StringBuilder();
                 sb.append("http://");
-                sb.append(tivo.getClient().getAddress().toString().replaceAll("/", ""));
+                sb.append(tivo.getClient().getAddress().getHostAddress());
                 sb.append("/download/");
                 sb.append(title);
                 sb.append(".TiVo?Container=%2FNowPlaying&id=");
