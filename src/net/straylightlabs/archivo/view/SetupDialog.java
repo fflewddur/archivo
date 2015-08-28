@@ -60,9 +60,8 @@ public class SetupDialog {
     private void initDialog(Window parent) {
         dialog.initOwner(parent);
         dialog.initModality(Modality.WINDOW_MODAL);
-        dialog.initStyle(StageStyle.UNDECORATED);
+        dialog.initStyle(StageStyle.UTILITY);
 
-        dialog.setTitle("Archivo Setup");
         dialog.setHeaderText("Welcome to Archivo");
 
         GridPane grid = new GridPane();

@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -47,6 +48,12 @@ public class RootLayoutController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         menubar.setUseSystemMenuBar(true);
         statusIndicator.setVisible(false);
+    }
+
+    @FXML
+    public void showAboutDialog(ActionEvent event) {
+        AboutDialog about = new AboutDialog(mainApp.getPrimaryStage());
+        about.show();
     }
 
     public void setMainApp(Archivo app) {

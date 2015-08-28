@@ -35,7 +35,7 @@
                <CheckMenuItem mnemonicParsing="false" text="Copy-Protected Recordings" selected="true"/>
            </Menu>
            <Menu mnemonicParsing="false" text="Help">
-               <MenuItem mnemonicParsing="false" text="About"/>
+               <MenuItem mnemonicParsing="false" text="About" onAction="#showAboutDialog"/>
            </Menu>
        </MenuBar>
    </top>

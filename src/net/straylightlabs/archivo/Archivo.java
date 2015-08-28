@@ -191,6 +191,10 @@ public class Archivo extends Application {
         }
     }
 
+    public Stage getPrimaryStage() {
+        return primaryStage;
+    }
+
     public Tivo getActiveTivo() {
         return recordingListController.getSelectedTivo();
     }
