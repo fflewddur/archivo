@@ -279,7 +279,7 @@ public class RecordingDetailsController implements Initializable {
             if (recording.isCopyProtected() || recording.isInProgress()) {
 
                 archiveButton.setDisable(true);
-            } else if (recording.getStatus().getStatus() != ArchiveStatus.TaskStatus.NONE) {
+            } else if (recording.getStatus().getStatus().isCancelable()) {
                 archiveButton.setDisable(true);
                 showNode(cancelButton);
             } else {

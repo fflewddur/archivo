@@ -119,7 +119,6 @@ public class Archivo extends Application {
         List<Tivo> initialTivos = prefs.getKnownDevices(mak);
         initRecordingDetails();
         initRecordingList(initialTivos);
-//        new Thread(new ArchiveQueueManager(this, archiveQueue)).start();
 
         primaryStage.setOnCloseRequest(e -> cleanShutdown());
     }

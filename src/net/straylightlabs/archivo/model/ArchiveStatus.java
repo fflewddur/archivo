@@ -71,6 +71,21 @@ public class ArchiveStatus {
         DOWNLOADING,
         TRANSCODING,
         FINISHED,
-        ERROR
+        ERROR;
+
+        public boolean isCancelable() {
+            switch (this) {
+                case NONE:
+                case FINISHED:
+                case ERROR:
+                    return false;
+                case QUEUED:
+                case DOWNLOADING:
+                case TRANSCODING:
+                    return true;
+                default:
+                    throw new AssertionError("Unknown TaskStatus");
+            }
+        }
     }
 }
