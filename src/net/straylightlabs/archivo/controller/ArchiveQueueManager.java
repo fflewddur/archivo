@@ -96,7 +96,7 @@ public class ArchiveQueueManager {
 
     private Path getFileDestination() {
         // TODO Make this user-configurable
-        Path destination = Paths.get(System.getProperty("user.home"), "download.tivo");
+        Path destination = Paths.get(System.getProperty("user.home"), "download.TiVo");
         return destination;
     }
 }

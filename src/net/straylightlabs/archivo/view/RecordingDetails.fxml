@@ -45,6 +45,7 @@
             <VBox spacing="5">
                 <Button fx:id="archiveButton" onAction="#archive" minWidth="80">Archive</Button>
                 <Button fx:id="cancelButton" onAction="#cancel" minWidth="80">Cancel</Button>
+                <Button fx:id="openButton" onAction="#open" minWidth="80">Open</Button>
             </VBox>
             <VBox spacing="3">
                 <Label fx:id="date" text="Recorded on"/>

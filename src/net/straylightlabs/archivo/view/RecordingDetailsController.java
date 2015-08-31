@@ -72,6 +72,8 @@ public class RecordingDetailsController implements Initializable {
     private Button archiveButton;
     @FXML
     private Button cancelButton;
+    @FXML
+    private Button openButton;
 
     public RecordingDetailsController(Archivo mainApp) {
         this.mainApp = mainApp;
@@ -107,6 +109,11 @@ public class RecordingDetailsController implements Initializable {
         recording.statusProperty().setValue(ArchiveStatus.EMPTY);
     }
 
+    @FXML
+    public void open(ActionEvent event) {
+        Archivo.logger.severe("Opening not yet implemented.");
+    }
+
     public void clearRecording() {
         setLabelText(title, "");
         setLabelText(subtitle, "");
@@ -120,6 +127,7 @@ public class RecordingDetailsController implements Initializable {
         setPosterFromURL(null);
         hideNode(archiveButton);
         hideNode(cancelButton);
+        hideNode(openButton);
     }
 
     public void showRecording(Recording recording) {
@@ -277,16 +285,23 @@ public class RecordingDetailsController implements Initializable {
             hideNode(archiveButton);
         } else {
             if (recording.isCopyProtected() || recording.isInProgress()) {
-
                 archiveButton.setDisable(true);
+                showNode(archiveButton);
             } else if (recording.getStatus().getStatus().isCancelable()) {
                 archiveButton.setDisable(true);
+                showNode(archiveButton);
                 showNode(cancelButton);
+                hideNode(openButton);
+            } else if (recording.getStatus().getStatus() == ArchiveStatus.TaskStatus.FINISHED) {
+                hideNode(archiveButton);
+                hideNode(cancelButton);
+                showNode(openButton);
             } else {
                 archiveButton.setDisable(false);
+                showNode(archiveButton);
                 hideNode(cancelButton);
+                hideNode(openButton);
             }
-            showNode(archiveButton);
         }
     }
 }
