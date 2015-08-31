@@ -44,7 +44,7 @@ public class TivoDecoder {
         System.out.format("%s%n%n", QUALCOMM_MSG);
 
         try (FileInputStream inputStream = new FileInputStream(inputPath.toFile())) {
-            TivoStreamHeader header = new TivoStreamHeader(inputStream);
+            TivoStream header = new TivoStream(inputStream);
             header.read();
             System.out.println(header);
         } catch (FileNotFoundException e) {
