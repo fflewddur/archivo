@@ -19,6 +19,8 @@
 
 package net.straylightlabs.archivo.tivodecode;
 
+import org.apache.commons.codec.digest.DigestUtils;
+
 import java.io.DataInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,11 +28,15 @@ import java.io.InputStream;
 public class TivoStream {
     private TivoStreamHeader header;
     private TivoStreamChunk[] chunks;
+    private TuringStream turing;
+    private TuringStream metaTuring;
 
+    private final String mak;
     private final InputStream inputStream;
 
-    public TivoStream(InputStream inputStream) {
+    public TivoStream(InputStream inputStream, String mak) {
         this.inputStream = inputStream;
+        this.mak = mak;
     }
 
     public boolean read() {
@@ -45,6 +51,12 @@ public class TivoStream {
                 chunks[i] = new TivoStreamChunk(dataInputStream);
                 if (!chunks[i].read()) {
                     return false;
+                }
+                if (chunks[i].isEncrypted()) {
+
+                } else {
+                    turing = new TuringStream(chunks[i].getKey(mak));
+                    metaTuring = new TuringStream(chunks[i].getMetadataKey(mak));
                 }
             }
         } catch (IOException e) {
@@ -136,14 +148,20 @@ public class TivoStream {
         private int chunkSize;
         private int dataSize;
         private int id;
-        private int type;
+        private ChunkType type;
         private byte[] data;
         private final DataInputStream inputStream;
 
         private final static int CHUNK_HEADER_SIZE = 12; // Size of each chunk's header, in bytes
+        private final static String MEDIA_MAK_PREFIX = "tivo:TiVo DVR:";
+        private final static String LOOKUP_STRING = "0123456789abcdef";
 
         public TivoStreamChunk(DataInputStream inputStream) {
             this.inputStream = inputStream;
+        }
+
+        public boolean isEncrypted() {
+            return type == ChunkType.ENCRYPTED;
         }
 
         public boolean read() {
@@ -155,7 +173,8 @@ public class TivoStream {
                 // Two bytes for the chunk's ID
                 id = inputStream.readUnsignedShort();
                 // Two bytes for the type of payload
-                type = inputStream.readUnsignedShort();
+                type = ChunkType.valueOf(inputStream.readUnsignedShort());
+
                 // The rest is the payload
                 data = new byte[dataSize];
 
@@ -176,6 +195,30 @@ public class TivoStream {
             return true;
         }
 
+        public byte[] getKey(String mak) {
+            byte[] makBytes = mak.getBytes();
+            byte[] bytes = new byte[makBytes.length + dataSize];
+            System.arraycopy(makBytes, 0, bytes, 0, makBytes.length);
+            System.arraycopy(data, 0, bytes, makBytes.length, dataSize);
+            return DigestUtils.sha1(bytes);
+        }
+
+        public byte[] getMetadataKey(String mak) {
+            byte[] prefixBytes = MEDIA_MAK_PREFIX.getBytes();
+            byte[] makBytes = mak.getBytes();
+            byte[] bytes = new byte[prefixBytes.length + makBytes.length];
+            System.arraycopy(prefixBytes, 0, bytes, 0, prefixBytes.length);
+            System.arraycopy(makBytes, 0, bytes, prefixBytes.length, makBytes.length);
+            byte[] md5 = DigestUtils.md5(bytes);
+
+            byte[] metaKey = new byte[32];
+            for (int i = 0; i < md5.length; i++) {
+                metaKey[i * 2] = (byte) LOOKUP_STRING.charAt((md5[i] >> 4) & 0xf);
+                metaKey[i * 2 + 1] = (byte) LOOKUP_STRING.charAt(md5[i] & 0xf);
+            }
+            return getKey(new String(metaKey));
+        }
+
         @Override
         public String toString() {
             StringBuilder sb = new StringBuilder();
@@ -184,7 +227,7 @@ public class TivoStream {
             sb.append(String.format(" chunkSize=%d", chunkSize));
             sb.append(String.format(" dataSize=%d", dataSize));
             sb.append(String.format(" id=%d", id));
-            sb.append(String.format(" type=%d", type));
+            sb.append(String.format(" type=%s", type));
             sb.append("]");
 
             return sb.toString();
@@ -192,7 +235,17 @@ public class TivoStream {
 
         public enum ChunkType {
             PLAINTEXT,
-            ENCRYPTED
+            ENCRYPTED;
+
+            public static ChunkType valueOf(int val) {
+                switch (val) {
+                    case 0:
+                        return PLAINTEXT;
+                    case 1:
+                        return ENCRYPTED;
+                }
+                throw new IllegalArgumentException(String.format("%d is an unsupported chunk type", val));
+            }
         }
     }
 

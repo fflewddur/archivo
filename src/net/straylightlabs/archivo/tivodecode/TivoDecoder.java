@@ -32,19 +32,21 @@ import java.nio.file.Paths;
 public class TivoDecoder {
     private final Path inputPath;
     private final Path outputPath;
+    private final String mak;
 
     public final static String QUALCOMM_MSG = "Encryption by QUALCOMM ;)";
 
-    public TivoDecoder(Path inputPath, Path outputPath) {
+    public TivoDecoder(Path inputPath, Path outputPath, String mak) {
         this.inputPath = inputPath;
         this.outputPath = outputPath;
+        this.mak = mak;
     }
 
     public boolean decode() {
         System.out.format("%s%n%n", QUALCOMM_MSG);
 
         try (FileInputStream inputStream = new FileInputStream(inputPath.toFile())) {
-            TivoStream header = new TivoStream(inputStream);
+            TivoStream header = new TivoStream(inputStream, mak);
             header.read();
             System.out.println(header);
         } catch (FileNotFoundException e) {
@@ -62,12 +64,13 @@ public class TivoDecoder {
     /**
      * To enable easier testing.
      *
-     * @param args Paths to the input and output files, in that order
+     * @param args Paths to the input and output files and a string representing the MAK, in that order
      */
     public static void main(String[] args) {
         Path in = Paths.get(args[0]);
         Path out = Paths.get(args[1]);
-        TivoDecoder decoder = new TivoDecoder(in, out);
+        String mak = args[2];
+        TivoDecoder decoder = new TivoDecoder(in, out, mak);
         decoder.decode();
     }
 }
