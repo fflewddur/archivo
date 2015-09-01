@@ -25,6 +25,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 
 import java.net.URL;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -62,6 +63,7 @@ public class Recording {
     private final int numEpisodes;
     // Combine season and episode number(s) into a more useful string
     private final String seasonAndEpisode;
+    private Path destination;
 
     public final static int DESIRED_IMAGE_WIDTH = 200;
     public final static int DESIRED_IMAGE_HEIGHT = 150;
@@ -259,6 +261,18 @@ public class Recording {
 
     public int getNumEpisodes() {
         return numEpisodes;
+    }
+
+    public Path getDestination() {
+        return destination;
+    }
+
+    public void setDestination(Path val) {
+        destination = val;
+    }
+
+    public String getFullTitle() {
+        return buildSingleRecordingTitle();
     }
 
     public String getTitle() {

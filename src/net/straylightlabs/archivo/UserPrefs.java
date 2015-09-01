@@ -22,7 +22,11 @@ package net.straylightlabs.archivo;
 import javafx.application.Application;
 import net.straylightlabs.archivo.model.Tivo;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.logging.Level;
@@ -36,6 +40,7 @@ class UserPrefs {
     public static final String MAK = "mak";
     public static final String DEVICE_LIST = "knownTivos";
     public static final String MOST_RECENT_DEVICE = "lastTivo";
+    public static final String MOST_RECENT_FOLDER = "lastFolder";
 
     public UserPrefs() {
         try {
@@ -148,5 +153,30 @@ class UserPrefs {
 
     public void setLastDevice(Tivo tivo) {
         prefs.put(MOST_RECENT_DEVICE, tivo.toJSON().toString());
+    }
+
+    public Path getLastFolder() {
+        Path lastFolder = Paths.get(prefs.get(MOST_RECENT_FOLDER, getPlatformVideoFolder()));
+        Archivo.logger.info("Last folder = " + lastFolder);
+        return lastFolder;
+    }
+
+    /**
+     * Test for the existence of some common folders. If none exist, default to the user's home directory.
+     */
+    private String getPlatformVideoFolder() {
+        String userHomePath = System.getProperty("user.home");
+        List<String> possibleFolders = Arrays.asList("Videos", "Movies", "My Videos");
+        for (String possibleFolder : possibleFolders) {
+            Path videoPath = Paths.get(userHomePath, possibleFolder);
+            if (Files.isDirectory(videoPath)) {
+                return videoPath.toString();
+            }
+        }
+        return userHomePath;
+    }
+
+    public void setLastFolder(Path lastFolder) {
+        prefs.put(MOST_RECENT_FOLDER, lastFolder.toString());
     }
 }

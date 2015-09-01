@@ -37,6 +37,7 @@ import net.straylightlabs.archivo.view.RootLayoutController;
 import net.straylightlabs.archivo.view.SetupDialog;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -247,6 +248,14 @@ public class Archivo extends Application {
 
     public void setKnownDevices(List<Tivo> tivos) {
         prefs.setKnownDevices(tivos);
+    }
+
+    public Path getLastFolder() {
+        return prefs.getLastFolder();
+    }
+
+    public void setLastFolder(Path lastFolder) {
+        prefs.setLastFolder(lastFolder);
     }
 
     public static void main(String[] args) {

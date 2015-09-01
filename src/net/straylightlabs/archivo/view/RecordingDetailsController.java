@@ -29,11 +29,15 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
+import javafx.stage.FileChooser;
+import javafx.stage.Window;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 
+import java.io.File;
 import java.net.URL;
+import java.nio.file.Path;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
@@ -97,14 +101,19 @@ public class RecordingDetailsController implements Initializable {
 
     @FXML
     public void archive(ActionEvent event) {
-        Archivo.logger.info(String.format("Archive recording %s...", recording.getTitle()));
-        recording.statusProperty().setValue(ArchiveStatus.QUEUED);
-        mainApp.enqueueRecordingForArchiving(recording);
+        Path destination = showSaveDialog(mainApp.getPrimaryStage());
+        if (destination != null) {
+            Archivo.logger.info(String.format("Archive recording %s to %s...", recording.getFullTitle(), destination));
+            recording.statusProperty().setValue(ArchiveStatus.QUEUED);
+            recording.setDestination(destination);
+            mainApp.enqueueRecordingForArchiving(recording);
+            mainApp.setLastFolder(destination.getParent());
+        }
     }
 
     @FXML
     public void cancel(ActionEvent event) {
-        Archivo.logger.info(String.format("Cancel archiving of recording %s...", recording.getTitle()));
+        Archivo.logger.info(String.format("Cancel archiving of recording %s...", recording.getFullTitle()));
         mainApp.cancelArchiving(recording);
         recording.statusProperty().setValue(ArchiveStatus.EMPTY);
     }
@@ -112,6 +121,23 @@ public class RecordingDetailsController implements Initializable {
     @FXML
     public void open(ActionEvent event) {
         Archivo.logger.severe("Opening not yet implemented.");
+    }
+
+    private Path showSaveDialog(Window parent) {
+        FileChooser chooser = new FileChooser();
+        chooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("TiVo Files", "*.TiVo")
+        );
+        String fullTitle = recording.getFullTitle();
+        chooser.setInitialFileName(fullTitle);
+        chooser.setInitialDirectory(mainApp.getLastFolder().toFile());
+
+        File destination = chooser.showSaveDialog(parent);
+        if (destination != null) {
+            return destination.toPath();
+        } else {
+            return null;
+        }
     }
 
     public void clearRecording() {

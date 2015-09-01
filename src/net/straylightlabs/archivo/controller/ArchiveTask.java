@@ -44,7 +44,6 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDateTime;
 
@@ -55,16 +54,14 @@ public class ArchiveTask extends Task<Recording> {
     private final Recording recording;
     private final Tivo tivo;
     private final String mak;
-    private final Path destination;
 
     private static final int BUFFER_SIZE = 8192;
     private static final double MIN_PROGRESS_INCREMENT = 0.01;
 
-    public ArchiveTask(Recording recording, Tivo tivo, String mak, Path destination) {
+    public ArchiveTask(Recording recording, Tivo tivo, String mak) {
         this.recording = recording;
         this.tivo = tivo;
         this.mak = mak;
-        this.destination = destination;
     }
 
     @Override
@@ -85,14 +82,14 @@ public class ArchiveTask extends Task<Recording> {
             command.executeOn(tivo.getClient());
             URL url = command.getDownloadUrl();
             Archivo.logger.info("URL: " + url);
-            Archivo.logger.info("Saving file to " + destination);
-            getRecording(recording, url, destination);
+            Archivo.logger.info("Saving file to " + recording.getDestination());
+            getRecording(recording, url);
         } catch (IOException e) {
             Archivo.logger.severe("Error fetching recording information: " + e.getLocalizedMessage());
         }
     }
 
-    private void getRecording(Recording recording, URL url, Path destination) {
+    private void getRecording(Recording recording, URL url) {
         if (isCancelled()) {
             Archivo.logger.info("ArchiveTask canceled by user.");
             return;
@@ -111,7 +108,7 @@ public class ArchiveTask extends Task<Recording> {
                 }
 
                 Archivo.logger.info("Status line: " + response.getStatusLine());
-                handleResponse(response, destination, recording);
+                handleResponse(response, recording);
             }
         } catch (IOException e) {
             Archivo.logger.severe("Error downloading recording: " + e.getLocalizedMessage());
@@ -134,10 +131,10 @@ public class ArchiveTask extends Task<Recording> {
                 .build();
     }
 
-    private void handleResponse(CloseableHttpResponse response, Path destination, Recording recording) {
+    private void handleResponse(CloseableHttpResponse response, Recording recording) {
         long estimatedLength = getEstimatedLengthFromHeaders(response);
         double priorPercent = 0;
-        try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(destination))) {
+        try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(recording.getDestination()))) {
             try (BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent(), BUFFER_SIZE)) {
                 byte[] buffer = new byte[BUFFER_SIZE + 1];
                 long totalBytesRead = 0;

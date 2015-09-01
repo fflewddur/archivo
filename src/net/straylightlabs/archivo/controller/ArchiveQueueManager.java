@@ -48,10 +48,9 @@ public class ArchiveQueueManager {
 
     public boolean enqueueArchiveTask(Recording recording, Tivo tivo, String mak) {
         try {
-            Path destination = getFileDestination();
-            ArchiveTask task = new ArchiveTask(recording, tivo, mak, destination);
+            ArchiveTask task = new ArchiveTask(recording, tivo, mak);
             task.setOnRunning(event -> {
-                mainApp.setStatusText(String.format("Archiving %s...", recording.getTitle()));
+                mainApp.setStatusText(String.format("Archiving %s...", recording.getFullTitle()));
                 recording.statusProperty().setValue(ArchiveStatus.createDownloadingStatus(0, ArchiveStatus.TIME_UNKNOWN));
             });
             task.setOnSucceeded(event -> {
