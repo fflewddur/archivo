@@ -1,10 +1,8 @@
 /*
- * Java implementation of Turing encryption system, based on Turning.h 1.4.
- * Copyright 2015 Todd Kulesza <todd@dropline.net>.
+ * Java implementation of Turing encryption system for use with TiVo
+ * Transport Streams. Based on TivoDecode 0.4.4 and Turning.h 1.4.
  *
- * Turing.h	1.4 (QUALCOMM) 03/02/24
- *
- * Interface definition of Turing
+ * Java port copyright 2015 Todd Kulesza <todd@dropline.net>.
  *
  * Copyright C 2002, Qualcomm Inc. Written by Greg Rose
  *
@@ -63,8 +61,27 @@
 
 package net.straylightlabs.archivo.tivodecode;
 
+import java.util.ArrayList;
+import java.util.List;
 
-public class TuringStream {
-    private int cipherPos;
-    private int cipherLen;
+public class TuringDecoder {
+    private final byte[] key;
+    private final List<TuringStream> streams;
+
+    public TuringDecoder(byte[] key) {
+        this.key = key;
+        streams = new ArrayList<>();
+    }
+
+    public void prepareFrame(int streamId, int blockId) {
+
+    }
+
+    public void skipBytes(int bytesToSkip) {
+
+    }
+
+    public void decryptBytes(byte[] buffer) {
+
+    }
 }

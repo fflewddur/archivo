@@ -46,9 +46,10 @@ public class TivoDecoder {
         System.out.format("%s%n%n", QUALCOMM_MSG);
 
         try (FileInputStream inputStream = new FileInputStream(inputPath.toFile())) {
-            TivoStream header = new TivoStream(inputStream, mak);
-            header.read();
-            System.out.println(header);
+            TivoStream stream = new TivoStream(inputStream, mak);
+            stream.read();
+            System.out.println(stream);
+            stream.printChunkPayloads();
         } catch (FileNotFoundException e) {
             System.err.format("The input file '%s' was not found: %s%n", inputPath, e.getLocalizedMessage());
         } catch (IOException e) {
