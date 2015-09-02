@@ -35,7 +35,9 @@ import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 
+import java.awt.*;
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -120,7 +122,12 @@ public class RecordingDetailsController implements Initializable {
 
     @FXML
     public void open(ActionEvent event) {
-        Archivo.logger.severe("Opening not yet implemented.");
+        Archivo.logger.info(String.format("Opening recording %s...", recording.getDestination()));
+        try {
+            Desktop.getDesktop().open(recording.getDestination().toFile());
+        } catch (IOException e) {
+            Archivo.logger.severe(String.format("Error opening '%s': %s", recording.getDestination(), e.getLocalizedMessage()));
+        }
     }
 
     private Path showSaveDialog(Window parent) {
