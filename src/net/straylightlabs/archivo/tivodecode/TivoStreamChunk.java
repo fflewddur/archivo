@@ -31,7 +31,7 @@ class TivoStreamChunk {
     private byte[] data;
     private final CountingDataInputStream inputStream;
 
-    private final static int CHUNK_HEADER_SIZE = 12; // Size of each chunk's header, in bytes
+    public final static int CHUNK_HEADER_SIZE = 12; // Size of each chunk's header, in bytes
     private final static String MEDIA_MAK_PREFIX = "tivo:TiVo DVR:";
     private final static String LOOKUP_STRING = "0123456789abcdef";
 
@@ -72,6 +72,10 @@ class TivoStreamChunk {
         return true;
     }
 
+    public int getDataSize() {
+        return dataSize;
+    }
+
     public byte[] getKey(String mak) {
         byte[] makBytes = mak.getBytes();
         byte[] bytes = new byte[makBytes.length + dataSize];
@@ -97,9 +101,9 @@ class TivoStreamChunk {
     }
 
     public void decryptMetadata(TuringDecoder decoder, int offset) {
-        decoder.prepareFrame(0, 0);
-        decoder.skipBytes(offset);
-        decoder.decryptBytes(data);
+        TuringStream stream = decoder.prepareFrame(0, 0);
+        decoder.skipBytes(stream, offset);
+        decoder.decryptBytes(stream, data);
     }
 
     @Override

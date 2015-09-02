@@ -27,6 +27,7 @@ public class TivoStream {
     private TivoStreamChunk[] chunks;
     private TuringDecoder decoder;
     private TuringDecoder metaDecoder;
+    private long metaPosition;
 
     private final String mak;
     private final InputStream inputStream;
@@ -34,6 +35,7 @@ public class TivoStream {
     public TivoStream(InputStream inputStream, String mak) {
         this.inputStream = inputStream;
         this.mak = mak;
+        metaPosition = 0;
     }
 
     public boolean read() {
@@ -45,13 +47,15 @@ public class TivoStream {
 
             chunks = new TivoStreamChunk[header.getNumChunks()];
             for (int i = 0; i < header.getNumChunks(); i++) {
+                long chunkDataPos = dataInputStream.getPosition() + TivoStreamChunk.CHUNK_HEADER_SIZE;
                 chunks[i] = new TivoStreamChunk(dataInputStream);
                 if (!chunks[i].read()) {
                     return false;
                 }
                 if (chunks[i].isEncrypted()) {
-                    // TODO figure out our offset
-                    chunks[i].decryptMetadata(metaDecoder, 0);
+                    int offset = (int) (chunkDataPos - metaPosition);
+                    chunks[i].decryptMetadata(metaDecoder, offset);
+                    metaPosition = chunkDataPos + chunks[i].getDataSize();
                 } else {
                     decoder = new TuringDecoder(chunks[i].getKey(mak));
                     metaDecoder = new TuringDecoder(chunks[i].getMetadataKey(mak));
