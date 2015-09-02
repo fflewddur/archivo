@@ -29,8 +29,11 @@ import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
 import java.util.List;
+import java.util.StringJoiner;
+import java.util.stream.Collectors;
 
 /**
  * Models a single recording from a TiVo device.
@@ -273,6 +276,54 @@ public class Recording {
 
     public String getFullTitle() {
         return buildSingleRecordingTitle();
+    }
+
+    public String getDefaultFilename() {
+        return buildDefaultFilename();
+    }
+
+    /**
+     * Build a sensible default filename that includes as much relevant available information as possible.
+     */
+    private String buildDefaultFilename() {
+        StringJoiner components = new StringJoiner(" - ");
+        int numComponents = 1; // We always add a title
+
+        if (seriesTitle != null && !seriesTitle.isEmpty()) {
+            components.add(seriesTitle);
+        } else {
+            // Ensure we have *something* for the title
+            components.add(UNTITLED_TEXT);
+        }
+
+        if (hasSeasonAndEpisode()) {
+            components.add(String.format("S%02dE%s", seriesNumber, getEpisodeNumberRange()));
+            numComponents++;
+        }
+
+        if (episodeTitle != null && !episodeTitle.isEmpty()) {
+            components.add(episodeTitle);
+            numComponents++;
+        }
+
+        // If we only have a title, add the original air date. If that doesn't exist, use the recording date.
+        if (numComponents == 1) {
+            if (originalAirDate != null) {
+                components.add(originalAirDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            } else {
+                components.add(getDateRecorded().format(DateTimeFormatter.ISO_LOCAL_DATE));
+            }
+        }
+
+        return components.toString();
+    }
+
+    private String getEpisodeNumberRange() {
+        if (numEpisodes == 1) {
+            return String.format("%02d", episodeNumbers.get(0));
+        } else {
+            return episodeNumbers.stream().map(Object::toString).collect(Collectors.joining(","));
+        }
     }
 
     public String getTitle() {

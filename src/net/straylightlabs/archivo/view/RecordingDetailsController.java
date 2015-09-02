@@ -135,8 +135,7 @@ public class RecordingDetailsController implements Initializable {
         chooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("TiVo Files", "*.TiVo")
         );
-        String fullTitle = recording.getFullTitle();
-        chooser.setInitialFileName(fullTitle);
+        chooser.setInitialFileName(recording.getDefaultFilename());
         chooser.setInitialDirectory(mainApp.getLastFolder().toFile());
 
         File destination = chooser.showSaveDialog(parent);
