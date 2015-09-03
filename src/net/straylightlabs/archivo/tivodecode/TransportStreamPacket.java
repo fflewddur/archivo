@@ -20,10 +20,15 @@
 package net.straylightlabs.archivo.tivodecode;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 public class TransportStreamPacket {
     private long packetId;
+    private boolean isPmt;
+    private boolean isTivo;
     private Header header;
+    private ByteBuffer data;
+    private int dataOffset;
 
     public boolean readFrom(CountingDataInputStream inputStream) throws IOException {
         header = readHeader(inputStream);
@@ -31,14 +36,18 @@ public class TransportStreamPacket {
             System.err.format("Invalid TS packet header%n");
             return false;
         }
+
         // Read the rest of the packet
         int bytesToRead = TransportStream.TS_FRAME_SIZE - header.getLength();
-        int bytesRead, totalBytesRead = 0;
+        int bytesRead = 0, totalBytesRead = 0;
         byte[] buffer = new byte[bytesToRead];
+
         do {
             bytesRead = inputStream.read(buffer, totalBytesRead, bytesToRead - totalBytesRead);
             totalBytesRead += bytesRead;
-        } while (bytesRead != -1 && totalBytesRead < bytesToRead);
+        } while (bytesRead != -1 && bytesToRead > 0 && totalBytesRead < bytesToRead);
+        data = ByteBuffer.wrap(buffer);
+        dataOffset = 0;
 
         return (totalBytesRead == bytesToRead);
     }
@@ -48,8 +57,9 @@ public class TransportStreamPacket {
         int headerBits = inputStream.readInt();
         header = new Header(headerBits);
         if (header.hasAdaptationField) {
-            byte adaptationFieldLength = inputStream.readByte();
-            byte adaptationFieldBits = inputStream.readByte();
+            int adaptationFieldLength = inputStream.readUnsignedByte();
+            int adaptationFieldBits = inputStream.readByte();
+            System.out.println("Adaptation field length = " + adaptationFieldLength);
             inputStream.skipBytes(adaptationFieldLength - 1);
             headerLength += (adaptationFieldLength + 1);
         }
@@ -68,6 +78,56 @@ public class TransportStreamPacket {
 
     public int getPID() {
         return header.getPID();
+    }
+
+    public boolean isPayloadStart() {
+        return header.isPayloadStart();
+    }
+
+    public byte[] readBytesFromData(int length) {
+        byte[] buffer = new byte[length];
+        for (int i = 0; i < length; i++) {
+            buffer[i] = data.get(dataOffset++);
+        }
+        return buffer;
+    }
+
+    public int readIntFromData() {
+        int val = data.getInt(dataOffset);
+        dataOffset += 4;
+        return val;
+    }
+
+    public int readUnsignedByteFromData() {
+        int val = data.get(dataOffset) & 0xff; // Treat as unsigned byte
+        dataOffset += 1;
+        return val;
+    }
+
+    public int readUnsignedShortFromData() {
+        int val = data.getShort(dataOffset) & 0xffff; // Treat as unsigned short
+        dataOffset += 2;
+        return val;
+    }
+
+    public void advanceDataOffset(int bytes) {
+        dataOffset += bytes;
+    }
+
+    public void setIsPmt(boolean val) {
+        isPmt = val;
+    }
+
+    public boolean isPmt() {
+        return isPmt;
+    }
+
+    public void setIsTivo(boolean val) {
+        isTivo = val;
+    }
+
+    public boolean isTivo() {
+        return isTivo;
     }
 
     @Override
@@ -110,10 +170,10 @@ public class TransportStreamPacket {
         private int length;
         private int sync;
         private boolean hasTransportError;
-        private boolean isPayloadUnitStart;
+        private boolean isPayloadStart;
         private boolean isPriority;
         private int pid;
-        private int scramblingControl;
+        private boolean isScrambled;
         private boolean hasAdaptationField;
         private boolean hasPayloadData;
         private int counter;
@@ -125,10 +185,10 @@ public class TransportStreamPacket {
         private void initFromBits(int bits) {
             sync = (bits & 0xff000000) >> 24;
             hasTransportError = ((bits & 0x00800000) >> 23) == 1;
-            isPayloadUnitStart = ((bits & 0x00400000) >> 22) == 1;
+            isPayloadStart = ((bits & 0x00400000) >> 22) == 1;
             isPriority = ((bits & 0x00200000) >> 21) == 1;
             pid = (bits & 0x001FFF00) >> 8;
-            scramblingControl = (bits & 0x000000C0) >> 6;
+            isScrambled = ((bits & 0x000000C0) >> 6) != 0;
             hasAdaptationField = ((bits & 0x00000020) >> 5) == 1;
             hasPayloadData = ((bits & 0x00000010) >> 4) == 1;
             counter = (bits & 0x0000000F);
@@ -150,8 +210,8 @@ public class TransportStreamPacket {
             return hasTransportError;
         }
 
-        public boolean isPayloadUnitStart() {
-            return isPayloadUnitStart;
+        public boolean isPayloadStart() {
+            return isPayloadStart;
         }
 
         public boolean isPriority() {
@@ -166,8 +226,8 @@ public class TransportStreamPacket {
             return PacketType.valueOf(pid);
         }
 
-        public int getScramblingControl() {
-            return scramblingControl;
+        public boolean isScrambled() {
+            return isScrambled;
         }
 
         public boolean isHasAdaptationField() {

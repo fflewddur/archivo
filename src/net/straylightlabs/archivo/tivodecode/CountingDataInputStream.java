@@ -63,6 +63,12 @@ public class CountingDataInputStream implements AutoCloseable {
         return val;
     }
 
+    public int readUnsignedByte() throws IOException {
+        int val = stream.readUnsignedByte();
+        position += Byte.BYTES;
+        return val;
+    }
+
     public int readUnsignedShort() throws IOException {
         int val = stream.readUnsignedShort();
         position += Short.BYTES;

@@ -51,7 +51,7 @@ public class TivoDecoder {
             TivoStream stream = new TivoStream(inputStream, outputStream, mak);
             stream.read();
             System.out.println(stream);
-            stream.printChunkPayloads();
+//            stream.printChunkPayloads();
         } catch (FileNotFoundException e) {
             System.err.format("The input file '%s' was not found: %s%n", inputPath, e.getLocalizedMessage());
         } catch (IOException e) {
