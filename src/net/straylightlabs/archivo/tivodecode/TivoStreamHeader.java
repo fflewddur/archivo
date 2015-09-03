@@ -66,6 +66,18 @@ class TivoStreamHeader {
         return true;
     }
 
+    public int getMpegOffset() {
+        return mpegOffset;
+    }
+
+    public TivoStream.Format getFormat() {
+        if ((dummy06 & 0x20) == 0x20) {
+            return TivoStream.Format.TRANSPORT_STREAM;
+        } else {
+            return TivoStream.Format.PROGRAM_STREAM;
+        }
+    }
+
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();

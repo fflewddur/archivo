@@ -22,6 +22,7 @@ package net.straylightlabs.archivo.tivodecode;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -45,18 +46,17 @@ public class TivoDecoder {
     public boolean decode() {
         System.out.format("%s%n%n", QUALCOMM_MSG);
 
-        try (FileInputStream inputStream = new FileInputStream(inputPath.toFile())) {
-            TivoStream stream = new TivoStream(inputStream, mak);
+        try (FileInputStream inputStream = new FileInputStream(inputPath.toFile());
+             FileOutputStream outputStream = new FileOutputStream(outputPath.toFile())) {
+            TivoStream stream = new TivoStream(inputStream, outputStream, mak);
             stream.read();
             System.out.println(stream);
             stream.printChunkPayloads();
         } catch (FileNotFoundException e) {
             System.err.format("The input file '%s' was not found: %s%n", inputPath, e.getLocalizedMessage());
         } catch (IOException e) {
-            System.err.format("Error while reading input file: %s%n", e.getLocalizedMessage());
+            System.err.format("Error while decoding file: %s%n", e.getLocalizedMessage());
         }
-
-        // TODO Create file at outputPath
 
         return false;
     }

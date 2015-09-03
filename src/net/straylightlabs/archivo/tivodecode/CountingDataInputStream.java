@@ -45,6 +45,12 @@ public class CountingDataInputStream implements AutoCloseable {
         return val;
     }
 
+    public int read(byte[] buffer, int offset, int length) throws IOException {
+        int val = stream.read(buffer, offset, length);
+        position += val;
+        return val;
+    }
+
     public byte readByte() throws IOException {
         byte val = stream.readByte();
         position += Byte.BYTES;

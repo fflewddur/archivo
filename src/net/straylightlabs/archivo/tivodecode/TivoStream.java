@@ -21,6 +21,7 @@ package net.straylightlabs.archivo.tivodecode;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 
 public class TivoStream {
     private TivoStreamHeader header;
@@ -31,9 +32,11 @@ public class TivoStream {
 
     private final String mak;
     private final InputStream inputStream;
+    private final OutputStream outputStream;
 
-    public TivoStream(InputStream inputStream, String mak) {
+    public TivoStream(InputStream inputStream, OutputStream outputStream, String mak) {
         this.inputStream = inputStream;
+        this.outputStream = outputStream;
         this.mak = mak;
         metaPosition = 0;
     }
@@ -60,6 +63,22 @@ public class TivoStream {
                     decoder = new TuringDecoder(chunks[i].getKey(mak));
                     metaDecoder = new TuringDecoder(chunks[i].getMetadataKey(mak));
                 }
+            }
+
+            TivoStreamDecoder streamDecoder;
+            switch (header.getFormat()) {
+                case PROGRAM_STREAM:
+                    System.err.println("TiVo Program Stream files are not [yet] supported :(");
+                    return false;
+                case TRANSPORT_STREAM:
+                    streamDecoder = new TransportStreamDecoder(decoder, header.getMpegOffset(), dataInputStream, outputStream);
+                    break;
+                default:
+                    System.err.println("Error: unknown file format.");
+                    return false;
+            }
+            if (!streamDecoder.process()) {
+                return false;
             }
         } catch (IOException e) {
             System.err.format("Error reading TiVoStream file: %s%n", e.getLocalizedMessage());
@@ -93,8 +112,8 @@ public class TivoStream {
         System.out.print(sb.toString());
     }
 
-    public enum StreamType {
-        PROGRAM,
-        TRANSPORT
+    public enum Format {
+        PROGRAM_STREAM,
+        TRANSPORT_STREAM
     }
 }
