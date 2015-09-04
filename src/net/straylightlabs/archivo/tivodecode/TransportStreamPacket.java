@@ -72,6 +72,10 @@ public class TransportStreamPacket {
         packetId = id;
     }
 
+    public long getPacketId() {
+        return packetId;
+    }
+
     public PacketType getPacketType() {
         return header.getType();
     }
@@ -82,6 +86,15 @@ public class TransportStreamPacket {
 
     public boolean isPayloadStart() {
         return header.isPayloadStart();
+    }
+
+    /**
+     * Returns a read-only view of the @data ByteBuffer, initialized to the start of the buffer.
+     */
+    public ByteBuffer getData() {
+        ByteBuffer readOnlyView = data.asReadOnlyBuffer();
+        readOnlyView.rewind();
+        return readOnlyView;
     }
 
     public byte[] readBytesFromData(int length) {

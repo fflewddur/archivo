@@ -50,7 +50,7 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
 
     private void initPatStream() {
         System.out.format("Creating new stream for PID (0x%04x)%n", 0);
-        TransportStream stream = new TransportStream(0);
+        TransportStream stream = new TransportStream(0, outputStream);
         streams.put(0, stream);
     }
 
@@ -93,6 +93,14 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
                     default:
                         System.err.println("Unknown packet type");
                         return false;
+                }
+                TransportStream stream = streams.get(packet.getPID());
+                if (stream == null) {
+                    System.err.format("Error: No TransportStream exists with PID 0x%04x%n", packet.getPID());
+                    return false;
+                }
+                if (!stream.addPacket(packet)) {
+                    return false;
                 }
                 packet = new TransportStreamPacket();
             }
@@ -161,7 +169,7 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
             // Create a stream for this PID unless one already exists
             if (!streams.containsKey(patData.getProgramMapPid())) {
                 System.out.format("Creating a new stream for PMT PID 0x%04x%n", patData.getProgramMapPid());
-                TransportStream stream = new TransportStream(patData.getProgramMapPid());
+                TransportStream stream = new TransportStream(patData.getProgramMapPid(), outputStream);
                 streams.put(patData.getProgramMapPid(), stream);
             }
         }
@@ -209,7 +217,7 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
             // Create a stream for this PID unless one already exists
             if (!streams.containsKey(streamPid)) {
                 System.out.format("Creating a new %s stream for PID 0x%04x%n", streamType, streamPid);
-                TransportStream stream = new TransportStream(streamPid, streamType);
+                TransportStream stream = new TransportStream(streamPid, outputStream, streamType);
                 streams.put(streamPid, stream);
             }
         }

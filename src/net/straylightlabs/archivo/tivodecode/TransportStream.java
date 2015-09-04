@@ -19,30 +19,35 @@
 
 package net.straylightlabs.archivo.tivodecode;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.util.*;
 
 public class TransportStream {
     private final int pid;
     private int streamId;
     private StreamType type;
-    private byte[] key;
-    private int blockNumber;
+    private byte[] pesBuffer;
+    private byte[] turingKey;
+    private int turingBlockNumber;
+    private final Deque<TransportStreamPacket> packets;
+    private final Deque<Integer> pesHeaderLengths;
+    private final OutputStream outputStream;
 
     public static final int TS_FRAME_SIZE = 188;
 
-    public TransportStream(int pid) {
+    public TransportStream(int pid, OutputStream outputStream) {
         this.pid = pid;
         this.type = StreamType.NONE;
+        this.outputStream = outputStream;
+        pesBuffer = new byte[TS_FRAME_SIZE * 10];
+        packets = new ArrayDeque<>();
+        pesHeaderLengths = new ArrayDeque<>();
     }
 
-    public TransportStream(int pid, StreamType type) {
-        this(pid);
+    public TransportStream(int pid, OutputStream outputStream, StreamType type) {
+        this(pid, outputStream);
         this.type = type;
-    }
-
-    public int getStreamId() {
-        return streamId;
     }
 
     public void setStreamId(int val) {
@@ -53,12 +58,102 @@ public class TransportStream {
         return type;
     }
 
-    public byte[] getKey() {
-        return key;
+    public void setKey(byte[] val) {
+        turingKey = val;
     }
 
-    public void setKey(byte[] val) {
-        key = val;
+    public boolean addPacket(TransportStreamPacket packet) {
+        boolean flushBuffers = false;
+
+        // If this packet's Payload Unit Start Indicator is set,
+        // or one of the stream's previous packet's was set, we
+        // need to buffer the packet, such that we can make an
+        // attempt to determine where the end of the PES headers
+        // lies.   Only after we've done that, can we determine
+        // the packet offset at which decryption is to occur.
+        // The accounts for the situation where the PES headers
+        // straddles two packets, and decryption is needed on the 2nd.
+        if (packet.isPayloadStart() || packets.size() != 0) {
+            packets.addLast(packet);
+
+            // Form one contiguous buffer containing all buffered packet payloads
+            Arrays.fill(pesBuffer, (byte) 0);
+            int pesBufferLen = 0;
+            for (TransportStreamPacket p : packets) {
+                ByteBuffer data = p.getData();
+                data.get(pesBuffer, pesBufferLen, data.capacity());
+                pesBufferLen += data.capacity();
+            }
+
+            // Scan the contiguous buffer for PES headers
+            // in order to find the end of PES headers.
+            pesHeaderLengths.clear();
+            if (!getPesHeaderLength(pesBuffer)) {
+                System.err.format("Failed to parse PES headers for packet %d%n", packet.getPacketId());
+                return false;
+            }
+            int pesHeaderLength = pesHeaderLengths.stream().mapToInt(i -> i).sum() / 8;
+
+        } else {
+            flushBuffers = true;
+            packets.addLast(packet);
+        }
+
+        return true;
+    }
+
+    private boolean getPesHeaderLength(byte[] buffer) {
+        MpegParser parser = new MpegParser(buffer);
+        boolean done = false;
+        while (!done && !parser.isEOF()) {
+            parser.advanceBits(8); // Skip header offset
+            if (0x000001 != parser.nextBits(24)) {
+                done = true;
+                continue;
+            }
+
+            int len = 0;
+            int startCode = parser.nextBits(32);
+            parser.clear();
+            switch (MpegParser.ControlCode.valueOf(startCode)) {
+                case EXTENSION_START_CODE:
+                    len = parser.extensionHeader();
+                    break;
+                case GROUP_START_CODE:
+                    len = parser.groupOfPicturesHeader();
+                    break;
+                case USER_DATA_START_CODE:
+                    len = parser.userData();
+                    break;
+                case PICTURE_START_CODE:
+                    len = parser.pictureHeader();
+                    break;
+                case SEQUENCE_HEADER_CODE:
+                    len = parser.sequenceHeader();
+                    break;
+                case SEQUENCE_END_CODE:
+                    len = parser.sequenceEnd();
+                    break;
+                case ANCILLARY_DATA_CODE:
+                    len = parser.ancillaryData();
+                    break;
+                default:
+                    if (startCode >= 0x101 && startCode <= 0x1AF) {
+                        done = true;
+                    } else if ((startCode == 0x1BD) || (startCode >= 0x1C0 && startCode <= 0x1EF)) {
+                        len = parser.pesHeader();
+                    } else {
+                        System.err.format("Error: Unhandled PES header: 0x%08x%n", startCode);
+                        return false;
+                    }
+            }
+
+            if (len > 0) {
+                pesHeaderLengths.addLast(len);
+            }
+        }
+
+        return true;
     }
 
     public enum StreamType {
