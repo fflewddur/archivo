@@ -26,6 +26,7 @@ import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
 import net.straylightlabs.archivo.net.MindCommandIdSearch;
+import net.straylightlabs.archivo.tivodecode.TivoDecoder;
 import org.apache.http.Header;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -39,9 +40,7 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.time.Duration;
@@ -57,6 +56,8 @@ public class ArchiveTask extends Task<Recording> {
 
     private static final int BUFFER_SIZE = 8192;
     private static final double MIN_PROGRESS_INCREMENT = 0.01;
+    private static final int NUM_RETRIES = 3;
+    private static final int RETRY_DELAY = 5000; // delay between retry attempts, in ms
 
     public ArchiveTask(Recording recording, Tivo tivo, String mak) {
         this.recording = recording;
@@ -102,13 +103,23 @@ public class ArchiveTask extends Task<Recording> {
                 response.close(); // Not needed, but clears up a warning
             }
             // Now fetch the file
-            try (CloseableHttpResponse response = client.execute(get)) {
-                if (response.getStatusLine().getStatusCode() != 200) {
-                    Archivo.logger.severe("Error downloading recording: " + response.getStatusLine());
+            int retries = NUM_RETRIES;
+            boolean responseOk = false;
+            while (!responseOk && retries > 0) {
+                try (CloseableHttpResponse response = client.execute(get)) {
+                    if (response.getStatusLine().getStatusCode() != 200) {
+                        Archivo.logger.severe("Error downloading recording: " + response.getStatusLine());
+                        Archivo.logger.info("Sleeping for " + RETRY_DELAY + " ms");
+                        Thread.sleep(RETRY_DELAY);
+                        retries--;
+                    } else {
+                        Archivo.logger.info("Status line: " + response.getStatusLine());
+                        responseOk = true;
+                        handleResponse(response, recording);
+                    }
+                } catch (InterruptedException e) {
+                    Archivo.logger.severe("Thread interrupted: " + e.getLocalizedMessage());
                 }
-
-                Archivo.logger.info("Status line: " + response.getStatusLine());
-                handleResponse(response, recording);
             }
         } catch (IOException e) {
             Archivo.logger.severe("Error downloading recording: " + e.getLocalizedMessage());
@@ -136,6 +147,14 @@ public class ArchiveTask extends Task<Recording> {
         double priorPercent = 0;
         try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(recording.getDestination()))) {
             try (BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent(), BUFFER_SIZE)) {
+                PipedInputStream pipedInputStream = new PipedInputStream(BUFFER_SIZE * 100);
+                PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream);
+                Thread thread = new Thread(() -> {
+                    TivoDecoder decoder = new TivoDecoder(pipedInputStream, outputStream, mak);
+                    decoder.decode();
+                });
+                thread.start();
+
                 byte[] buffer = new byte[BUFFER_SIZE + 1];
                 long totalBytesRead = 0;
                 LocalDateTime startTime = LocalDateTime.now();
@@ -149,7 +168,8 @@ public class ArchiveTask extends Task<Recording> {
                     }
                     totalBytesRead += bytesRead;
                     Archivo.logger.fine("Bytes read: " + bytesRead);
-                    outputStream.write(buffer, 0, bytesRead);
+//                    outputStream.write(buffer, 0, bytesRead);
+                    pipedOutputStream.write(buffer, 0, bytesRead);
                     double percent = totalBytesRead / (double) estimatedLength;
                     if (percent - priorPercent >= MIN_PROGRESS_INCREMENT) {
                         updateProgress(recording, percent, startTime, totalBytesRead, estimatedLength);
@@ -157,6 +177,15 @@ public class ArchiveTask extends Task<Recording> {
                     }
                 }
                 Archivo.logger.info("Download complete.");
+                pipedOutputStream.flush();
+                pipedOutputStream.close();
+                try {
+                    thread.join();
+                    pipedInputStream.close();
+                    Archivo.logger.info("Decoding complete.");
+                } catch (InterruptedException e) {
+                    Archivo.logger.severe("Decoding thread interrupted: " + e.getLocalizedMessage());
+                }
             } catch (IOException e) {
                 Archivo.logger.severe("Error reading file from network: " + e.getLocalizedMessage());
             }
