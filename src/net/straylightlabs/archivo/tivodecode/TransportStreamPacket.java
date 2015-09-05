@@ -27,8 +27,10 @@ public class TransportStreamPacket {
     private boolean isPmt;
     private boolean isTivo;
     private Header header;
+    private ByteBuffer headerBuffer;
     private ByteBuffer data;
     private int dataOffset;
+    private int pesHeaderOffset;
 
     public boolean readFrom(CountingDataInputStream inputStream) throws IOException {
         header = readHeader(inputStream);
@@ -55,17 +57,75 @@ public class TransportStreamPacket {
     private Header readHeader(CountingDataInputStream inputStream) throws IOException {
         int headerLength = Integer.BYTES;
         int headerBits = inputStream.readInt();
+        int adaptationFieldLength = 0;
+        int adaptationFieldBits = 0;
         header = new Header(headerBits);
         if (header.hasAdaptationField) {
-            int adaptationFieldLength = inputStream.readUnsignedByte();
-            int adaptationFieldBits = inputStream.readByte();
-            System.out.println("Adaptation field length = " + adaptationFieldLength);
-            inputStream.skipBytes(adaptationFieldLength - 1);
+            adaptationFieldLength = inputStream.readUnsignedByte();
+            adaptationFieldBits = inputStream.readByte();
+//            System.out.println("Adaptation field length = " + adaptationFieldLength);
             headerLength += (adaptationFieldLength + 1);
+        }
+        headerBuffer = ByteBuffer.allocate(headerLength);
+        headerBuffer.putInt(headerBits);
+        if (header.hasAdaptationField) {
+            headerBuffer.put((byte) adaptationFieldLength);
+            headerBuffer.put((byte) adaptationFieldBits);
+            for (int i = 0; i < adaptationFieldLength - 1; i++) {
+                byte b = inputStream.readByte();
+                headerBuffer.put(b);
+            }
         }
         header.setLength(headerLength);
 
         return header;
+    }
+
+    public byte[] getBytes() {
+        byte[] buffer = new byte[TransportStream.TS_FRAME_SIZE];
+        if (isScrambled()) {
+            throw new IllegalStateException("Cannot get bytes from scrambled packet");
+        }
+        if (headerBuffer.hasArray() && data.hasArray()) {
+            System.arraycopy(headerBuffer.array(), 0, buffer, 0, header.getLength());
+            System.arraycopy(data.array(), 0, buffer, header.getLength(), data.capacity());
+        } else {
+            throw new IllegalStateException("Cannot get bytes from empty packet");
+        }
+        return buffer;
+    }
+
+    public byte[] getScrambledBytes(byte[] decrypted) {
+        byte[] buffer = new byte[TransportStream.TS_FRAME_SIZE];
+        if (headerBuffer.hasArray()) {
+            System.arraycopy(headerBuffer.array(), 0, buffer, 0, header.getLength());
+            System.arraycopy(data.array(), 0, buffer, header.getLength(), TransportStream.TS_FRAME_SIZE - decrypted.length - header.getLength());
+            System.arraycopy(decrypted, 0, buffer, header.getLength() + getPesHeaderOffset(), decrypted.length);
+        } else {
+            throw new IllegalStateException("Cannot get bytes from empty packet");
+        }
+        return buffer;
+    }
+
+    public boolean isScrambled() {
+        return header.isScrambled();
+    }
+
+    public void clearScrambled() {
+        byte[] headerBytes = headerBuffer.array();
+        headerBytes[3] &= ~(0xC0);
+    }
+
+    public int getPayloadOffset() {
+        return header.getLength();
+    }
+
+    public void setPesHeaderOffset(int val) {
+        pesHeaderOffset = val;
+    }
+
+    public int getPesHeaderOffset() {
+        return pesHeaderOffset;
     }
 
     public void setPacketId(long id) {

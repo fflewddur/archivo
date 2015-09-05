@@ -77,6 +77,10 @@ public class TuringDecoder {
         streams = new HashMap<>();
     }
 
+    public void setKey(byte[] newKey) {
+        System.arraycopy(newKey, 0, key, 0, newKey.length);
+    }
+
     public TuringStream prepareFrame(int streamId, int blockId) {
         TuringStream stream = streams.get(streamId);
         if (stream == null) {
@@ -85,6 +89,7 @@ public class TuringDecoder {
             streams.put(streamId, stream);
         }
 
+//        System.out.println("stream.getBlockId() = " + stream.getBlockId());
         if (stream.getBlockId() != blockId) {
             prepareFrameHelper(stream, streamId, blockId);
         }
@@ -102,11 +107,11 @@ public class TuringDecoder {
         byte[] shortenedKey = new byte[SHORTENED_KEY_LENGTH];
         System.arraycopy(key, 0, shortenedKey, 0, SHORTENED_KEY_LENGTH);
         byte[] turkey = DigestUtils.sha1(shortenedKey);
-        System.out.println("turkey: " + DigestUtils.sha1Hex(shortenedKey));
+//        System.out.println("prepareFrameHelper(): turkey=" + DigestUtils.sha1Hex(shortenedKey));
         byte[] turiv = DigestUtils.sha1(key);
-        System.out.println("turiv: " + DigestUtils.sha1Hex(key));
+//        System.out.println("prepareFrameHelper(): turiv=" + DigestUtils.sha1Hex(key));
 
-        stream.reset(turkey, turiv);
+        stream.reset(streamId, blockId, turkey, turiv);
     }
 
     public void skipBytes(TuringStream stream, int bytesToSkip) {

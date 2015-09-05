@@ -19,34 +19,41 @@
 
 package net.straylightlabs.archivo.tivodecode;
 
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.HashMap;
+import java.util.Map;
 
 public class TransportStream {
-    private final int pid;
+    private final TuringDecoder turingDecoder;
+    //    private final int pid;
     private int streamId;
     private StreamType type;
     private byte[] pesBuffer;
     private byte[] turingKey;
     private int turingBlockNumber;
+    //    private int turingCrypted;
     private final Deque<TransportStreamPacket> packets;
     private final Deque<Integer> pesHeaderLengths;
     private final OutputStream outputStream;
 
     public static final int TS_FRAME_SIZE = 188;
 
-    public TransportStream(int pid, OutputStream outputStream) {
-        this.pid = pid;
+    public TransportStream(OutputStream outputStream, TuringDecoder decoder) {
+//        this.pid = pid;
         this.type = StreamType.NONE;
         this.outputStream = outputStream;
+        this.turingDecoder = decoder;
         pesBuffer = new byte[TS_FRAME_SIZE * 10];
         packets = new ArrayDeque<>();
         pesHeaderLengths = new ArrayDeque<>();
     }
 
-    public TransportStream(int pid, OutputStream outputStream, StreamType type) {
-        this(pid, outputStream);
+    public TransportStream(OutputStream outputStream, TuringDecoder decoder, StreamType type) {
+        this(outputStream, decoder);
         this.type = type;
     }
 
@@ -77,7 +84,7 @@ public class TransportStream {
             packets.addLast(packet);
 
             // Form one contiguous buffer containing all buffered packet payloads
-            Arrays.fill(pesBuffer, (byte) 0);
+//            Arrays.fill(pesBuffer, (byte) 0);
             int pesBufferLen = 0;
             for (TransportStreamPacket p : packets) {
                 ByteBuffer data = p.getData();
@@ -93,10 +100,87 @@ public class TransportStream {
                 return false;
             }
             int pesHeaderLength = pesHeaderLengths.stream().mapToInt(i -> i).sum() / 8;
+//            System.out.format("pesDecodeBufferLen %d, pesHeaderLength %d%n", pesBufferLen, pesHeaderLength);
+
+            // Do the PES headers end in this packet ?
+            if (pesHeaderLength < pesBufferLen) {
+                flushBuffers = true;
+
+                // For each packet, set the end point for PES headers in that packet
+                for (TransportStreamPacket p : packets) {
+                    while (!pesHeaderLengths.isEmpty()) {
+                        int headerLen = pesHeaderLengths.removeFirst() / 8;
+                        if (headerLen + p.getPayloadOffset() + p.getPesHeaderOffset() < TS_FRAME_SIZE) {
+                            p.setPesHeaderOffset(p.getPesHeaderOffset() + headerLen);
+                            pesHeaderLength -= headerLen;
+                        } else {
+                            // Packet boundary occurs within this PES header
+                            // Three cases to handle :
+                            //   1. pkt boundary falls within startCode
+                            //        start decrypt after startCode finish in NEXT pkt
+                            //   2. pkt boundary falls between startCode and payload
+                            //        start decrypt at payload start in NEXT pkt
+                            //   3. pkt boundary falls within payload
+                            //        start decrypt offset into the payload
+                            int packetBoundaryOffset = TS_FRAME_SIZE - p.getPayloadOffset() - p.getPesHeaderOffset();
+                            if (packetBoundaryOffset < 4) {
+                                headerLen -= packetBoundaryOffset;
+                                headerLen *= 8;
+                                pesHeaderLengths.addFirst(headerLen);
+                            }
+                            break;
+                        }
+                    }
+                }
+            }
 
         } else {
             flushBuffers = true;
             packets.addLast(packet);
+        }
+
+        if (flushBuffers) {
+//            System.out.println("Flush packets for write");
+
+            // Loop through each buffered packet.
+            // If it is encrypted, perform decryption and then write it out.
+            // Otherwise, just write it out.
+            try {
+                while (!packets.isEmpty()) {
+                    TransportStreamPacket p = packets.removeFirst();
+                    byte[] packetBytes;
+                    if (p.isScrambled()) {
+                        p.clearScrambled();
+                        ByteBuffer encryptedData = p.getData();
+                        int encryptedLength = encryptedData.capacity() - p.getPesHeaderOffset();
+                        byte[] data = new byte[encryptedLength];
+                        for (int i = 0; i < p.getPesHeaderOffset(); i++) {
+                            encryptedData.get(); // Advance past PES header
+                        }
+                        encryptedData.get(data);
+                        if (!decrypt(data)) {
+                            System.err.format("Packet decrypt failed%n");
+                            return false;
+                        }
+                        packetBytes = p.getScrambledBytes(data);
+                    } else {
+                        packetBytes = p.getBytes();
+                    }
+
+                    StringBuilder sb = new StringBuilder();
+                    int counter = 0;
+                    for (byte b : packetBytes) {
+                        sb.append(String.format("%02x", b));
+                        if (++counter % 40 == 0)
+                            sb.append("\n    ");
+                    }
+//                    System.out.println("writing buffer:\n    " + sb.toString());
+                    outputStream.write(packetBytes);
+                }
+            } catch (IOException e) {
+                System.err.format("Error writing file: %s%n", e.getLocalizedMessage());
+                return false;
+            }
         }
 
         return true;
@@ -106,8 +190,12 @@ public class TransportStream {
         MpegParser parser = new MpegParser(buffer);
         boolean done = false;
         while (!done && !parser.isEOF()) {
-            parser.advanceBits(8); // Skip header offset
+            int headerOffset = parser.nextBits(8);
+//            System.out.format("PES header offset: 0x%x%n", headerOffset);
+//            parser.advanceBits(8); // Skip header offset
+
             if (0x000001 != parser.nextBits(24)) {
+//                System.out.println("done!");
                 done = true;
                 continue;
             }
@@ -149,11 +237,82 @@ public class TransportStream {
             }
 
             if (len > 0) {
+//                System.out.format("Adding header len (%d)%n", len);
                 pesHeaderLengths.addLast(len);
             }
         }
 
         return true;
+    }
+
+    public boolean decrypt(byte[] buffer) {
+//        System.out.print("Turing key before doHeader(): ");
+//        for (int i = 0; i < 16; i++) {
+//            System.out.format("%02x", turingKey[i]);
+//        }
+//        System.out.println();
+
+        if (!doHeader()) {
+            System.err.format("Problem parsing Turing header%n");
+            return false;
+        }
+//        StringBuilder sb = new StringBuilder();
+//        sb.append(String.format("BBB : stream_id 0x%02x, blockno %d, crypted 0x%08x%n", streamId, turingBlockNumber, turingCrypted));
+        TuringStream turingStream = turingDecoder.prepareFrame(streamId, turingBlockNumber);
+//        sb.append(String.format("CCC : stream_id 0x%02x, blockno %d, crypted 0x%08x%n", streamId, turingBlockNumber, turingCrypted));
+//        System.out.print("Turing key before decryptBytes(): ");
+//        for (int i = 0; i < 16; i++) {
+//            System.out.format("%02x", turingKey[i]);
+//        }
+//        System.out.println();
+        turingDecoder.decryptBytes(turingStream, buffer);
+//        sb.append(String.format("Buffer: "));
+//        for (byte b : buffer) {
+//            sb.append(String.format("%02X", b));
+//        }
+//        sb.append(String.format("%n"));
+//        System.out.println(sb.toString());
+        return true;
+    }
+
+    private boolean doHeader() {
+        boolean noProblems = true;
+
+        if ((turingKey[0] & 0x80) == 0)
+            noProblems = false;
+
+        if ((turingKey[1] & 0x40) == 0)
+            noProblems = false;
+
+        turingBlockNumber = (turingKey[0x1] & 0x3f) << 0x12;
+        turingBlockNumber |= (turingKey[0x2] & 0xff) << 0xa;
+        turingBlockNumber |= (turingKey[0x3] & 0xc0) << 0x2;
+
+        if ((turingKey[3] & 0x20) == 0)
+            noProblems = false;
+
+        turingBlockNumber |= (turingKey[0x3] & 0x1f) << 0x3;
+        turingBlockNumber |= (turingKey[0x4] & 0xe0) >> 0x5;
+
+
+        if ((turingKey[4] & 0x10) == 0)
+            noProblems = false;
+
+//        turingCrypted = (turingKey[0xb] & 0x03) << 0x1e;
+//        turingCrypted |= (turingKey[0xc] & 0xff) << 0x16;
+//        turingCrypted |= (turingKey[0xd] & 0xfc) << 0xe;
+
+        if ((turingKey[0xd] & 0x2) == 0)
+            noProblems = false;
+
+//        turingCrypted |= (turingKey[0xd] & 0x01) << 0xf;
+//        turingCrypted |= (turingKey[0xe] & 0xff) << 0x7;
+//        turingCrypted |= (turingKey[0xf] & 0xfe) >> 0x1;
+
+        if ((turingKey[0xf] & 0x1) == 0)
+            noProblems = false;
+
+        return noProblems;
     }
 
     public enum StreamType {

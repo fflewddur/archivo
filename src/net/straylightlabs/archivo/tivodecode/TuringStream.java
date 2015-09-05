@@ -69,12 +69,24 @@ public class TuringStream {
         cipherPos = 0;
     }
 
-    public void reset(byte[] turkey, byte[] turiv) {
+    public void reset(int streamId, int blockId, byte[] turkey, byte[] turiv) {
+        this.streamId = streamId;
+        this.blockId = blockId;
         cipherPos = 0;
         turingReferenceImp.setTuringKey(turkey, 20);
         turingReferenceImp.setTuringIV(turiv, 20);
         Arrays.fill(cipherData, (byte) 0);
         cipherLen = turingReferenceImp.turingGen(cipherData);
+    }
+
+    @Override
+    public String toString() {
+        return "TuringStream{" +
+                "streamId=" + streamId +
+                ", blockId=" + blockId +
+                ", cipherPos=" + cipherPos +
+                ", cipherLen=" + cipherLen +
+                '}';
     }
 
     private void dumpCipherData() {

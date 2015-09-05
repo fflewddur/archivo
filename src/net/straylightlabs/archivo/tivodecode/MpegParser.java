@@ -26,11 +26,6 @@ public class MpegParser {
     private int headerLength;
     private long bitPos;
     private boolean isEOF;
-    private int progressiveSequence;
-    private int pictureStructure;
-    private int topFieldFirst;
-    private int repeatFirstField;
-    private int verticalSize;
 
     private static final int BITS_PER_BYTE = 8;
 
@@ -145,9 +140,7 @@ public class MpegParser {
     }
 
     public int sequenceExtension() {
-        advanceBits(12);
-        progressiveSequence = nextBits(1);
-        advanceBits(36);
+        advanceBits(49);
 
         nextStartCode();
         return headerLength;
@@ -167,13 +160,7 @@ public class MpegParser {
     }
 
     public int pictureCodingExtension() {
-        advanceBits(22);
-        pictureStructure = nextBits(2);
-        advanceBits(2);
-        topFieldFirst = nextBits(1);
-        advanceBits(6);
-        repeatFirstField = nextBits(1);
-        advanceBits(3);
+        advanceBits(37);
         int compositeDisplayFlag = nextBits(1);
         advanceBits(1);
         if (compositeDisplayFlag == 1) {
@@ -191,11 +178,9 @@ public class MpegParser {
     }
 
     public int userData() {
-        int userDataStartCode = nextBits(32);
-        advanceBits(32);
+        advanceBits(64);
         while (nextBits(24) != 0x000001) {
-            int userData = nextBits(8);
-            advanceBits(8);
+            advanceBits(16);
         }
 
         nextStartCode();
@@ -221,9 +206,7 @@ public class MpegParser {
     }
 
     public int sequenceHeader() {
-        advanceBits(44);
-        verticalSize = nextBits(12);
-        advanceBits(50);
+        advanceBits(106);
         int loadIntraQuantiserMatrix = nextBits(1);
         advanceBits(1);
         if (loadIntraQuantiserMatrix == 1) {
@@ -266,8 +249,7 @@ public class MpegParser {
         else if ((streamId >= 0xE0) && (streamId <= 0xEF))
             extensionPresent = true;
 
-        int pesHeaderLength = nextBits(16);
-        advanceBits(16);
+        advanceBits(32);
 
         if (extensionPresent) {
             pesHeaderExtension();
@@ -283,13 +265,13 @@ public class MpegParser {
         int program_packet_sequence_counter_flag = 0;
         int p_std_buffer_flag = 0;
         int pes_extension_field_length = 0;
-        int PTS_DTS_flags = 0;
-        int ESCR_flag = 0;
-        int ES_rate_flag = 0;
-        int additional_copy_flag = 0;
-        int PES_CRC_flag = 0;
+        int PTS_DTS_flags;
+        int ESCR_flag;
+        int ES_rate_flag;
+        int additional_copy_flag;
+        int PES_CRC_flag;
         int pes_extension_flag2 = 0;
-        int PES_extension_flag = 0;
+        int PES_extension_flag;
 
         advanceBits(8);
         PTS_DTS_flags = nextBits(2);
