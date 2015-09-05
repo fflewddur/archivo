@@ -20,10 +20,7 @@
 
 package net.straylightlabs.archivo.tivodecode;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -47,7 +44,7 @@ public class TivoDecoder {
         System.out.format("%s%n%n", QUALCOMM_MSG);
 
         try (FileInputStream inputStream = new FileInputStream(inputPath.toFile());
-             FileOutputStream outputStream = new FileOutputStream(outputPath.toFile())) {
+             BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(outputPath.toFile()))) {
             TivoStream stream = new TivoStream(inputStream, outputStream, mak);
             stream.read();
             System.out.println(stream);

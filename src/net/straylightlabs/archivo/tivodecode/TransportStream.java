@@ -19,7 +19,6 @@
 
 package net.straylightlabs.archivo.tivodecode;
 
-import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayDeque;
@@ -167,17 +166,17 @@ public class TransportStream {
                         packetBytes = p.getBytes();
                     }
 
-                    StringBuilder sb = new StringBuilder();
-                    int counter = 0;
-                    for (byte b : packetBytes) {
-                        sb.append(String.format("%02x", b));
-                        if (++counter % 40 == 0)
-                            sb.append("\n    ");
-                    }
+//                    StringBuilder sb = new StringBuilder();
+//                    int counter = 0;
+//                    for (byte b : packetBytes) {
+//                        sb.append(String.format("%02x", b));
+//                        if (++counter % 40 == 0)
+//                            sb.append("\n    ");
+//                    }
 //                    System.out.println("writing buffer:\n    " + sb.toString());
                     outputStream.write(packetBytes);
                 }
-            } catch (IOException e) {
+            } catch (Exception e) {
                 System.err.format("Error writing file: %s%n", e.getLocalizedMessage());
                 return false;
             }

@@ -61,7 +61,7 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
             TransportStreamPacket packet = new TransportStreamPacket();
             while (packet.readFrom(inputStream)) {
                 packet.setPacketId(++packetCounter);
-                System.out.println(packet);
+//                System.out.println(packet);
                 switch (packet.getPacketType()) {
                     case PROGRAM_ASSOCIATION_TABLE:
                         if (!processPatPacket(packet)) {
