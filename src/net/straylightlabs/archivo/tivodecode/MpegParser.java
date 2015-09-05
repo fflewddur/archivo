@@ -140,7 +140,7 @@ public class MpegParser {
     }
 
     public int sequenceExtension() {
-        advanceBits(49);
+        advanceBits(48);
 
         nextStartCode();
         return headerLength;
@@ -160,7 +160,7 @@ public class MpegParser {
     }
 
     public int pictureCodingExtension() {
-        advanceBits(37);
+        advanceBits(33);
         int compositeDisplayFlag = nextBits(1);
         advanceBits(1);
         if (compositeDisplayFlag == 1) {
@@ -178,9 +178,9 @@ public class MpegParser {
     }
 
     public int userData() {
-        advanceBits(64);
+        advanceBits(32);
         while (nextBits(24) != 0x000001) {
-            advanceBits(16);
+            advanceBits(8);
         }
 
         nextStartCode();
@@ -206,7 +206,7 @@ public class MpegParser {
     }
 
     public int sequenceHeader() {
-        advanceBits(106);
+        advanceBits(94);
         int loadIntraQuantiserMatrix = nextBits(1);
         advanceBits(1);
         if (loadIntraQuantiserMatrix == 1) {
@@ -237,7 +237,7 @@ public class MpegParser {
         boolean extensionPresent = false;
         int streamId = nextBits(8);
         advanceBits(8);
-
+//        System.out.format("streamId: 0x%02x, headerLength=%d%n", streamId, headerLength);
         if (streamId == 0xBD)
             extensionPresent = true;
         else if (streamId == 0xBE)
@@ -249,9 +249,10 @@ public class MpegParser {
         else if ((streamId >= 0xE0) && (streamId <= 0xEF))
             extensionPresent = true;
 
-        advanceBits(32);
+        advanceBits(16);
 
         if (extensionPresent) {
+//            System.out.println("extensionPresent, headerLength=" + headerLength);
             pesHeaderExtension();
         }
 
@@ -293,19 +294,19 @@ public class MpegParser {
             advanceBits(80);
         }
 
-        if (ESCR_flag > 0) {
+        if (ESCR_flag != 0) {
             advanceBits(48);
         }
-        if (ES_rate_flag > 0) {
+        if (ES_rate_flag != 0) {
             advanceBits(24);
         }
-        if (additional_copy_flag > 0) {
+        if (additional_copy_flag != 0) {
             advanceBits(8);
         }
-        if (PES_CRC_flag > 0) {
+        if (PES_CRC_flag != 0) {
             advanceBits(16);
         }
-        if (PES_extension_flag > 0) {
+        if (PES_extension_flag != 0) {
             pes_private_data_flag = nextBits(1);
             advanceBits(1);
             pack_header_field_flag = nextBits(1);
@@ -317,24 +318,24 @@ public class MpegParser {
             pes_extension_flag2 = nextBits(1);
             advanceBits(1);
         }
-        if (pes_private_data_flag > 0) {
+        if (pes_private_data_flag != 0) {
             advanceBits(8 * 16);
         }
-        if (pack_header_field_flag > 0) {
+        if (pack_header_field_flag != 0) {
             advanceBits(8);
         }
-        if (program_packet_sequence_counter_flag > 0) {
+        if (program_packet_sequence_counter_flag != 0) {
             advanceBits(16);
         }
-        if (p_std_buffer_flag > 0) {
+        if (p_std_buffer_flag != 0) {
             advanceBits(16);
         }
-        if (pes_extension_flag2 > 0) {
+        if (pes_extension_flag2 != 0) {
             advanceBits(1);
             pes_extension_field_length = nextBits(7);
             advanceBits(15);
         }
-        if (pes_extension_field_length > 0) {
+        if (pes_extension_field_length != 0) {
             advanceBits(8 * pes_extension_field_length);
         }
 

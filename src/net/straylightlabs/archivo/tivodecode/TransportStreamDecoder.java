@@ -103,14 +103,14 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
                     return false;
                 }
 
-//                if (packet.getPacketId() > 200000) {
+//                if (packet.getPacketId() > 50000) {
 //                    return false;
 //                }
                 packet = new TransportStreamPacket();
             }
             return true;
         } catch (EOFException e) {
-            System.out.println("End of file reached.");
+//            System.out.println("End of file reached.");
             return true;
         } catch (IOException e) {
             System.err.format("Error reading transport stream: %s%n", e.getLocalizedMessage());
@@ -150,7 +150,7 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
             return false;
         }
 
-        int transportStreamId = packet.readUnsignedShortFromData();
+        packet.readUnsignedShortFromData();
         sectionLength -= 2;
 
         patData.setVersionNumber(packet.readUnsignedByteFromData() & 0x3E);
@@ -162,7 +162,7 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
 
         sectionLength -= 4; // Ignore the CRC
         while (sectionLength > 0) {
-            patField = packet.readUnsignedShortFromData();
+            packet.readUnsignedShortFromData();
             sectionLength -= 2;
 
             // Again?
@@ -182,6 +182,8 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
     }
 
     private boolean processPmtPacket(TransportStreamPacket packet) {
+//        System.out.println("PMT packet");
+
         if (packet.isPayloadStart()) {
             // Advance past pointer field
             packet.advanceDataOffset(1);
@@ -230,6 +232,8 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
     }
 
     private boolean processTivoPacket(TransportStreamPacket packet) {
+//        System.out.println("TiVo packet");
+
         int validator = packet.readIntFromData();
         if (validator != 0x5469566f) {
             System.err.format("Invalid TiVo private data validator: %08x%n", validator);

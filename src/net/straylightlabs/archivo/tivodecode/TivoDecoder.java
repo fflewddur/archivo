@@ -28,32 +28,25 @@ import java.nio.file.Paths;
 
  */
 public class TivoDecoder {
-    private final Path inputPath;
-    private final Path outputPath;
+    private final InputStream inputStream;
+    private final OutputStream outputStream;
     private final String mak;
 
     public final static String QUALCOMM_MSG = "Encryption by QUALCOMM ;)";
 
-    public TivoDecoder(Path inputPath, Path outputPath, String mak) {
-        this.inputPath = inputPath;
-        this.outputPath = outputPath;
+    public TivoDecoder(InputStream inputStream, OutputStream outputStream, String mak) {
+        this.inputStream = inputStream;
+        this.outputStream = outputStream;
         this.mak = mak;
     }
 
     public boolean decode() {
         System.out.format("%s%n%n", QUALCOMM_MSG);
 
-        try (FileInputStream inputStream = new FileInputStream(inputPath.toFile());
-             BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(outputPath.toFile()))) {
-            TivoStream stream = new TivoStream(inputStream, outputStream, mak);
-            stream.read();
-            System.out.println(stream);
+        TivoStream stream = new TivoStream(inputStream, outputStream, mak);
+        stream.process();
+//        System.out.println(stream);
 //            stream.printChunkPayloads();
-        } catch (FileNotFoundException e) {
-            System.err.format("The input file '%s' was not found: %s%n", inputPath, e.getLocalizedMessage());
-        } catch (IOException e) {
-            System.err.format("Error while decoding file: %s%n", e.getLocalizedMessage());
-        }
 
         return false;
     }
@@ -68,7 +61,14 @@ public class TivoDecoder {
         Path in = Paths.get(args[0]);
         Path out = Paths.get(args[1]);
         String mak = args[2];
-        TivoDecoder decoder = new TivoDecoder(in, out, mak);
-        decoder.decode();
+        try (FileInputStream inputStream = new FileInputStream(in.toFile());
+             BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(out.toFile()))) {
+            TivoDecoder decoder = new TivoDecoder(inputStream, outputStream, mak);
+            decoder.decode();
+        } catch (FileNotFoundException e) {
+            System.err.format("Error: %s%n", e.getLocalizedMessage());
+        } catch (IOException e) {
+            System.err.format("Error reading/writing files: %s%n", e.getLocalizedMessage());
+        }
     }
 }

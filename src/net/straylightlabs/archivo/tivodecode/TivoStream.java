@@ -41,7 +41,7 @@ public class TivoStream {
         metaPosition = 0;
     }
 
-    public boolean read() {
+    public boolean process() {
         try (CountingDataInputStream dataInputStream = new CountingDataInputStream(inputStream)) {
             header = new TivoStreamHeader(dataInputStream);
             if (!header.read()) {

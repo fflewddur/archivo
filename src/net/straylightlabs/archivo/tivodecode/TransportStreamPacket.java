@@ -41,7 +41,7 @@ public class TransportStreamPacket {
 
         // Read the rest of the packet
         int bytesToRead = TransportStream.TS_FRAME_SIZE - header.getLength();
-        int bytesRead = 0, totalBytesRead = 0;
+        int bytesRead, totalBytesRead = 0;
         byte[] buffer = new byte[bytesToRead];
 
         do {
