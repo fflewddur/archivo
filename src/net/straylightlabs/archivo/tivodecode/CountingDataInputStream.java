@@ -32,7 +32,6 @@ public class CountingDataInputStream implements AutoCloseable {
 
     public CountingDataInputStream(InputStream stream) {
         this.stream = new DataInputStream(stream);
-        position = 0;
     }
 
     public long getPosition() {

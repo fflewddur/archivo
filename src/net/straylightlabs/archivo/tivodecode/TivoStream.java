@@ -38,7 +38,6 @@ public class TivoStream {
         this.inputStream = inputStream;
         this.outputStream = outputStream;
         this.mak = mak;
-        metaPosition = 0;
     }
 
     public boolean process() {

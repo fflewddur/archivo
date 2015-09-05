@@ -56,7 +56,6 @@ class TivoStreamChunk {
 
             // The rest is the payload
             data = new byte[dataSize];
-
             for (int totalBytesRead = 0, bytesRead = 0; totalBytesRead < dataSize && bytesRead != -1; totalBytesRead += bytesRead) {
                 bytesRead = inputStream.read(data);
             }
@@ -64,7 +63,7 @@ class TivoStreamChunk {
             // There might be padding bytes at the end of the chunk
             int paddingBytes = chunkSize - dataSize - CHUNK_HEADER_SIZE;
             inputStream.skipBytes(paddingBytes);
-        } catch (IOException e) {
+        } catch (IOException | IllegalArgumentException e) {
             System.err.println("Error reading chunk: " + e.getLocalizedMessage());
             return false;
         }
