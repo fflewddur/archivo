@@ -26,7 +26,7 @@ import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
 import net.straylightlabs.archivo.net.MindCommandIdSearch;
-import net.straylightlabs.archivo.tivodecode.TivoDecoder;
+import net.straylightlabs.tivolibre.TivoDecoder;
 import org.apache.http.Header;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -54,7 +54,8 @@ public class ArchiveTask extends Task<Recording> {
     private final Tivo tivo;
     private final String mak;
 
-    private static final int BUFFER_SIZE = 8192;
+    private static final int BUFFER_SIZE = 8192; // 8KB
+    private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 32; // 32MB
     private static final double MIN_PROGRESS_INCREMENT = 0.01;
     private static final int NUM_RETRIES = 3;
     private static final int RETRY_DELAY = 5000; // delay between retry attempts, in ms
@@ -153,14 +154,15 @@ public class ArchiveTask extends Task<Recording> {
         double priorPercent = 0;
         try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(recording.getDestination()));
              BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent(), BUFFER_SIZE);
-             PipedInputStream pipedInputStream = new PipedInputStream(BUFFER_SIZE);
-             PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream)) {
+             PipedInputStream pipedInputStream = new PipedInputStream(PIPE_BUFFER_SIZE);
+             PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream)
+        ) {
             // Pipe the network stream to our TiVo decoder, then pipe the output of that to the output file stream
             Thread thread = new Thread(() -> {
                 TivoDecoder decoder = new TivoDecoder(pipedInputStream, outputStream, mak);
                 if (!decoder.decode()) {
                     Archivo.logger.severe("Failed to decode file");
-                    throw new RuntimeException("Testing");
+                    throw new ArchiveTaskException("Problem decoding recording");
                 }
             });
             thread.start();
@@ -183,12 +185,13 @@ public class ArchiveTask extends Task<Recording> {
                 }
                 totalBytesRead += bytesRead;
                 Archivo.logger.fine("Bytes read: " + bytesRead);
-//                    outputStream.write(buffer, 0, bytesRead);
+//                outputStream.write(buffer, 0, bytesRead);
                 pipedOutputStream.write(buffer, 0, bytesRead);
                 double percent = totalBytesRead / (double) estimatedLength;
                 if (percent - priorPercent >= MIN_PROGRESS_INCREMENT) {
                     updateProgress(recording, percent, startTime, totalBytesRead, estimatedLength);
                     priorPercent = percent;
+                    Archivo.logger.info("Total bytes written to pipe: " + totalBytesRead);
                 }
             }
             Archivo.logger.info("Download complete.");
