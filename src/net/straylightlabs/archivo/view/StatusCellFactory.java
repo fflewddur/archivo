@@ -64,6 +64,10 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
                     setText("Archived");
                     setProgress(1.0);
                     break;
+                case ERROR:
+                    setText(status.getMessage());
+                    setGraphic(null);
+                    break;
                 default:
                     setText(status.getStatus().toString());
                     setGraphic(null);
@@ -85,12 +89,12 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
     private String formatTime(int seconds) {
         if (seconds == ArchiveStatus.TIME_UNKNOWN) {
             return "calculating time left";
-        } else if (seconds < 40) {
+        } else if (seconds <= 30) {
             return "about 30 seconds left";
-        } else if (seconds < (60 + 59)) {
+        } else if (seconds <= 65) {
             return "about 1 minute left";
         } else if (seconds < (60 * 60)) {
-            return "" + seconds / 60 + " minutes left";
+            return "" + (seconds / 60 + 1) + " minutes left";
         } else {
             int hours = seconds / 60 / 60;
             if (hours > 1) {

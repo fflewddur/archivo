@@ -26,27 +26,41 @@ public class ArchiveStatus {
     private final TaskStatus status;
     private final double progress;
     private final int secondsRemaining;
+    private final String message;
 
     public final static int TIME_UNKNOWN = -1;
     public final static ArchiveStatus EMPTY = new ArchiveStatus(TaskStatus.NONE);
     public final static ArchiveStatus QUEUED = new ArchiveStatus(TaskStatus.QUEUED);
     public final static ArchiveStatus FINISHED = new ArchiveStatus(TaskStatus.FINISHED);
-    public final static ArchiveStatus ERROR = new ArchiveStatus(TaskStatus.ERROR);
+//    public final static ArchiveStatus ERROR = new ArchiveStatus(TaskStatus.ERROR);
 
     private ArchiveStatus(TaskStatus status) {
         this.status = status;
         progress = 0;
         secondsRemaining = 0;
+        message = null;
     }
 
     private ArchiveStatus(TaskStatus status, double progress, int secondsRemaining) {
         this.status = status;
         this.progress = progress;
         this.secondsRemaining = secondsRemaining;
+        this.message = null;
+    }
+
+    private ArchiveStatus(TaskStatus status, String message) {
+        this.status = status;
+        this.progress = 0;
+        this.secondsRemaining = 0;
+        this.message = message;
     }
 
     public TaskStatus getStatus() {
         return status;
+    }
+
+    public String getMessage() {
+        return message;
     }
 
     public double getProgress() {
@@ -63,6 +77,10 @@ public class ArchiveStatus {
 
     public static ArchiveStatus createTranscodingStatus(double progress, int secondsRemaining) {
         return new ArchiveStatus(TaskStatus.TRANSCODING, progress, secondsRemaining);
+    }
+
+    public static ArchiveStatus createErrorStatus(Throwable e) {
+        return new ArchiveStatus(TaskStatus.ERROR, e.getLocalizedMessage());
     }
 
     public enum TaskStatus {

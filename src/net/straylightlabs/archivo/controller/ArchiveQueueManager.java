@@ -25,8 +25,6 @@ import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
 
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,16 +52,19 @@ public class ArchiveQueueManager {
                 recording.statusProperty().setValue(ArchiveStatus.createDownloadingStatus(0, ArchiveStatus.TIME_UNKNOWN));
             });
             task.setOnSucceeded(event -> {
+                Archivo.logger.info(String.format("ArchiveTask succeeded for %s", recording.getFullTitle()));
                 queuedTasks.remove(recording);
                 mainApp.clearStatusText();
                 recording.statusProperty().setValue(ArchiveStatus.FINISHED);
             });
             task.setOnFailed(event -> {
+                Archivo.logger.info(String.format("ArchiveTask failed for %s", recording.getFullTitle()));
                 queuedTasks.remove(recording);
                 mainApp.clearStatusText();
-                recording.statusProperty().setValue(ArchiveStatus.ERROR);
+                recording.statusProperty().setValue(ArchiveStatus.createErrorStatus(event.getSource().getException()));
             });
             task.setOnCancelled(event -> {
+                Archivo.logger.info(String.format("ArchiveTask canceled for %s", recording.getFullTitle()));
                 queuedTasks.remove(recording);
                 mainApp.clearStatusText();
                 recording.statusProperty().setValue(ArchiveStatus.EMPTY);
@@ -91,11 +92,5 @@ public class ArchiveQueueManager {
 
     public boolean hasTasks() {
         return queuedTasks.size() > 0;
-    }
-
-    private Path getFileDestination() {
-        // TODO Make this user-configurable
-        Path destination = Paths.get(System.getProperty("user.home"), "download.TiVo");
-        return destination;
     }
 }

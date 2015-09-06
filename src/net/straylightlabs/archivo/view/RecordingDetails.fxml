@@ -46,6 +46,8 @@
                 <Button fx:id="archiveButton" onAction="#archive" minWidth="80">Archive</Button>
                 <Button fx:id="cancelButton" onAction="#cancel" minWidth="80">Cancel</Button>
                 <Button fx:id="openButton" onAction="#open" minWidth="80">Open</Button>
+                <Label fx:id="copyProtected" text="Copy-protected"
+                       style="-fx-text-fill: darkred; -fx-font-weight: bold;"/>
             </VBox>
             <VBox spacing="3">
                 <Label fx:id="date" text="Recorded on"/>
@@ -55,8 +57,6 @@
             <VBox spacing="3">
                 <Label fx:id="episode" text="Episode"/>
                 <Label fx:id="originalAirDate" text="Original air date"/>
-                <Label fx:id="copyProtected" text="Copy-protected"
-                       style="-fx-text-fill: darkred; -fx-font-weight: bold;"/>
             </VBox>
         </HBox>
     </VBox>
