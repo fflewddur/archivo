@@ -19,7 +19,6 @@
 
 package net.straylightlabs.archivo.tivodecode;
 
-
 import java.util.Arrays;
 
 public class TuringStream {
@@ -101,6 +100,6 @@ public class TuringStream {
                 sb.append(" ");
 
         }
-        System.out.println(sb.toString());
+        TivoDecoder.logger.info(sb.toString());
     }
 }

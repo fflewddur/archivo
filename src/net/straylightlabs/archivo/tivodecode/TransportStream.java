@@ -95,7 +95,7 @@ public class TransportStream {
             // in order to find the end of PES headers.
             pesHeaderLengths.clear();
             if (!getPesHeaderLength(pesBuffer)) {
-                System.err.format("Failed to parse PES headers for packet %d%n", packet.getPacketId());
+                TivoDecoder.logger.severe(String.format("Failed to parse PES headers for packet %d%n", packet.getPacketId()));
                 return false;
             }
             int pesHeaderLength = pesHeaderLengths.stream().mapToInt(i -> i).sum() / 8;
@@ -169,7 +169,7 @@ public class TransportStream {
                         }
                         encryptedData.get(data);
                         if (!decrypt(data)) {
-                            System.err.format("Packet decrypt failed%n");
+                            TivoDecoder.logger.severe("Decrypting packet failed");
                             return false;
                         }
                         packetBytes = p.getScrambledBytes(data);
@@ -189,7 +189,7 @@ public class TransportStream {
                     outputStream.write(packetBytes);
                 }
             } catch (Exception e) {
-                System.err.format("Error writing file: %s%n", e.getLocalizedMessage());
+                TivoDecoder.logger.severe("Error writing file: " + e.getLocalizedMessage());
                 return false;
             }
         }
@@ -250,7 +250,7 @@ public class TransportStream {
                     } else if ((startCode == 0x1BD) || (startCode >= 0x1C0 && startCode <= 0x1EF)) {
                         len = parser.pesHeader();
                     } else {
-                        System.err.format("Error: Unhandled PES header: 0x%08x%n", startCode);
+                        TivoDecoder.logger.severe(String.format("Error: Unhandled PES header: 0x%08x", startCode));
                         return false;
                     }
             }
@@ -272,7 +272,7 @@ public class TransportStream {
 //        System.out.println();
 
         if (!doHeader()) {
-            System.err.format("Problem parsing Turing header%n");
+            TivoDecoder.logger.severe("Problem parsing Turing header");
             return false;
         }
 //        StringBuilder sb = new StringBuilder();

@@ -65,7 +65,7 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
                 switch (packet.getPacketType()) {
                     case PROGRAM_ASSOCIATION_TABLE:
                         if (!processPatPacket(packet)) {
-                            System.err.println("Error processing PAT packet");
+                            TivoDecoder.logger.severe("Error processing PAT packet");
                             return false;
                         }
                         break;
@@ -73,7 +73,7 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
                         if (packet.getPID() == patData.getProgramMapPid()) {
                             packet.setIsPmt(true);
                             if (!processPmtPacket(packet)) {
-                                System.err.println("Error processing PMT packet");
+                                TivoDecoder.logger.severe("Error processing PMT packet");
                                 return false;
                             }
                         } else {
@@ -84,19 +84,19 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
 
                             if (packet.isTivo()) {
                                 if (!processTivoPacket(packet)) {
-                                    System.err.println("Error processing TiVo packet");
+                                    TivoDecoder.logger.severe("Error processing TiVo packet");
                                     return false;
                                 }
                             }
                         }
                         break;
                     default:
-                        System.err.println("Unknown packet type");
+                        TivoDecoder.logger.severe("Unknown packet type");
                         return false;
                 }
                 TransportStream stream = streams.get(packet.getPID());
                 if (stream == null) {
-                    System.err.format("Error: No TransportStream exists with PID 0x%04x%n", packet.getPID());
+                    TivoDecoder.logger.severe(String.format("Error: No TransportStream exists with PID 0x%04x", packet.getPID()));
                     return false;
                 }
                 if (!stream.addPacket(packet)) {
@@ -113,7 +113,7 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
 //            System.out.println("End of file reached.");
             return true;
         } catch (IOException e) {
-            System.err.format("Error reading transport stream: %s%n", e.getLocalizedMessage());
+            TivoDecoder.logger.severe("Error reading transport stream: " + e.getLocalizedMessage());
         }
 
         return false;
@@ -122,8 +122,9 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
     private void advanceToMpegOffset() throws IOException {
         int bytesToSkip = (int) (mpegOffset - inputStream.getPosition());
         if (bytesToSkip < 0) {
-            System.err.format("Error: Transport stream advanced past MPEG data (MPEG at %d, current position = %d)%n",
-                    mpegOffset, inputStream.getPosition());
+            TivoDecoder.logger.severe(
+                    String.format("Error: Transport stream advanced past MPEG data (MPEG at %d, current position = %d)%n",
+                            mpegOffset, inputStream.getPosition()));
         }
         inputStream.skipBytes(bytesToSkip);
     }
@@ -135,18 +136,18 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
         }
 
         if (packet.readUnsignedByteFromData() != 0) {
-            System.err.println("PAT Table ID must be 0x00");
+            TivoDecoder.logger.severe("PAT Table ID must be 0x00");
             return false;
         }
 
         int patField = packet.readUnsignedShortFromData();
         int sectionLength = patField & 0x03ff;
         if ((patField & 0xC000) != 0x8000) {
-            System.err.println("Failed to validate PAT Misc field");
+            TivoDecoder.logger.severe("Failed to validate PAT Misc field");
             return false;
         }
         if ((patField & 0x0C00) != 0x0000) {
-            System.err.println("Failed to validate PAT MBZ of section length");
+            TivoDecoder.logger.severe("Failed to validate PAT MBZ of section length");
             return false;
         }
 
@@ -236,7 +237,7 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
 
         int validator = packet.readIntFromData();
         if (validator != 0x5469566f) {
-            System.err.format("Invalid TiVo private data validator: %08x%n", validator);
+            TivoDecoder.logger.severe(String.format("Invalid TiVo private data validator: %08x", validator));
             return false;
         }
 
@@ -255,7 +256,7 @@ public class TransportStreamDecoder implements TivoStreamDecoder {
 
             TransportStream stream = streams.get(packetId);
             if (stream == null) {
-                System.err.format("No TransportStream with ID 0x%04x found.%n", packetId);
+                TivoDecoder.logger.severe(String.format("No TransportStream with ID 0x%04x found", packetId));
                 return false;
             }
             stream.setStreamId(streamId);

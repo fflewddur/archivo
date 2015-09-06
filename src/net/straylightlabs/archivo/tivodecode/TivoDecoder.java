@@ -23,6 +23,7 @@ package net.straylightlabs.archivo.tivodecode;
 import java.io.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.logging.Logger;
 
 /**
 
@@ -32,25 +33,26 @@ public class TivoDecoder {
     private final OutputStream outputStream;
     private final String mak;
 
+    public static Logger logger;
+
     public final static String QUALCOMM_MSG = "Encryption by QUALCOMM ;)";
 
     public TivoDecoder(InputStream inputStream, OutputStream outputStream, String mak) {
         this.inputStream = inputStream;
         this.outputStream = outputStream;
         this.mak = mak;
+        logger = Logger.getLogger(TivoDecoder.class.getName());
     }
 
     public boolean decode() {
-        System.out.format("%s%n%n", QUALCOMM_MSG);
-
+        logger.info(QUALCOMM_MSG);
         TivoStream stream = new TivoStream(inputStream, outputStream, mak);
-        stream.process();
-//        System.out.println(stream);
-//            stream.printChunkPayloads();
-
-        return false;
+        return stream.process();
     }
 
+    public static void setLogger(Logger logger) {
+        TivoDecoder.logger = logger;
+    }
 
     /**
      * To enable easier testing.

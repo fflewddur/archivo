@@ -67,20 +67,21 @@ public class TivoStream {
             TivoStreamDecoder streamDecoder;
             switch (header.getFormat()) {
                 case PROGRAM_STREAM:
-                    System.err.println("TiVo Program Stream files are not [yet] supported :(");
+                    TivoDecoder.logger.severe("TiVo Program Stream files are not [yet] supported :(");
                     return false;
                 case TRANSPORT_STREAM:
                     streamDecoder = new TransportStreamDecoder(decoder, header.getMpegOffset(), dataInputStream, outputStream);
                     break;
                 default:
-                    System.err.println("Error: unknown file format.");
+                    TivoDecoder.logger.severe("Error: unknown file format.");
                     return false;
             }
             if (!streamDecoder.process()) {
                 return false;
             }
         } catch (IOException e) {
-            System.err.format("Error reading TiVoStream file: %s%n", e.getLocalizedMessage());
+            TivoDecoder.logger.severe("Error reading TiVoStream file: " + e.getLocalizedMessage());
+            return false;
         }
 
         return true;
@@ -108,7 +109,7 @@ public class TivoStream {
             sb.append(String.format("<START OF CHUNK %d PAYLOAD>%s<END OF PAYLOAD>%n", i, chunks[i].getDataString()));
         }
 
-        System.out.print(sb.toString());
+        TivoDecoder.logger.info(sb.toString());
     }
 
     public enum Format {

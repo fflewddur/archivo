@@ -35,8 +35,8 @@ public class TransportStreamPacket {
     public boolean readFrom(CountingDataInputStream inputStream) throws IOException {
         header = readHeader(inputStream);
         if (!header.isValid()) {
-            System.err.format("Invalid TS packet header%n");
-            return false;
+            TivoDecoder.logger.severe("Invalid TS packet header");
+            throw new IOException("Invalid TS packet header");
         }
 
         // Read the rest of the packet
