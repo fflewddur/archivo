@@ -25,6 +25,7 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
@@ -232,6 +233,14 @@ public class Archivo extends Application {
     public void clearStatusText() {
         logger.info("TaskStatus cleared");
         rootController.hideStatus();
+    }
+
+    public void showErrorMessage(String header, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Something went wrong...");
+        alert.setHeaderText(header);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     public String getMak() {

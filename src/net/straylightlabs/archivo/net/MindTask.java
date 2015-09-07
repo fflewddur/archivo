@@ -34,11 +34,12 @@ public class MindTask extends Task<Void> {
     }
 
     @Override
-    protected Void call() {
+    protected Void call() throws IOException {
         try {
             command.executeOn(client);
         } catch (IOException e) {
             Archivo.logger.severe("Error executing MindTask: " + e.getLocalizedMessage());
+            throw e;
         }
         return null;
     }

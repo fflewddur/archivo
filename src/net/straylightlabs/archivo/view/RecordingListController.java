@@ -129,7 +129,15 @@ public class RecordingListController implements Initializable {
             Throwable e = event.getSource().getException();
             Archivo.logger.log(Level.SEVERE,
                     String.format("Error fetching recordings from %s: %s", tivo.getName(), e.getLocalizedMessage()), e);
+            mainApp.clearStatusText();
+            mainApp.showErrorMessage("Problem fetching list of recordings",
+                    String.format("Unfortunately we encountered a problem while fetching the list of available " +
+                            "recordings from %s. This usually means that either your computer or your TiVo has lost " +
+                            "its network connection.%n%nError message: %s", tivo.getName(), e.getLocalizedMessage())
+            );
+
             enableUI();
+
         });
         mainApp.getRpcExecutor().submit(task);
     }

@@ -55,7 +55,7 @@ public class ArchiveTask extends Task<Recording> {
     private final String mak;
 
     private static final int BUFFER_SIZE = 8192; // 8KB
-    private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 32; // 32MB
+    private static final int PIPE_BUFFER_SIZE = 1024 * 1024; // 1MB
     private static final double MIN_PROGRESS_INCREMENT = 0.01;
     private static final int NUM_RETRIES = 3;
     private static final int RETRY_DELAY = 5000; // delay between retry attempts, in ms
