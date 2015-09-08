@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="tivo-libre">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/tivo-libre-0.5.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/tivo-libre-0.5.3.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -133,7 +133,7 @@ public class RecordingDetailsController implements Initializable {
     private Path showSaveDialog(Window parent) {
         FileChooser chooser = new FileChooser();
         chooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("TiVo Files", "*.TiVo")
+                new FileChooser.ExtensionFilter("MPEG Files", "*.mpg")
         );
         chooser.setInitialFileName(recording.getDefaultFilename());
         chooser.setInitialDirectory(mainApp.getLastFolder().toFile());
