@@ -34,6 +34,9 @@ public class Tivo {
     private final InetAddress[] addresses;
     private final int port;
     private final String mak;
+    private long storageBytesUsed;
+    private long storageBytesTotal;
+    private String bodyId;
     private MindRPC client;
 
     private static final String JSON_NAME = "name";
@@ -47,10 +50,35 @@ public class Tivo {
         addresses = builder.addresses;
         port = builder.port;
         mak = builder.mak;
+        bodyId = "-";
     }
 
     public String getName() {
         return name;
+    }
+
+    public String getBodyId() {
+        return bodyId;
+    }
+
+    public void setBodyId(String val) {
+        bodyId = val;
+    }
+
+    public long getStorageBytesUsed() {
+        return storageBytesUsed;
+    }
+
+    public void setStorageBytesUsed(long val) {
+        storageBytesUsed = val;
+    }
+
+    public long getStorageBytesTotal() {
+        return storageBytesTotal;
+    }
+
+    public void setStorageBytesTotal(long val) {
+        storageBytesTotal = val;
     }
 
     public MindRPC getClient() {

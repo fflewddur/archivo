@@ -25,12 +25,18 @@
 <AnchorPane xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1">
     <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
           AnchorPane.topAnchor="0.0">
-        <HBox fx:id="toolbar" spacing="8.0">
+        <HBox fx:id="toolbar" spacing="8.0" alignment="CENTER_LEFT">
             <padding>
                 <Insets bottom="6.0" left="6.0" right="6.0" top="6.0"/>
             </padding>
             <ComboBox fx:id="tivoList" prefWidth="150.0"/>
             <Button mnemonicParsing="false" onAction="#fetchRecordingsFromSelectedTivo" text="Refresh"/>
+            <Label>Space used:
+                <padding>
+                    <Insets left="6"/>
+                </padding>
+            </Label>
+            <ProgressBar fx:id="storageIndicator" prefWidth="150" progress="0"/>
         </HBox>
         <TreeTableView fx:id="recordingTreeTable" VBox.vgrow="ALWAYS">
             <columns>

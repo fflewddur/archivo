@@ -22,6 +22,7 @@ package net.straylightlabs.archivo.net;
 public enum MindCommandType {
     UNKNOWN,
     AUTH,
+    BODY_CONFIG_SEARCH,
     ID_SEARCH,
     RECORDING_FOLDER_ITEM_SEARCH,
     RECORDING_SEARCH;
@@ -31,6 +32,8 @@ public enum MindCommandType {
         switch(this) {
             case AUTH:
                 return "bodyAuthenticate";
+            case BODY_CONFIG_SEARCH:
+                return "bodyConfigSearch";
             case ID_SEARCH:
                 return "idSearch";
             case RECORDING_FOLDER_ITEM_SEARCH:

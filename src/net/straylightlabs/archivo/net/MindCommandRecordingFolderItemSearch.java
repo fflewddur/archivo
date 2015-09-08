@@ -22,6 +22,7 @@ package net.straylightlabs.archivo.net;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Series;
+import net.straylightlabs.archivo.model.Tivo;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -30,6 +31,7 @@ import java.util.*;
 
 public class MindCommandRecordingFolderItemSearch extends MindCommand {
     private List<Series> series;
+    private Tivo tivo; // Since we always call this command at startup, use it to figure out the TiVo's bodyId
 
     private final static JSONArray templateList;
 
@@ -37,9 +39,10 @@ public class MindCommandRecordingFolderItemSearch extends MindCommand {
         templateList = buildTemplate();
     }
 
-    public MindCommandRecordingFolderItemSearch() {
+    public MindCommandRecordingFolderItemSearch(Tivo tivo) {
         super();
         this.commandType = MindCommandType.RECORDING_FOLDER_ITEM_SEARCH;
+        this.tivo = tivo;
         bodyData.put("responseTemplate", templateList);
         bodyData.put("bodyId", "-");
         // Get all of the recordings, don't group by title
@@ -62,6 +65,7 @@ public class MindCommandRecordingFolderItemSearch extends MindCommand {
         for (int i = 0; i < items.length(); i++) {
             JSONObject o = items.getJSONObject(i);
             String bodyId = o.getString("bodyId");
+            tivo.setBodyId(bodyId);
             String recordingId = o.getString("childRecordingId");
             MindCommandRecordingSearch command = new MindCommandRecordingSearch(recordingId, bodyId);
             try {

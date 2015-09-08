@@ -27,16 +27,14 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeTableColumn;
-import javafx.scene.control.TreeTableView;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Series;
 import net.straylightlabs.archivo.model.Tivo;
+import net.straylightlabs.archivo.net.MindCommandBodyConfigSearch;
 import net.straylightlabs.archivo.net.MindCommandRecordingFolderItemSearch;
 import net.straylightlabs.archivo.net.MindTask;
 import net.straylightlabs.archivo.net.TivoSearchTask;
@@ -65,6 +63,8 @@ public class RecordingListController implements Initializable {
     private TreeTableColumn<Recording, LocalDateTime> dateColumn;
     @FXML
     private TreeTableColumn<Recording, ArchiveStatus> statusColumn;
+    @FXML
+    private ProgressBar storageIndicator;
 
     private Archivo mainApp;
 
@@ -118,12 +118,26 @@ public class RecordingListController implements Initializable {
         recordingTreeTable.getSelectionModel().clearSelection();
         disableUI();
 
-        MindCommandRecordingFolderItemSearch command = new MindCommandRecordingFolderItemSearch();
+        MindCommandRecordingFolderItemSearch command = new MindCommandRecordingFolderItemSearch(tivo);
         MindTask task = new MindTask(tivo.getClient(), command);
         task.setOnSucceeded(event -> {
             fillTreeTableView(command.getSeries());
-            mainApp.clearStatusText();
-            enableUI();
+            MindCommandBodyConfigSearch bodyConfigSearch = new MindCommandBodyConfigSearch(tivo);
+            MindTask bodyConfigTask = new MindTask(tivo.getClient(), bodyConfigSearch);
+            bodyConfigTask.setOnSucceeded(event1 -> {
+                double percent = (double) tivo.getStorageBytesUsed() / tivo.getStorageBytesTotal();
+                storageIndicator.setProgress(percent);
+                mainApp.clearStatusText();
+                enableUI();
+            });
+            bodyConfigTask.setOnFailed(event1 -> {
+                Throwable e = event1.getSource().getException();
+                Archivo.logger.log(Level.SEVERE,
+                        String.format("Error fetching details of %s: %s", tivo.getName(), e.getLocalizedMessage()), e);
+                mainApp.clearStatusText();
+                enableUI();
+            });
+            mainApp.getRpcExecutor().submit(bodyConfigTask);
         });
         task.setOnFailed(event -> {
             Throwable e = event.getSource().getException();
@@ -137,7 +151,6 @@ public class RecordingListController implements Initializable {
             );
 
             enableUI();
-
         });
         mainApp.getRpcExecutor().submit(task);
     }
