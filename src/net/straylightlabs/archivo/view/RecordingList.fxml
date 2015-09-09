@@ -23,20 +23,21 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <AnchorPane xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1">
-    <VBox AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
-          AnchorPane.topAnchor="0.0">
-        <HBox fx:id="toolbar" spacing="8.0" alignment="CENTER_LEFT">
+    <VBox AnchorPane.bottomAnchor="0" AnchorPane.leftAnchor="0" AnchorPane.rightAnchor="0"
+          AnchorPane.topAnchor="0">
+        <HBox fx:id="toolbar" spacing="8">
             <padding>
-                <Insets bottom="6.0" left="6.0" right="6.0" top="6.0"/>
+                <Insets bottom="6" left="6" right="6" top="6"/>
             </padding>
-            <ComboBox fx:id="tivoList" prefWidth="150.0"/>
+            <ComboBox fx:id="tivoList" prefWidth="150"/>
             <Button mnemonicParsing="false" onAction="#fetchRecordingsFromSelectedTivo" text="Refresh"/>
-            <Label fx:id="storageLabel">Space used:
+            <HBox spacing="8" alignment="CENTER_LEFT">
                 <padding>
                     <Insets left="6"/>
                 </padding>
-            </Label>
-            <ProgressBar fx:id="storageIndicator" prefWidth="150" progress="0"/>
+                <Label fx:id="storageLabel">Space used:</Label>
+                <ProgressBar fx:id="storageIndicator" prefWidth="150" progress="0"/>
+            </HBox>
         </HBox>
         <TreeTableView fx:id="recordingTreeTable" VBox.vgrow="ALWAYS">
             <columns>

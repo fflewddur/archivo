@@ -209,11 +209,15 @@ public class RecordingListController implements Initializable {
         });
     }
 
+    /**
+     * Setup the "Space used" indicator to reflect the current state of @tivo.
+     */
     private void updateStorageControls(Tivo tivo) {
         double percent = (double) tivo.getStorageBytesUsed() / tivo.getStorageBytesTotal();
         int gbUsed = (int)(tivo.getStorageBytesUsed() / (1024 * 1024));
         int gbTotal = (int)(tivo.getStorageBytesTotal() / (1024 * 1024));
-        Tooltip storageTooltip = new Tooltip(String.format("%d%% (%,dGB of %,dGB)", (int)(percent * 100), gbUsed, gbTotal));
+        Tooltip storageTooltip = new Tooltip(String.format("%s is %d%% full (%,dGB of %,dGB)",
+                tivo.getName(), (int) (percent * 100), gbUsed, gbTotal));
         storageIndicator.setProgress(percent);
         storageIndicator.setTooltip(storageTooltip);
         storageLabel.setTooltip(storageTooltip);
