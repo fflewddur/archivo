@@ -63,6 +63,7 @@ public class MindRPC {
     public static final String LINE_ENDING = "\r\n";
     private static final String KEY_PASSWORD = "LwrbLEFYvG";
     private static final int MAX_SESSION_ID_VAL = 0x27dc20;
+    private static final String ENCODING = "UTF-8";
 
     static {
         RESPONSE_HEAD = Pattern.compile("MRPC/2\\s+(\\d+)\\s+(\\d+)");
@@ -156,7 +157,7 @@ public class MindRPC {
             if (!readBytes(socketReader, body, bodyLength)) {
                 throw new IOException("Error reading RPC response body");
             }
-            return new JSONObject(new String(body));
+            return new JSONObject(new String(body, ENCODING));
         } else {
             throw new IOException("Response format not as expected (First line = '" + headerStart + "'");
         }
@@ -185,7 +186,7 @@ public class MindRPC {
                 bytes[index++] = (byte) val;
             }
         }
-        return new String(bytes);
+        return new String(bytes, ENCODING);
     }
 
     private boolean readBytes(BufferedInputStream socketReader, byte[] buffer, int expectedLen) throws IOException {
