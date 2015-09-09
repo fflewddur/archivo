@@ -25,6 +25,8 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.Event;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -160,6 +162,8 @@ public class RecordingListController implements Initializable {
         TreeItem<Recording> root = new TreeItem<>(new Recording.Builder().seriesTitle("root").build());
         TreeItem<Recording> suggestions = new TreeItem<>(new Recording.Builder().seriesTitle("TiVo Suggestions")
                 .isSeriesHeading(true).build());
+        suggestions.expandedProperty().addListener(new HeaderExpandedHandler(suggestions));
+
         for (Series s : series) {
             List<Recording> recordings = s.getEpisodes();
             TreeItem<Recording> item;
@@ -271,6 +275,22 @@ public class RecordingListController implements Initializable {
             }
             // Save our list of known TiVos
             mainApp.setKnownDevices(tivos);
+        }
+    }
+
+    /**
+     * Ensure that when a header is expanded, it scrolls to the top of the view
+     */
+    private class HeaderExpandedHandler implements ChangeListener<Boolean> {
+        private final TreeItem<Recording> item;
+
+        public HeaderExpandedHandler(TreeItem<Recording> item) {
+            this.item = item;
+        }
+
+        @Override
+        public void changed(ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean newValue) {
+            recordingTreeTable.scrollTo(recordingTreeTable.getRow(item));
         }
     }
 }
