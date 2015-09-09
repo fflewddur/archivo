@@ -25,8 +25,6 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
-import javafx.event.Event;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
@@ -67,6 +65,8 @@ public class RecordingListController implements Initializable {
     private TreeTableColumn<Recording, ArchiveStatus> statusColumn;
     @FXML
     private ProgressBar storageIndicator;
+    @FXML
+    private Label storageLabel;
 
     private Archivo mainApp;
 
@@ -127,8 +127,7 @@ public class RecordingListController implements Initializable {
             MindCommandBodyConfigSearch bodyConfigSearch = new MindCommandBodyConfigSearch(tivo);
             MindTask bodyConfigTask = new MindTask(tivo.getClient(), bodyConfigSearch);
             bodyConfigTask.setOnSucceeded(event1 -> {
-                double percent = (double) tivo.getStorageBytesUsed() / tivo.getStorageBytesTotal();
-                storageIndicator.setProgress(percent);
+                updateStorageControls(tivo);
                 mainApp.clearStatusText();
                 enableUI();
             });
@@ -208,6 +207,16 @@ public class RecordingListController implements Initializable {
             recordingTreeTable.getSelectionModel().selectFirst();
             recordingTreeTable.requestFocus();
         });
+    }
+
+    private void updateStorageControls(Tivo tivo) {
+        double percent = (double) tivo.getStorageBytesUsed() / tivo.getStorageBytesTotal();
+        int gbUsed = (int)(tivo.getStorageBytesUsed() / (1024 * 1024));
+        int gbTotal = (int)(tivo.getStorageBytesTotal() / (1024 * 1024));
+        Tooltip storageTooltip = new Tooltip(String.format("%d%% (%,dGB of %,dGB)", (int)(percent * 100), gbUsed, gbTotal));
+        storageIndicator.setProgress(percent);
+        storageIndicator.setTooltip(storageTooltip);
+        storageLabel.setTooltip(storageTooltip);
     }
 
     public void startTivoSearch() {

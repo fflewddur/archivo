@@ -31,7 +31,7 @@
             </padding>
             <ComboBox fx:id="tivoList" prefWidth="150.0"/>
             <Button mnemonicParsing="false" onAction="#fetchRecordingsFromSelectedTivo" text="Refresh"/>
-            <Label>Space used:
+            <Label fx:id="storageLabel">Space used:
                 <padding>
                     <Insets left="6"/>
                 </padding>

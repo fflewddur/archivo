@@ -56,9 +56,10 @@ public class ArchiveTask extends Task<Recording> {
 
     private static final int BUFFER_SIZE = 8192; // 8KB
     private static final int PIPE_BUFFER_SIZE = 1024 * 1024; // 1MB
-    private static final double MIN_PROGRESS_INCREMENT = 0.01;
+    private static final double MIN_PROGRESS_INCREMENT = 0.005;
     private static final int NUM_RETRIES = 3;
     private static final int RETRY_DELAY = 5000; // delay between retry attempts, in ms
+    private static final double ESTIMATED_SIZE_THRESHOLD = 0.95; // Need to download this % of a file to consider it successful
 
     static {
         TivoDecoder.setLogger(Archivo.logger);
@@ -194,19 +195,21 @@ public class ArchiveTask extends Task<Recording> {
                     Archivo.logger.info("Total bytes written to pipe: " + totalBytesRead);
                 }
             }
-            Archivo.logger.info("Download complete.");
+            Archivo.logger.info("Download finished.");
+
+            // Close the pipe to ensure the decoding thread finishes
             pipedOutputStream.flush();
             pipedOutputStream.close();
-            try {
-                // Wait for the decoding thread to finish
-                thread.join();
-                Archivo.logger.info("Decoding complete.");
-            } catch (InterruptedException e) {
-                Archivo.logger.severe("Decoding thread interrupted: " + e.getLocalizedMessage());
-            }
+            // Wait for the decoding thread to finish
+            thread.join();
+            Archivo.logger.info("Decoding finished.");
+
+            verifyDownloadSize(totalBytesRead, estimatedLength);
         } catch (IOException e) {
             Archivo.logger.severe("IOException: " + e.getLocalizedMessage());
             throw new ArchiveTaskException("Problem downloading recording");
+        } catch (InterruptedException e) {
+            Archivo.logger.severe("Decoding thread interrupted: " + e.getLocalizedMessage());
         }
     }
 
@@ -236,5 +239,14 @@ public class ArchiveTask extends Task<Recording> {
         Platform.runLater(() -> recording.statusProperty().setValue(
                 ArchiveStatus.createDownloadingStatus(percent, secondsRemaining)
         ));
+    }
+
+    private void verifyDownloadSize(long bytesRead, long bytesExpected) {
+        if (bytesRead / (double)bytesExpected < ESTIMATED_SIZE_THRESHOLD) {
+            Archivo.logger.severe(String.format("Failed to download file (%,d bytes read, %,d bytes expected)",
+                    bytesRead, bytesExpected)
+            );
+            throw new ArchiveTaskException("Failed to download recording");
+        }
     }
 }
