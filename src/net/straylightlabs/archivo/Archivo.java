@@ -125,7 +125,7 @@ public class Archivo extends Application {
         primaryStage.setOnCloseRequest(e -> cleanShutdown());
     }
 
-    private void cleanShutdown() {
+    public void cleanShutdown() {
         int waitTimeMS = 100;
         int msLimit = 5000;
         if (archiveQueueManager.hasTasks()) {
@@ -241,6 +241,14 @@ public class Archivo extends Application {
         alert.setHeaderText(header);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    public RecordingDetailsController getRecordingDetailsController() {
+        return recordingDetailsController;
+    }
+
+    public UserPrefs getUserPrefs() {
+        return prefs;
     }
 
     public String getMak() {

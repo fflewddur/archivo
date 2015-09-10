@@ -51,6 +51,27 @@ public class RootLayoutController implements Initializable {
     }
 
     @FXML
+    public void archive(ActionEvent event) {
+        mainApp.getRecordingDetailsController().archive(event);
+    }
+
+    @FXML
+    public void delete(ActionEvent event) {
+        Archivo.logger.severe("Delete is not yet implemented");
+    }
+
+    @FXML
+    public void quit(ActionEvent event) {
+        mainApp.cleanShutdown();
+    }
+
+    @FXML
+    public void showPreferencesDialog(ActionEvent event) {
+        PreferencesDialog preferences = new PreferencesDialog(mainApp.getPrimaryStage(), mainApp.getUserPrefs());
+        preferences.show();
+    }
+
+    @FXML
     public void showAboutDialog(ActionEvent event) {
         AboutDialog about = new AboutDialog(mainApp.getPrimaryStage());
         about.show();

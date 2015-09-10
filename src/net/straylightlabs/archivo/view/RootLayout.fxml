@@ -27,14 +27,20 @@
             fx:controller="net.straylightlabs.archivo.view.RootLayoutController">
    <top>
        <MenuBar id="menubar" fx:id="menubar" BorderPane.alignment="CENTER">
-           <Menu mnemonicParsing="false" text="File">
-               <MenuItem mnemonicParsing="false" text="Close"/>
+           <Menu text="File">
+               <MenuItem text="Archive..." fx:id="archiveMenuItem" onAction="#archive"/>
+               <MenuItem text="Delete from TiVo" fx:id="deleteMenuItem" onAction="#delete"/>
+               <SeparatorMenuItem/>
+               <MenuItem text="Quit" onAction="#quit"/>
            </Menu>
-           <Menu mnemonicParsing="false" text="View">
-               <CheckMenuItem mnemonicParsing="false" text="TiVo Suggestions" selected="true"/>
-               <CheckMenuItem mnemonicParsing="false" text="Copy-Protected Recordings" selected="true"/>
+           <Menu text="Edit">
+               <MenuItem text="Preferences" onAction="#showPreferencesDialog"/>
            </Menu>
-           <Menu mnemonicParsing="false" text="Help">
+           <!--<Menu mnemonicParsing="false" text="View">-->
+           <!--<CheckMenuItem mnemonicParsing="false" text="TiVo Suggestions" selected="true"/>-->
+           <!--<CheckMenuItem mnemonicParsing="false" text="Copy-Protected Recordings" selected="true"/>-->
+           <!--</Menu>-->
+           <Menu text="Help">
                <MenuItem mnemonicParsing="false" text="About" onAction="#showAboutDialog"/>
            </Menu>
        </MenuBar>

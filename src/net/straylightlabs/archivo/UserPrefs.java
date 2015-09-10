@@ -33,7 +33,7 @@ import java.util.logging.Level;
 import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
-class UserPrefs {
+public class UserPrefs {
     private Preferences prefs;
     private boolean logVerbose;
 
