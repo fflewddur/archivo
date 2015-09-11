@@ -57,7 +57,7 @@ public class ArchiveTask extends Task<Recording> {
     private static final int BUFFER_SIZE = 8192; // 8KB
     private static final int PIPE_BUFFER_SIZE = 1024 * 1024; // 1MB
     private static final double MIN_PROGRESS_INCREMENT = 0.005;
-    private static final int NUM_RETRIES = 3;
+    private static final int NUM_RETRIES = 5;
     private static final int RETRY_DELAY = 5000; // delay between retry attempts, in ms
     private static final double ESTIMATED_SIZE_THRESHOLD = 0.95; // Need to download this % of a file to consider it successful
 
@@ -111,13 +111,15 @@ public class ArchiveTask extends Task<Recording> {
             }
             // Now fetch the file
             int retries = NUM_RETRIES;
+            int retryDelay = RETRY_DELAY;
             boolean responseOk = false;
             while (!responseOk && retries > 0) {
                 try (CloseableHttpResponse response = client.execute(get)) {
                     if (response.getStatusLine().getStatusCode() != 200) {
                         Archivo.logger.severe("Error downloading recording: " + response.getStatusLine());
-                        Archivo.logger.info("Sleeping for " + RETRY_DELAY + " ms");
-                        Thread.sleep(RETRY_DELAY);
+                        Archivo.logger.info("Sleeping for " + retryDelay + " ms");
+                        Thread.sleep(retryDelay);
+                        retryDelay += RETRY_DELAY;
                         retries--;
                     } else {
                         Archivo.logger.info("Status line: " + response.getStatusLine());
@@ -127,6 +129,9 @@ public class ArchiveTask extends Task<Recording> {
                 } catch (InterruptedException e) {
                     Archivo.logger.severe("Thread interrupted: " + e.getLocalizedMessage());
                 }
+            }
+            if (!responseOk) {
+                throw new ArchiveTaskException("Problem downloading recording");
             }
         } catch (IOException e) {
             Archivo.logger.severe("Error downloading recording: " + e.getLocalizedMessage());
