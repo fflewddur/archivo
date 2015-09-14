@@ -20,9 +20,9 @@
 package net.straylightlabs.archivo.model;
 
 /**
- * Created by todd on 8/26/15.
+ * Model the status of an archive task.
  */
-public class ArchiveStatus {
+public class ArchiveStatus implements Comparable<ArchiveStatus> {
     private final TaskStatus status;
     private final double progress;
     private final int secondsRemaining;
@@ -32,20 +32,19 @@ public class ArchiveStatus {
     public final static ArchiveStatus EMPTY = new ArchiveStatus(TaskStatus.NONE);
     public final static ArchiveStatus QUEUED = new ArchiveStatus(TaskStatus.QUEUED);
     public final static ArchiveStatus FINISHED = new ArchiveStatus(TaskStatus.FINISHED);
-//    public final static ArchiveStatus ERROR = new ArchiveStatus(TaskStatus.ERROR);
 
     private ArchiveStatus(TaskStatus status) {
         this.status = status;
         progress = 0;
         secondsRemaining = 0;
-        message = null;
+        message = "";
     }
 
     private ArchiveStatus(TaskStatus status, double progress, int secondsRemaining) {
         this.status = status;
         this.progress = progress;
         this.secondsRemaining = secondsRemaining;
-        this.message = null;
+        this.message = "";
     }
 
     private ArchiveStatus(TaskStatus status, String message) {
@@ -83,13 +82,59 @@ public class ArchiveStatus {
         return new ArchiveStatus(TaskStatus.ERROR, e.getLocalizedMessage());
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (!(obj instanceof ArchiveStatus)) {
+            return false;
+        } else if (obj == this) {
+            return true;
+        }
+
+        ArchiveStatus other = (ArchiveStatus) obj;
+        return (this.status == other.status && Double.compare(this.progress, other.progress) == 0 &&
+                this.secondsRemaining == other.secondsRemaining && this.message.equals(other.message));
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 17;
+        hash = hash * 31 + status.ordinal();
+        long bits = Double.doubleToLongBits(progress);
+        hash = hash * 31 + (int)(bits ^ (bits >>> 32));
+        hash = hash * 31 + secondsRemaining;
+        hash = hash * 31 + message.hashCode();
+        return hash;
+    }
+
+    @Override
+    public int compareTo(ArchiveStatus o) {
+        if (this.status != o.status) {
+            return this.status.ordinal() - o.status.ordinal();
+        } else if (Double.compare(this.progress, o.progress) != 0) {
+            return Double.compare(this.progress, o.progress);
+        } else if (!this.message.equals(o.message)){
+            return this.message.compareTo(o.message);
+        }
+        return 0;
+    }
+
+    @Override
+    public String toString() {
+        return "ArchiveStatus{" +
+                "status=" + status +
+                ", progress=" + progress +
+                ", secondsRemaining=" + secondsRemaining +
+                ", message='" + message + '\'' +
+                '}';
+    }
+
     public enum TaskStatus {
-        NONE,
-        QUEUED,
-        DOWNLOADING,
         TRANSCODING,
+        DOWNLOADING,
+        QUEUED,
         FINISHED,
-        ERROR;
+        ERROR,
+        NONE,;
 
         public boolean isCancelable() {
             switch (this) {

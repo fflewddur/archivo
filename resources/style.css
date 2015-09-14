@@ -3,10 +3,21 @@
 .root {
     -light: rgb(205, 210, 215);
     -dark: rgb(47.0, 52.0, 57.0);
+    -light-text: rgb(180, 185, 190);
 }
 
 .text {
     -fx-font-smoothing-type: lcd;
+}
+
+.recording-list .scroll-bar:vertical .increment-button,
+.recording-list .scroll-bar:vertical .decrement-button {
+    -fx-padding: 6;
+}
+
+.recording-list .placeholder-message {
+    -fx-font-size: 1.5em;
+    -fx-text-fill: -light-text;
 }
 
 /*******************************************************************************

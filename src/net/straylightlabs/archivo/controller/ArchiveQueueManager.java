@@ -58,7 +58,9 @@ public class ArchiveQueueManager {
                 recording.statusProperty().setValue(ArchiveStatus.FINISHED);
             });
             task.setOnFailed(event -> {
-                Archivo.logger.info(String.format("ArchiveTask failed for %s", recording.getFullTitle()));
+                Throwable e = event.getSource().getException();
+                Archivo.logger.severe(String.format("ArchiveTask failed for %s: %s", recording.getFullTitle(), e));
+                e.printStackTrace();
                 queuedTasks.remove(recording);
                 mainApp.clearStatusText();
                 recording.statusProperty().setValue(ArchiveStatus.createErrorStatus(event.getSource().getException()));

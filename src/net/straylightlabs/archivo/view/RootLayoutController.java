@@ -67,7 +67,7 @@ public class RootLayoutController implements Initializable {
 
     @FXML
     public void showPreferencesDialog(ActionEvent event) {
-        PreferencesDialog preferences = new PreferencesDialog(mainApp.getPrimaryStage(), mainApp.getUserPrefs());
+        PreferencesDialog preferences = new PreferencesDialog(mainApp.getPrimaryStage(), mainApp);
         preferences.show();
     }
 

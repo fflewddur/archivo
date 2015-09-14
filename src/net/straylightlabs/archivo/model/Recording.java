@@ -320,7 +320,7 @@ public class Recording {
     }
 
     private String getEpisodeNumberRange() {
-        if (numEpisodes == 1) {
+        if (episodeNumbers.size() == 1) {
             return String.format("%02d", episodeNumbers.get(0));
         } else {
             return episodeNumbers.stream().map(Object::toString).collect(Collectors.joining(","));
@@ -335,9 +335,12 @@ public class Recording {
         StringBuilder sb = new StringBuilder();
         boolean prevCharIsSpace = false;
         for (Character c : filename.toCharArray()) {
-            if (Character.isLetterOrDigit(c) || Character.getType(c) == Character.DASH_PUNCTUATION) {
+            int type = Character.getType(c);
+            if (Character.isLetterOrDigit(c) || c == '\'' || c == '.' || type == Character.DASH_PUNCTUATION) {
                 sb.append(c);
                 prevCharIsSpace = false;
+            } else if (type == Character.OTHER_PUNCTUATION) {
+                // Don't even add a space for these
             } else if (Character.isWhitespace(c) && !prevCharIsSpace) {
                 sb.append(c);
                 prevCharIsSpace = true;

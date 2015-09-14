@@ -46,12 +46,9 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 // TODO Add timeout for connecting to TiVo
-// TODO Display status column showing recording status: already archived, archiving, queued for archiving, still recording, and copy-protected
-// TODO Add control for downloading the selected recording
 // TODO Add control for filtering TiVo recommendations from the recording list
 // TODO Add control for filtering DRM-protected recordings from the recording list
 // TODO Remember the user's last sort column and restore it at startup
-// TODO Remember the main window's dimensions and restore them at startup
 // TODO Implement collection of paths to tools for decoding, stripping commercials, and encoding video
 // TODO Implement queue of archival tasks that can be started, maybe paused?, and canceled
 
@@ -260,6 +257,12 @@ public class Archivo extends Application {
         alert.setHeaderText(header);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    public void updateMAK(String newMak) {
+        this.mak = newMak;
+        prefs.setMAK(newMak);
+        recordingListController.updateMak(newMak);
     }
 
     public RecordingDetailsController getRecordingDetailsController() {

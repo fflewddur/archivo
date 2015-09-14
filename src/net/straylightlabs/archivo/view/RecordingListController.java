@@ -51,6 +51,9 @@ public class RecordingListController implements Initializable {
     private TivoSearchTask tivoSearchTask;
     private boolean alreadyDefaultSorted;
 
+    private ProgressIndicator tablePlaceholderProgressIndicator;
+    private Label tablePlaceholderMessage;
+
     @FXML
     private HBox toolbar;
     @FXML
@@ -74,6 +77,8 @@ public class RecordingListController implements Initializable {
         alreadyDefaultSorted = false;
         this.mainApp = mainApp;
         tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(initialTivos));
+        tablePlaceholderMessage = new Label("No recordings are available");
+        tablePlaceholderProgressIndicator = new ProgressIndicator();
     }
 
     @Override
@@ -88,6 +93,7 @@ public class RecordingListController implements Initializable {
         tivoList.setItems(tivos);
 
         recordingTreeTable.setShowRoot(false);
+        recordingTreeTable.setPlaceholder(tablePlaceholderMessage);
 
         showColumn.setCellValueFactory(data -> data.getValue().getValue().titleProperty());
         dateColumn.setCellValueFactory(data -> data.getValue().getValue().dateRecordedProperty());
@@ -104,6 +110,15 @@ public class RecordingListController implements Initializable {
         if (lastDevice != null && tivos.contains(lastDevice)) {
             tivoList.setValue(lastDevice);
         }
+
+        setupStyles();
+    }
+
+    private void setupStyles() {
+        recordingTreeTable.getStyleClass().add("recording-list");
+        tablePlaceholderMessage.getStyleClass().add("placeholder-message");
+        tablePlaceholderProgressIndicator.setMaxWidth(180);
+        tablePlaceholderProgressIndicator.setMaxHeight(180);
     }
 
     public Tivo getSelectedTivo() {
@@ -117,6 +132,7 @@ public class RecordingListController implements Initializable {
 
     private void fetchRecordingsFrom(Tivo tivo) {
         mainApp.setStatusText("Fetching recordings...");
+        recordingTreeTable.setPlaceholder(tablePlaceholderProgressIndicator);
         recordingTreeTable.getSelectionModel().clearSelection();
         disableUI();
 
@@ -214,8 +230,8 @@ public class RecordingListController implements Initializable {
      */
     private void updateStorageControls(Tivo tivo) {
         double percent = (double) tivo.getStorageBytesUsed() / tivo.getStorageBytesTotal();
-        int gbUsed = (int)(tivo.getStorageBytesUsed() / (1024 * 1024));
-        int gbTotal = (int)(tivo.getStorageBytesTotal() / (1024 * 1024));
+        int gbUsed = (int) (tivo.getStorageBytesUsed() / (1024 * 1024));
+        int gbTotal = (int) (tivo.getStorageBytesTotal() / (1024 * 1024));
         Tooltip storageTooltip = new Tooltip(String.format("%s is %d%% full (%,dGB of %,dGB)",
                 tivo.getName(), (int) (percent * 100), gbUsed, gbTotal));
         storageIndicator.setProgress(percent);
@@ -238,11 +254,24 @@ public class RecordingListController implements Initializable {
         mainApp.getRpcExecutor().submit(tivoSearchTask);
     }
 
+    public void updateMak(String newMak) {
+        restartTivoSearch();
+        tivos.stream().forEach(tivo -> tivo.updateMak(newMak));
+    }
+
+    public void restartTivoSearch() {
+        assert (tivoSearchTask != null);
+
+        tivoSearchTask.cancel();
+        startTivoSearch();
+    }
+
     private void disableUI() {
         setUIDisabled(true);
     }
 
     private void enableUI() {
+        recordingTreeTable.setPlaceholder(tablePlaceholderMessage);
         setUIDisabled(false);
     }
 

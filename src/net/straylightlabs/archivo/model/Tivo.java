@@ -33,7 +33,7 @@ public class Tivo {
     private final String tsn;
     private final InetAddress[] addresses;
     private final int port;
-    private final String mak;
+    private String mak;
     private long storageBytesUsed;
     private long storageBytesTotal;
     private String bodyId;
@@ -51,6 +51,11 @@ public class Tivo {
         port = builder.port;
         mak = builder.mak;
         bodyId = "-";
+    }
+
+    public void updateMak(String newMak) {
+        this.mak = newMak;
+        client = null;
     }
 
     public String getName() {

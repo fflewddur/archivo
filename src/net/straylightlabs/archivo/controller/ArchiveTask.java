@@ -257,14 +257,18 @@ public class ArchiveTask extends Task<Recording> {
 
     private void updateProgress(Recording recording, double percent, LocalDateTime startTime, long totalBytesRead, long estimatedLength) {
         Duration elapsedTime = Duration.between(startTime, LocalDateTime.now());
-        double kbs = (totalBytesRead / 1024) / elapsedTime.getSeconds();
-        long kbRemaining = (estimatedLength - totalBytesRead) / 1024;
-        int secondsRemaining = (int) (kbRemaining / kbs);
-        Archivo.logger.info(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
-                totalBytesRead, estimatedLength, (int) (percent * 100), elapsedTime, kbs));
-        Platform.runLater(() -> recording.statusProperty().setValue(
-                ArchiveStatus.createDownloadingStatus(percent, secondsRemaining)
-        ));
+        try {
+            double kbs = (totalBytesRead / 1024) / elapsedTime.getSeconds();
+            long kbRemaining = (estimatedLength - totalBytesRead) / 1024;
+            int secondsRemaining = (int) (kbRemaining / kbs);
+            Archivo.logger.info(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
+                    totalBytesRead, estimatedLength, (int) (percent * 100), elapsedTime, kbs));
+            Platform.runLater(() -> recording.statusProperty().setValue(
+                    ArchiveStatus.createDownloadingStatus(percent, secondsRemaining)
+            ));
+        } catch (ArithmeticException e) {
+            Archivo.logger.warning("ArithmeticException: " + e.getLocalizedMessage());
+        }
     }
 
     private void verifyDownloadSize(long bytesRead, long bytesExpected) {

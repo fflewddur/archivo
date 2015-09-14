@@ -19,61 +19,42 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.geometry.Insets;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontPosture;
-import javafx.scene.text.FontWeight;
-import javafx.scene.text.Text;
 import javafx.stage.Modality;
 import javafx.stage.Window;
+import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.UserPrefs;
-
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * This dialog is for user-configurable options.
  */
 public class PreferencesDialog {
     private final Dialog<String> dialog;
+    private final Archivo mainApp;
     private final UserPrefs userPrefs;
 
-    private static final double fontSize;
-    private static final String fontFamily;
-
-    private static final int EXPLANATION_WIDTH = 400;
-
-    static {
-        fontFamily = Font.getDefault().getFamily();
-        fontSize = Font.getDefault().getSize();
-    }
-
-    public PreferencesDialog(Window parent, UserPrefs prefs) {
+    public PreferencesDialog(Window parent, Archivo mainApp) {
         dialog = new Dialog<>();
-        userPrefs = prefs;
+        this.mainApp = mainApp;
+        userPrefs = mainApp.getUserPrefs();
         initDialog(parent);
     }
 
     private void initDialog(Window parent) {
         dialog.initOwner(parent);
         dialog.initModality(Modality.NONE);
-//        dialog.initStyle(StageStyle.UTILITY);
 
         dialog.setTitle("Preferences");
 
         GridPane grid = new GridPane();
+        grid.setPadding(new Insets(10, 10, 10, 10));
         grid.setHgap(10);
         grid.setVgap(10);
-
-//        List<Text> text = buildExplanationText();
-//        TextFlow explanation = new TextFlow(text.toArray(new Text[text.size()]));
-//        explanation.setPrefWidth(EXPLANATION_WIDTH);
-//        explanation.setLineSpacing(3);
-//        grid.add(explanation, 0, 0, 2, 1);
 
         grid.add(new Label("Media access key"), 0, 1);
         TextField mak = new TextField();
@@ -91,47 +72,12 @@ public class PreferencesDialog {
 
         dialog.getDialogPane().setContent(grid);
 
-//        Platform.runLater(mak::requestFocus);
-
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
-                userPrefs.setMAK(mak.getText());
+                mainApp.updateMAK(mak.getText());
             }
             return null;
         });
-    }
-
-    private List<Text> buildExplanationText() {
-        List<Text> textList = new ArrayList<>();
-
-        textList.add(createText("Before transferring recordings from TiVo to your computer, you'll need to provide the "));
-        textList.add(createItalicsText("media access key (MAK)"));
-        textList.add(createText(" associated with your TiVo account. You can find your MAK by viewing "));
-        textList.add(createBoldText("My Account"));
-        textList.add(createText(" on tivo.com or from the "));
-        textList.add(createBoldText("Account & System Information"));
-        textList.add(createText(" menu on your TiVo itself."));
-        textList.add(createText("\n\nYou can change your MAK at any time from Archivo's Preferences."));
-
-        return textList;
-    }
-
-    private Text createText(String s) {
-        Text text = new Text(s);
-        text.setFont(Font.font(fontFamily, fontSize));
-        return text;
-    }
-
-    private Text createItalicsText(String s) {
-        Text text = new Text(s);
-        text.setFont(Font.font(fontFamily, FontPosture.ITALIC, fontSize));
-        return text;
-    }
-
-    private Text createBoldText(String s) {
-        Text text = new Text(s);
-        text.setFont(Font.font(fontFamily, FontWeight.BOLD, fontSize));
-        return text;
     }
 
     /**
