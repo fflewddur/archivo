@@ -33,6 +33,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Window;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.ArchiveStatus;
+import net.straylightlabs.archivo.model.FileType;
 import net.straylightlabs.archivo.model.Recording;
 
 import java.awt.*;
@@ -40,10 +41,10 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.security.cert.Extension;
 import java.time.Duration;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.ResourceBundle;
+import java.util.*;
+import java.util.List;
 
 public class RecordingDetailsController implements Initializable {
     private final Archivo mainApp;
@@ -132,18 +133,41 @@ public class RecordingDetailsController implements Initializable {
 
     private Path showSaveDialog(Window parent) {
         FileChooser chooser = new FileChooser();
-        chooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("MPEG Files", "*.mpg")
-        );
+        setupFileTypes(chooser);
         chooser.setInitialFileName(recording.getDefaultFilename());
         chooser.setInitialDirectory(mainApp.getLastFolder().toFile());
 
         File destination = chooser.showSaveDialog(parent);
+        saveFileType(chooser);
         if (destination != null) {
             return destination.toPath();
         } else {
             return null;
         }
+    }
+
+    private void setupFileTypes(FileChooser chooser) {
+        List<FileChooser.ExtensionFilter> fileTypes = new ArrayList<>();
+        FileChooser.ExtensionFilter selected = null;
+        String previousExtension = mainApp.getUserPrefs().getMostRecentFileType();
+        for (FileType type : FileType.values()) {
+            FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter(type.getDescription(), type.getExtension());
+            fileTypes.add(filter);
+            if (type.getExtension().equalsIgnoreCase(previousExtension)) {
+                Archivo.logger.info("Setting extension filter: " + previousExtension);
+                selected = filter;
+            }
+        }
+        chooser.getExtensionFilters().addAll(fileTypes);
+        if (selected != null) {
+            chooser.setSelectedExtensionFilter(selected);
+        }
+    }
+
+    private void saveFileType(FileChooser chooser) {
+        String extension = chooser.getSelectedExtensionFilter().getExtensions().get(0);
+        Archivo.logger.info("Selected extension filter: " + extension);
+        mainApp.getUserPrefs().setMostRecentType(FileType.fromExtension(extension));
     }
 
     public void clearRecording() {

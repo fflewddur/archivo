@@ -20,6 +20,7 @@
 package net.straylightlabs.archivo;
 
 import javafx.application.Application;
+import net.straylightlabs.archivo.model.FileType;
 import net.straylightlabs.archivo.model.Tivo;
 
 import java.nio.file.Files;
@@ -41,6 +42,11 @@ public class UserPrefs {
     public static final String DEVICE_LIST = "knownTivos";
     public static final String MOST_RECENT_DEVICE = "lastTivo";
     public static final String MOST_RECENT_FOLDER = "lastFolder";
+    public static final String MOST_RECENT_TYPE = "lastFileType";
+    public static final String SKIP_COMMERCIALS = "skipCommercials";
+    public static final String WINDOW_MAXIMIZED = "windowMaximized";
+    public static final String WINDOW_HEIGHT = "windowHeight";
+    public static final String WINDOW_WIDTH = "windowWidth";
 
     public UserPrefs() {
         try {
@@ -178,5 +184,37 @@ public class UserPrefs {
 
     public void setLastFolder(Path lastFolder) {
         prefs.put(MOST_RECENT_FOLDER, lastFolder.toString());
+    }
+
+    public String getMostRecentFileType() {
+        return prefs.get(MOST_RECENT_TYPE, FileType.getDefault().getExtension());
+    }
+
+    public void setMostRecentType(FileType type) {
+        prefs.put(MOST_RECENT_TYPE, type.getExtension());
+    }
+
+    public boolean isWindowMaximized() {
+        return prefs.getBoolean(WINDOW_MAXIMIZED, false);
+    }
+
+    public void setWindowMaximized(boolean value) {
+        prefs.putBoolean(WINDOW_MAXIMIZED, value);
+    }
+
+    public int getWindowHeight() {
+        return prefs.getInt(WINDOW_HEIGHT, 650);
+    }
+
+    public void setWindowHeight(int value) {
+        prefs.putInt(WINDOW_HEIGHT, value);
+    }
+
+    public int getWindowWidth() {
+        return prefs.getInt(WINDOW_WIDTH, 900);
+    }
+
+    public void setWindowWidth(int value) {
+        prefs.putInt(WINDOW_WIDTH, value);
     }
 }

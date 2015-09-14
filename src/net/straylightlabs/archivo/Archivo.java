@@ -104,6 +104,7 @@ public class Archivo extends Application {
         this.primaryStage.setTitle(APPLICATION_NAME);
         this.primaryStage.setMinHeight(WINDOW_MIN_HEIGHT);
         this.primaryStage.setMinWidth(WINDOW_MIN_WIDTH);
+        restoreWindowDimensions();
 
         initRootLayout();
 
@@ -126,6 +127,8 @@ public class Archivo extends Application {
     }
 
     public void cleanShutdown() {
+        saveWindowDimensions();
+
         int waitTimeMS = 100;
         int msLimit = 5000;
         if (archiveQueueManager.hasTasks()) {
@@ -143,6 +146,22 @@ public class Archivo extends Application {
         logger.info("Shutting down.");
         Platform.exit();
         System.exit(0);
+    }
+
+    private void saveWindowDimensions() {
+        if (primaryStage.isMaximized()) {
+            getUserPrefs().setWindowMaximized(true);
+        } else {
+            getUserPrefs().setWindowMaximized(false);
+            getUserPrefs().setWindowWidth((int) primaryStage.getWidth());
+            getUserPrefs().setWindowHeight((int) primaryStage.getHeight());
+        }
+    }
+
+    private void restoreWindowDimensions() {
+        primaryStage.setWidth(getUserPrefs().getWindowWidth());
+        primaryStage.setHeight(getUserPrefs().getWindowHeight());
+        primaryStage.setMaximized(getUserPrefs().isWindowMaximized());
     }
 
     private void initRootLayout() {

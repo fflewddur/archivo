@@ -315,7 +315,8 @@ public class Recording {
             }
         }
 
-        return components.toString();
+
+        return filterUnsafeChars(components.toString());
     }
 
     private String getEpisodeNumberRange() {
@@ -324,6 +325,29 @@ public class Recording {
         } else {
             return episodeNumbers.stream().map(Object::toString).collect(Collectors.joining(","));
         }
+    }
+
+    /**
+     * Remove invalid filename characters from @filename.
+     * Replace invalid characters with a space if they are between to two valid characters.
+     */
+    private String filterUnsafeChars(String filename) {
+        StringBuilder sb = new StringBuilder();
+        boolean prevCharIsSpace = false;
+        for (Character c : filename.toCharArray()) {
+            if (Character.isLetterOrDigit(c) || Character.getType(c) == Character.DASH_PUNCTUATION) {
+                sb.append(c);
+                prevCharIsSpace = false;
+            } else if (Character.isWhitespace(c) && !prevCharIsSpace) {
+                sb.append(c);
+                prevCharIsSpace = true;
+            } else if (!prevCharIsSpace) {
+                // Replace an invalid character with a space
+                sb.append(' ');
+                prevCharIsSpace = true;
+            }
+        }
+        return sb.toString();
     }
 
     public String getTitle() {
