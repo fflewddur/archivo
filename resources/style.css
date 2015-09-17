@@ -12,7 +12,7 @@
 
 .recording-list .scroll-bar:vertical .increment-button,
 .recording-list .scroll-bar:vertical .decrement-button {
-    -fx-padding: 6;
+    -fx-padding: 5;
 }
 
 .recording-list .placeholder-message {
