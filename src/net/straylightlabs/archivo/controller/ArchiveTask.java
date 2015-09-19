@@ -56,10 +56,10 @@ public class ArchiveTask extends Task<Recording> {
 
     private static final int BUFFER_SIZE = 8192; // 8KB
     private static final int PIPE_BUFFER_SIZE = 1024 * 1024; // 1MB
-    private static final double MIN_PROGRESS_INCREMENT = 0.001;
+    private static final int MIN_PROGRESS_INCREMENT = 10 * 1024 * 1024; // number of bytes that must transfer before we update our progress
     private static final int NUM_RETRIES = 5;
     private static final int RETRY_DELAY = 5000; // delay between retry attempts, in ms
-    private static final double ESTIMATED_SIZE_THRESHOLD = 0.95; // Need to download this % of a file to consider it successful
+    private static final double ESTIMATED_SIZE_THRESHOLD = 0.8; // Need to download this % of a file to consider it successful
 
     static {
         TivoDecoder.setLogger(Archivo.logger);
@@ -157,7 +157,6 @@ public class ArchiveTask extends Task<Recording> {
 
     private void handleResponse(CloseableHttpResponse response, Recording recording) throws ArchiveTaskException {
         long estimatedLength = getEstimatedLengthFromHeaders(response);
-        double priorPercent = 0;
         boolean decrypt = shouldDecrypt(recording);
         try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(recording.getDestination()));
              BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent(), BUFFER_SIZE);
@@ -180,6 +179,7 @@ public class ArchiveTask extends Task<Recording> {
 
             byte[] buffer = new byte[BUFFER_SIZE + 1];
             long totalBytesRead = 0;
+            long priorBytesRead = 0;
             LocalDateTime startTime = LocalDateTime.now();
             for (int bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE);
                  bytesRead >= 0;
@@ -203,11 +203,11 @@ public class ArchiveTask extends Task<Recording> {
                     outputStream.write(buffer, 0, bytesRead);
                 }
 
-                double percent = totalBytesRead / (double) estimatedLength;
-                if (percent - priorPercent >= MIN_PROGRESS_INCREMENT) {
+                if (totalBytesRead > priorBytesRead + MIN_PROGRESS_INCREMENT) {
+                    double percent = totalBytesRead / (double) estimatedLength;
                     updateProgress(recording, percent, startTime, totalBytesRead, estimatedLength);
-                    priorPercent = percent;
-                    Archivo.logger.info("Total bytes written to pipe: " + totalBytesRead);
+                    priorBytesRead = totalBytesRead;
+                    Archivo.logger.info("Total bytes read from network: " + totalBytesRead);
                 }
             }
             Archivo.logger.info("Download finished.");
