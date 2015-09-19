@@ -30,7 +30,7 @@
                 <Insets bottom="6" left="6" right="6" top="6"/>
             </padding>
             <ComboBox fx:id="tivoList" prefWidth="150"/>
-            <Button mnemonicParsing="false" onAction="#fetchRecordingsFromSelectedTivo" text="Refresh"/>
+            <Button fx:id="refreshTivoList" onAction="#fetchRecordingsFromSelectedTivo" text="Refresh"/>
             <HBox spacing="8" alignment="CENTER_LEFT">
                 <padding>
                     <Insets left="6"/>

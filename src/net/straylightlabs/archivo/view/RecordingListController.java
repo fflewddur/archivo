@@ -42,12 +42,15 @@ import net.straylightlabs.archivo.net.TivoSearchTask;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.ResourceBundle;
 import java.util.logging.Level;
 import java.util.stream.Collectors;
 
-public class RecordingListController implements Initializable {
+public class RecordingListController implements Initializable, Observer {
     private final ObservableList<Tivo> tivos;
+
     private TivoSearchTask tivoSearchTask;
     private boolean alreadyDefaultSorted;
 
@@ -58,6 +61,8 @@ public class RecordingListController implements Initializable {
     private HBox toolbar;
     @FXML
     private ComboBox<Tivo> tivoList;
+    @FXML
+    private Button refreshTivoList;
     @FXML
     private TreeTableView<Recording> recordingTreeTable;
     @FXML
@@ -266,10 +271,16 @@ public class RecordingListController implements Initializable {
         startTivoSearch();
     }
 
+    /**
+     * Disable the TiVo controls and the recording list
+     */
     private void disableUI() {
         setUIDisabled(true);
     }
 
+    /**
+     * Enable the TiVo controls and the recording list
+     */
     private void enableUI() {
         recordingTreeTable.setPlaceholder(tablePlaceholderMessage);
         setUIDisabled(false);
@@ -278,6 +289,25 @@ public class RecordingListController implements Initializable {
     private void setUIDisabled(boolean disabled) {
         toolbar.setDisable(disabled);
         recordingTreeTable.setDisable(disabled);
+    }
+
+    /**
+     * Disable the TiVo controls
+     */
+    public void disableTivoControls() {
+        setTivoControlsDisabled(true);
+    }
+
+    /**
+     * Enable the TiVo controls
+     */
+    public void enableTivoControls() {
+        setTivoControlsDisabled(false);
+    }
+
+    private void setTivoControlsDisabled(boolean disabled) {
+        tivoList.setDisable(disabled);
+        refreshTivoList.setDisable(disabled);
     }
 
     public void addRecordingChangedListener(ChangeListener<Recording> listener) {
@@ -298,6 +328,16 @@ public class RecordingListController implements Initializable {
                     }
                     listener.changed(observableRecording, oldRecording, newRecording);
                 });
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        Boolean hasTasks = (Boolean) arg;
+        if (hasTasks) {
+            disableTivoControls();
+        } else {
+            enableTivoControls();
+        }
     }
 
     /**

@@ -124,6 +124,8 @@ public class Archivo extends Application {
         initRecordingDetails();
         initRecordingList(initialTivos);
 
+        archiveQueueManager.addObserver(recordingListController);
+
         primaryStage.setOnCloseRequest(e -> {
             if (!confirmTaskCancellation()) {
                 e.consume();

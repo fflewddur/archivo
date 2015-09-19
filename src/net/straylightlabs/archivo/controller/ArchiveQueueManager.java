@@ -25,6 +25,7 @@ import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
 
+import java.util.Observable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -32,8 +33,9 @@ import java.util.concurrent.RejectedExecutionException;
 
 /**
  * Enqueue archive requests for processing via a background thread, and allow archive tasks to be canceled.
+ * Alerts its observes when the queue size changes between empty and not-empty.
  */
-public class ArchiveQueueManager {
+public class ArchiveQueueManager extends Observable {
     private final Archivo mainApp;
     private final ExecutorService executorService;
     private final ConcurrentHashMap<Recording, Task<Recording>> queuedTasks;
@@ -53,25 +55,26 @@ public class ArchiveQueueManager {
             });
             task.setOnSucceeded(event -> {
                 Archivo.logger.info(String.format("ArchiveTask succeeded for %s", recording.getFullTitle()));
-                queuedTasks.remove(recording);
-                mainApp.clearStatusText();
+                removeTask(recording);
                 recording.statusProperty().setValue(ArchiveStatus.FINISHED);
             });
             task.setOnFailed(event -> {
                 Throwable e = event.getSource().getException();
                 Archivo.logger.severe(String.format("ArchiveTask failed for %s: %s", recording.getFullTitle(), e));
                 e.printStackTrace();
-                queuedTasks.remove(recording);
-                mainApp.clearStatusText();
+                removeTask(recording);
                 recording.statusProperty().setValue(ArchiveStatus.createErrorStatus(event.getSource().getException()));
             });
             task.setOnCancelled(event -> {
                 Archivo.logger.info(String.format("ArchiveTask canceled for %s", recording.getFullTitle()));
-                queuedTasks.remove(recording);
-                mainApp.clearStatusText();
+                removeTask(recording);
                 recording.statusProperty().setValue(ArchiveStatus.EMPTY);
             });
             Archivo.logger.info("Submitting task to executor service: " + executorService);
+            if (!hasTasks()) {
+                setChanged();
+                notifyObservers(true);
+            }
             queuedTasks.put(recording, task);
             executorService.submit(task);
         } catch (RejectedExecutionException e) {
@@ -79,6 +82,15 @@ public class ArchiveQueueManager {
             return false;
         }
         return true;
+    }
+
+    private void removeTask(Recording recording) {
+        queuedTasks.remove(recording);
+        if (!hasTasks()) {
+            setChanged();
+            notifyObservers(false);
+        }
+        mainApp.clearStatusText();
     }
 
     public void cancelArchiveTask(Recording recording) {
