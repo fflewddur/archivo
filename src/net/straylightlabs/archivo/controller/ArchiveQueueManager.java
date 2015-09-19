@@ -72,8 +72,8 @@ public class ArchiveQueueManager {
                 recording.statusProperty().setValue(ArchiveStatus.EMPTY);
             });
             Archivo.logger.info("Submitting task to executor service: " + executorService);
-            executorService.submit(task);
             queuedTasks.put(recording, task);
+            executorService.submit(task);
         } catch (RejectedExecutionException e) {
             Archivo.logger.severe("Could not schedule archive task: " + e.getLocalizedMessage());
             return false;

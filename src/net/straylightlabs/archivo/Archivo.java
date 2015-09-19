@@ -26,6 +26,9 @@ import javafx.beans.property.StringProperty;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonBar;
+import javafx.scene.control.ButtonType;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
@@ -40,6 +43,7 @@ import net.straylightlabs.archivo.view.SetupDialog;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.logging.Level;
@@ -120,10 +124,21 @@ public class Archivo extends Application {
         initRecordingDetails();
         initRecordingList(initialTivos);
 
-        primaryStage.setOnCloseRequest(e -> cleanShutdown());
+        primaryStage.setOnCloseRequest(e -> {
+            if (!confirmTaskCancellation()) {
+                e.consume();
+            } else {
+                archiveQueueManager.cancelAllArchiveTasks();
+                cleanShutdown();
+            }
+        });
     }
 
     public void cleanShutdown() {
+        if (!confirmTaskCancellation()) {
+            return;
+        }
+
         saveWindowDimensions();
 
         int waitTimeMS = 100;
@@ -143,6 +158,31 @@ public class Archivo extends Application {
         logger.info("Shutting down.");
         Platform.exit();
         System.exit(0);
+    }
+
+    /**
+     * If there are active tasks, prompt the user before exiting.
+     * Returns true if the user wants to cancel all tasks and exit.
+     */
+    private boolean confirmTaskCancellation() {
+        if (archiveQueueManager.hasTasks()) {
+            Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+            alert.setTitle("Cancel All Tasks?");
+            alert.setHeaderText("Really cancel all tasks and exit?");
+            alert.setContentText("You are currently archiving recordings from your TiVo. Are you sure you want to " +
+                    "close Archivo and cancel these tasks?");
+
+            ButtonType cancelButtonType = new ButtonType("Cancel tasks and exit", ButtonBar.ButtonData.NO);
+            ButtonType keepButtonType = new ButtonType("Keep archiving", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+            alert.getButtonTypes().setAll(cancelButtonType, keepButtonType);
+            ((Button) alert.getDialogPane().lookupButton(cancelButtonType)).setDefaultButton(false);
+            ((Button) alert.getDialogPane().lookupButton(keepButtonType)).setDefaultButton(true);
+
+            Optional<ButtonType> result = alert.showAndWait();
+            return (result.get() == cancelButtonType);
+        }
+        return true;
     }
 
     private void saveWindowDimensions() {
