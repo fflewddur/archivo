@@ -29,7 +29,11 @@
        <MenuBar id="menubar" fx:id="menubar" BorderPane.alignment="CENTER">
            <Menu text="File">
                <MenuItem text="Archive..." fx:id="archiveMenuItem" onAction="#archive"/>
-               <MenuItem text="Delete from TiVo" fx:id="deleteMenuItem" onAction="#delete"/>
+               <MenuItem text="Cancel" fx:id="cancelMenuItem" onAction="#cancel"/>
+               <MenuItem text="Play" fx:id="playMenuItem" onAction="#play"/>
+               <MenuItem text="Delete from TiVo..." fx:id="deleteMenuItem" onAction="#delete"/>
+               <SeparatorMenuItem/>
+               <MenuItem text="Cancel All Tasks" fx:id="cancelAllMenuItem" onAction="#cancelAll"/>
                <SeparatorMenuItem/>
                <MenuItem text="Quit" onAction="#quit"/>
            </Menu>

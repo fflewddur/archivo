@@ -20,8 +20,8 @@
 package net.straylightlabs.archivo.model;
 
 public enum FileType {
-    TIVO("Encrypted TiVo Files", ".TiVo"),
-    MPEG("MPEG Files", ".mpg");
+    TIVO("Encrypted TiVo Files", "*.TiVo"),
+    MPEG("MPEG Files", "*.mpg");
 
     private String description;
     private String extension;

@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -79,7 +80,7 @@ public class RecordingDetailsController implements Initializable {
     @FXML
     private Button cancelButton;
     @FXML
-    private Button openButton;
+    private Button playButton;
 
     public RecordingDetailsController(Archivo mainApp) {
         this.mainApp = mainApp;
@@ -121,12 +122,12 @@ public class RecordingDetailsController implements Initializable {
     }
 
     @FXML
-    public void open(ActionEvent event) {
-        Archivo.logger.info("Opening recording {}...", recording.getDestination());
+    public void play(ActionEvent event) {
+        Archivo.logger.info("Playing recording {}...", recording.getDestination());
         try {
             Desktop.getDesktop().open(recording.getDestination().toFile());
         } catch (IOException e) {
-            Archivo.logger.error("Error opening '{}': ", recording.getDestination(), e);
+            Archivo.logger.error("Error playing '{}': ", recording.getDestination(), e);
         }
     }
 
@@ -136,9 +137,9 @@ public class RecordingDetailsController implements Initializable {
         chooser.setInitialFileName(recording.getDefaultFilename());
         chooser.setInitialDirectory(mainApp.getLastFolder().toFile());
 
+        ObjectProperty<FileChooser.ExtensionFilter> selectedExtensionFilterProperty = chooser.selectedExtensionFilterProperty();
         File destination = chooser.showSaveDialog(parent);
-        destination = fixFilename(destination, getSelectedFileExtension(chooser));
-        saveFileType(chooser);
+        saveFileType(selectedExtensionFilterProperty);
         if (destination != null) {
             return destination.toPath();
         } else {
@@ -164,27 +165,14 @@ public class RecordingDetailsController implements Initializable {
         }
     }
 
-    private void saveFileType(FileChooser chooser) {
-        String extension = getSelectedFileExtension(chooser);
-        Archivo.logger.info("Selected extension filter: {}", extension);
-        mainApp.getUserPrefs().setMostRecentType(FileType.fromExtension(extension));
-    }
-
-    private String getSelectedFileExtension(FileChooser chooser) {
-        return chooser.getSelectedExtensionFilter().getExtensions().get(0);
-    }
-
-    /**
-     * The JavaFX FileChoooser has a bug on Mac OS X that messes up file extensions with extra dots.
-     */
-    private File fixFilename(File destination, String extension) {
-        String destString = destination.toString();
-        if (!destString.endsWith(extension)) {
-            destString = destString.replaceAll("(\\.)+$", "");
-            Archivo.logger.info("Destination: {}, extension = {}", destString, extension);
-            destination = new File(destString + extension);
+    private void saveFileType(ObjectProperty<FileChooser.ExtensionFilter> selectedExtensionFilterProperty) {
+        FileChooser.ExtensionFilter filter = selectedExtensionFilterProperty.get();
+        if (filter != null) {
+            List<String> extensions = filter.getExtensions();
+            String extension = extensions.get(0);
+            Archivo.logger.info("Selected extension filter: {}", extension);
+            mainApp.getUserPrefs().setMostRecentType(FileType.fromExtension(extension));
         }
-        return destination;
     }
 
     public void clearRecording() {
@@ -200,7 +188,7 @@ public class RecordingDetailsController implements Initializable {
         setPosterFromURL(null);
         hideNode(archiveButton);
         hideNode(cancelButton);
-        hideNode(openButton);
+        hideNode(playButton);
     }
 
     public void showRecording(Recording recording) {
@@ -364,16 +352,16 @@ public class RecordingDetailsController implements Initializable {
                 archiveButton.setDisable(true);
                 showNode(archiveButton);
                 showNode(cancelButton);
-                hideNode(openButton);
+                hideNode(playButton);
             } else if (recording.getStatus().getStatus() == ArchiveStatus.TaskStatus.FINISHED) {
                 hideNode(archiveButton);
                 hideNode(cancelButton);
-                showNode(openButton);
+                showNode(playButton);
             } else {
                 archiveButton.setDisable(false);
                 showNode(archiveButton);
                 hideNode(cancelButton);
-                hideNode(openButton);
+                hideNode(playButton);
             }
         }
     }

@@ -54,16 +54,12 @@ public class ArchiveTask extends Task<Recording> {
     private final Tivo tivo;
     private final String mak;
 
-    private static final int BUFFER_SIZE = 8192; // 8KB
-    private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 512; // 1MB
-    private static final int MIN_PROGRESS_INCREMENT = 10 * 1024 * 1024; // number of bytes that must transfer before we update our progress
-    private static final int NUM_RETRIES = 5;
+    private static final int BUFFER_SIZE = 8192; // 8 KB
+    private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 256; // 256 MB
+    private static final int MIN_PROGRESS_INCREMENT = 10 * 1024 * 1024; // 10 MB, number of bytes that must transfer before we update our progress
+    private static final int NUM_RETRIES = 5; // number of times to retry a failed download
     private static final int RETRY_DELAY = 5000; // delay between retry attempts, in ms
     private static final double ESTIMATED_SIZE_THRESHOLD = 0.8; // Need to download this % of a file to consider it successful
-
-//    static {
-//        TivoDecoder.setLogger(Archivo.logger);
-//    }
 
     public ArchiveTask(Recording recording, Tivo tivo, String mak) {
         this.recording = recording;

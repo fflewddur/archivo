@@ -45,7 +45,7 @@
             <VBox spacing="5">
                 <Button fx:id="archiveButton" onAction="#archive" minWidth="80">Archive...</Button>
                 <Button fx:id="cancelButton" onAction="#cancel" minWidth="80">Cancel</Button>
-                <Button fx:id="openButton" onAction="#open" minWidth="80">Open</Button>
+                <Button fx:id="playButton" onAction="#play" minWidth="80">Play</Button>
                 <Label fx:id="copyProtected" text="Copy-protected"
                        style="-fx-text-fill: darkred; -fx-font-weight: bold;"/>
             </VBox>

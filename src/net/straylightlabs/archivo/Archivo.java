@@ -124,6 +124,7 @@ public class Archivo extends Application {
         initRecordingList(initialTivos);
 
         archiveQueueManager.addObserver(recordingListController);
+        archiveQueueManager.addObserver(rootController);
 
         primaryStage.setOnCloseRequest(e -> {
             if (!confirmTaskCancellation()) {
@@ -210,6 +211,7 @@ public class Archivo extends Application {
 
             rootController = loader.getController();
             rootController.setMainApp(this);
+            rootController.disableMenuItems();
 
             Scene scene = new Scene(rootLayout);
             scene.getStylesheets().add("style.css");
@@ -220,27 +222,9 @@ public class Archivo extends Application {
         }
     }
 
-    private void initRecordingList(List<Tivo> initialTivos) {
-        try {
-            FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(Archivo.class.getResource("view/RecordingList.fxml"));
-
-            recordingListController = new RecordingListController(this, initialTivos);
-            loader.setController(recordingListController);
-
-            Pane recordingList = loader.load();
-            rootController.getMainGrid().add(recordingList, 0, 0);
-
-            recordingListController.addRecordingChangedListener(
-                    (observable, oldValue, newValue) -> recordingDetailsController.showRecording(newValue)
-            );
-            recordingListController.startTivoSearch();
-        } catch (IOException e) {
-            logger.error("Error initializing recording list: ", e);
-        }
-    }
-
     private void initRecordingDetails() {
+        assert (rootController != null);
+
         try {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(Archivo.class.getResource("view/RecordingDetails.fxml"));
@@ -255,6 +239,33 @@ public class Archivo extends Application {
         }
     }
 
+    private void initRecordingList(List<Tivo> initialTivos) {
+        assert (rootController != null);
+        assert (recordingDetailsController != null);
+
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(Archivo.class.getResource("view/RecordingList.fxml"));
+
+            recordingListController = new RecordingListController(this, initialTivos);
+            loader.setController(recordingListController);
+
+            Pane recordingList = loader.load();
+            rootController.getMainGrid().add(recordingList, 0, 0);
+
+            recordingListController.addRecordingChangedListener(
+                    (observable, oldValue, newValue) -> recordingDetailsController.showRecording(newValue)
+            );
+            recordingListController.addRecordingChangedListener(
+                    (observable, oldValue, newValue) -> rootController.recordingSelected(newValue)
+            );
+
+            recordingListController.startTivoSearch();
+        } catch (IOException e) {
+            logger.error("Error initializing recording list: ", e);
+        }
+    }
+
     public void enqueueRecordingForArchiving(Recording recording) {
         if (!archiveQueueManager.enqueueArchiveTask(recording, getActiveTivo(), getMak())) {
             logger.error("Error adding recording to queue");
@@ -263,6 +274,13 @@ public class Archivo extends Application {
 
     public void cancelArchiving(Recording recording) {
         archiveQueueManager.cancelArchiveTask(recording);
+    }
+
+    /**
+     * Cancel all of the current and queued Archive tasks
+     */
+    public void cancelAll() {
+        archiveQueueManager.cancelAllArchiveTasks();
     }
 
     public Stage getPrimaryStage() {

@@ -19,22 +19,42 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.layout.GridPane;
 import net.straylightlabs.archivo.Archivo;
+import net.straylightlabs.archivo.model.ArchiveStatus;
+import net.straylightlabs.archivo.model.Recording;
 
 import java.net.URL;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.ResourceBundle;
 
 
-public class RootLayoutController implements Initializable {
+public class RootLayoutController implements Initializable, Observer {
+    private Archivo mainApp;
+    private Recording selectedRecording;
+    private ChangeListener statusChangeListener;
+
     @FXML
     private MenuBar menubar;
+    @FXML
+    private MenuItem archiveMenuItem;
+    @FXML
+    private MenuItem cancelMenuItem;
+    @FXML
+    private MenuItem playMenuItem;
+    @FXML
+    private MenuItem deleteMenuItem;
+    @FXML
+    private MenuItem cancelAllMenuItem;
     @FXML
     private GridPane mainGrid;
     @FXML
@@ -42,7 +62,16 @@ public class RootLayoutController implements Initializable {
     @FXML
     private Label statusMessage;
 
-    private Archivo mainApp;
+
+    public RootLayoutController() {
+        statusChangeListener = (observable, oldValue, newValue) -> {
+            ArchiveStatus oldStatus = (ArchiveStatus) oldValue;
+            ArchiveStatus newStatus = (ArchiveStatus) newValue;
+            if (oldStatus.getStatus() != newStatus.getStatus()) {
+                updateMenuItems(selectedRecording);
+            }
+        };
+    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -56,8 +85,23 @@ public class RootLayoutController implements Initializable {
     }
 
     @FXML
+    public void cancel(ActionEvent event) {
+        mainApp.getRecordingDetailsController().cancel(event);
+    }
+
+    @FXML
+    public void play(ActionEvent event) {
+        mainApp.getRecordingDetailsController().play(event);
+    }
+
+    @FXML
     public void delete(ActionEvent event) {
         Archivo.logger.error("Delete is not yet implemented");
+    }
+
+    @FXML
+    public void cancelAll(ActionEvent event) {
+        mainApp.cancelAll();
     }
 
     @FXML
@@ -94,5 +138,53 @@ public class RootLayoutController implements Initializable {
 
     public GridPane getMainGrid() {
         return mainGrid;
+    }
+
+    public void disableMenuItems() {
+        updateMenuItems(null);
+        setCancelAllDisabled(true);
+    }
+
+    public void recordingSelected(Recording recording) {
+        if (selectedRecording != null) {
+            selectedRecording.statusProperty().removeListener(statusChangeListener);
+        }
+        selectedRecording = recording;
+        if (selectedRecording != null) {
+            selectedRecording.statusProperty().addListener(statusChangeListener);
+        }
+        updateMenuItems(recording);
+    }
+
+
+    private void updateMenuItems(Recording recording) {
+        archiveMenuItem.setDisable(false);
+        cancelMenuItem.setDisable(true);
+        playMenuItem.setDisable(true);
+        deleteMenuItem.setDisable(false);
+
+        if (recording == null || recording.isSeriesHeading()) {
+            archiveMenuItem.setDisable(true);
+            deleteMenuItem.setDisable(true);
+        } else {
+            if (recording.isCopyProtected()) {
+                archiveMenuItem.setDisable(true);
+            } else if (recording.getStatus().getStatus().isCancelable()) {
+                archiveMenuItem.setDisable(true);
+                cancelMenuItem.setDisable(false);
+            } else if (recording.getStatus().getStatus() == ArchiveStatus.TaskStatus.FINISHED) {
+                playMenuItem.setDisable(false);
+            }
+        }
+    }
+
+    @Override
+    public void update(Observable o, Object hasTasksObject) {
+        boolean hasTasks = (boolean) hasTasksObject;
+        setCancelAllDisabled(!hasTasks);
+    }
+
+    private void setCancelAllDisabled(boolean disabled) {
+        cancelAllMenuItem.setDisable(disabled);
     }
 }
