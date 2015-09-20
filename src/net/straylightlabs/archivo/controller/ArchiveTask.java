@@ -55,7 +55,7 @@ public class ArchiveTask extends Task<Recording> {
     private final String mak;
 
     private static final int BUFFER_SIZE = 8192; // 8 KB
-    private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 256; // 256 MB
+    private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 16; // 16 MB
     private static final int MIN_PROGRESS_INCREMENT = 10 * 1024 * 1024; // 10 MB, number of bytes that must transfer before we update our progress
     private static final int NUM_RETRIES = 5; // number of times to retry a failed download
     private static final int RETRY_DELAY = 5000; // delay between retry attempts, in ms
@@ -220,7 +220,7 @@ public class ArchiveTask extends Task<Recording> {
 
             verifyDownloadSize(totalBytesRead, estimatedLength);
         } catch (IOException e) {
-            Archivo.logger.error("IOException: ", e);
+            Archivo.logger.error("IOException while downloading recording: ", e);
             throw new ArchiveTaskException("Problem downloading recording");
         } catch (InterruptedException e) {
             Archivo.logger.error("Decoding thread interrupted: ", e);
