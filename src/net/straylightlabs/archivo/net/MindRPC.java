@@ -121,7 +121,7 @@ public class MindRPC {
             context.init(keyManagerFactory.getKeyManagers(), trustManagers, null);
             return context.getSocketFactory();
         } catch (GeneralSecurityException e) {
-            Archivo.logger.severe("Error creating custom SSLSocketFactory: " + e.getLocalizedMessage());
+            Archivo.logger.error("Error creating custom SSLSocketFactory: ", e);
         }
         throw new AssertionError();
     }
@@ -132,13 +132,13 @@ public class MindRPC {
         try (InputStream key = Files.newInputStream(keyPath)) {
             store.load(key, KEY_PASSWORD.toCharArray());
         } catch (IOException e) {
-            Archivo.logger.severe("Error accessing key file: " + e.getLocalizedMessage());
+            Archivo.logger.error("Error accessing key file: ", e);
         }
         return store;
     }
 
     public JSONObject send(String request) throws IOException {
-        Archivo.logger.info("Request to send:\n " + request);
+        Archivo.logger.info("Request to send:{}\n ", request);
 
         connectAndAuthenticate();
         socketWriter.print(request);

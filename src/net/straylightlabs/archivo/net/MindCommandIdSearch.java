@@ -36,6 +36,7 @@ import java.net.URLEncoder;
 public class MindCommandIdSearch extends MindCommand {
     private final Recording recording;
     private final Tivo tivo;
+    private boolean compatibilityMode;
 
     public MindCommandIdSearch(Recording recording, Tivo tivo) {
         super();
@@ -48,6 +49,13 @@ public class MindCommandIdSearch extends MindCommand {
     }
 
     /**
+     * Turn on compatibility mode, which downloads files in the older and slower PS format.
+     */
+    public void setCompatibilityMode(boolean val) {
+        compatibilityMode = val;
+    }
+
+    /**
      * Build a URL for downloading the video file associated with this recording.
      */
     public URL getDownloadUrl() {
@@ -57,14 +65,18 @@ public class MindCommandIdSearch extends MindCommand {
                 JSONArray ids = response.getJSONArray("objectId");
                 String id = ids.getString(0).replaceFirst("mfs:rc\\.", "");
                 String title = URLEncoder.encode(recording.getSeriesTitle(), RPC_ENCODING);
+                String tsFormat = "&Format=video/x-tivo-mpeg-ts";
+                if (compatibilityMode) {
+                    tsFormat = "";
+                }
                 String url = String.format(
-                        "http://%s/download/%s.TiVo?Container=%%2FNowPlaying&id=%s&Format=video/x-tivo-mpeg-ts",
-                        tivo.getClient().getAddress().getHostAddress(), title, id
+                        "http://%s/download/%s.TiVo?Container=%%2FNowPlaying&id=%s%s",
+                        tivo.getClient().getAddress().getHostAddress(), title, id, tsFormat
                 );
                 return new URL(url);
             }
         } catch (UnsupportedEncodingException | MalformedURLException e) {
-            Archivo.logger.severe("Error building download URL: " + e.getLocalizedMessage());
+            Archivo.logger.error("Error building download URL: ", e);
         }
         throw new IllegalStateException("No URL for recording");
     }

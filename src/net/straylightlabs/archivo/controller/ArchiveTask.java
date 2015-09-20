@@ -55,15 +55,15 @@ public class ArchiveTask extends Task<Recording> {
     private final String mak;
 
     private static final int BUFFER_SIZE = 8192; // 8KB
-    private static final int PIPE_BUFFER_SIZE = 1024 * 1024; // 1MB
+    private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 512; // 1MB
     private static final int MIN_PROGRESS_INCREMENT = 10 * 1024 * 1024; // number of bytes that must transfer before we update our progress
     private static final int NUM_RETRIES = 5;
     private static final int RETRY_DELAY = 5000; // delay between retry attempts, in ms
     private static final double ESTIMATED_SIZE_THRESHOLD = 0.8; // Need to download this % of a file to consider it successful
 
-    static {
-        TivoDecoder.setLogger(Archivo.logger);
-    }
+//    static {
+//        TivoDecoder.setLogger(Archivo.logger);
+//    }
 
     public ArchiveTask(Recording recording, Tivo tivo, String mak) {
         this.recording = recording;
@@ -83,16 +83,17 @@ public class ArchiveTask extends Task<Recording> {
             return;
         }
 
-        Archivo.logger.info("Starting archive task for " + recording.getTitle());
+        Archivo.logger.info("Starting archive task for {}", recording.getTitle());
         try {
             MindCommandIdSearch command = new MindCommandIdSearch(recording, tivo);
+//            command.setCompatibilityMode(true); // Download a PS file instead of a TS file
             command.executeOn(tivo.getClient());
             URL url = command.getDownloadUrl();
-            Archivo.logger.info("URL: " + url);
-            Archivo.logger.info("Saving file to " + recording.getDestination());
+            Archivo.logger.info("URL: {}", url);
+            Archivo.logger.info("Saving file to {}", recording.getDestination());
             getRecording(recording, url);
         } catch (IOException e) {
-            Archivo.logger.severe("Error fetching recording information: " + e.getLocalizedMessage());
+            Archivo.logger.error("Error fetching recording information: ", e);
             throw new ArchiveTaskException("Problem fetching recording information");
         }
     }
@@ -116,25 +117,25 @@ public class ArchiveTask extends Task<Recording> {
             while (!responseOk && retries > 0) {
                 try (CloseableHttpResponse response = client.execute(get)) {
                     if (response.getStatusLine().getStatusCode() != 200) {
-                        Archivo.logger.severe("Error downloading recording: " + response.getStatusLine());
-                        Archivo.logger.info("Sleeping for " + retryDelay + " ms");
+                        Archivo.logger.error("Error downloading recording: {}", response.getStatusLine());
+                        Archivo.logger.info("Sleeping for {} ms", retryDelay);
                         Thread.sleep(retryDelay);
                         retryDelay += RETRY_DELAY;
                         retries--;
                     } else {
-                        Archivo.logger.info("Status line: " + response.getStatusLine());
+                        Archivo.logger.info("Status line: {}", response.getStatusLine());
                         responseOk = true;
                         handleResponse(response, recording);
                     }
                 } catch (InterruptedException e) {
-                    Archivo.logger.severe("Thread interrupted: " + e.getLocalizedMessage());
+                    Archivo.logger.error("Thread interrupted: ", e);
                 }
             }
             if (!responseOk) {
                 throw new ArchiveTaskException("Problem downloading recording");
             }
         } catch (IOException e) {
-            Archivo.logger.severe("Error downloading recording: " + e.getLocalizedMessage());
+            Archivo.logger.error("Error downloading recording: ", e);
             throw new ArchiveTaskException("Problem downloading recording");
         }
     }
@@ -170,7 +171,7 @@ public class ArchiveTask extends Task<Recording> {
                 thread = new Thread(() -> {
                     TivoDecoder decoder = new TivoDecoder(pipedInputStream, outputStream, mak);
                     if (!decoder.decode()) {
-                        Archivo.logger.severe("Failed to decode file");
+                        Archivo.logger.error("Failed to decode file");
                         throw new ArchiveTaskException("Problem decoding recording");
                     }
                 });
@@ -185,7 +186,7 @@ public class ArchiveTask extends Task<Recording> {
                  bytesRead >= 0;
                  bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE)) {
                 if (decrypt && !thread.isAlive()) {
-                    Archivo.logger.severe("Decoding thread died prematurely");
+                    Archivo.logger.error("Decoding thread died prematurely");
                     response.close();
                     throw new ArchiveTaskException("Problem decoding recording");
                 }
@@ -195,7 +196,7 @@ public class ArchiveTask extends Task<Recording> {
                     return;
                 }
                 totalBytesRead += bytesRead;
-                Archivo.logger.fine("Bytes read: " + bytesRead);
+                Archivo.logger.trace("Bytes read: {}", bytesRead);
 
                 if (decrypt) {
                     pipedOutputStream.write(buffer, 0, bytesRead);
@@ -207,7 +208,7 @@ public class ArchiveTask extends Task<Recording> {
                     double percent = totalBytesRead / (double) estimatedLength;
                     updateProgress(recording, percent, startTime, totalBytesRead, estimatedLength);
                     priorBytesRead = totalBytesRead;
-                    Archivo.logger.info("Total bytes read from network: " + totalBytesRead);
+                    Archivo.logger.info("Total bytes read from network: {}", totalBytesRead);
                 }
             }
             Archivo.logger.info("Download finished.");
@@ -223,10 +224,10 @@ public class ArchiveTask extends Task<Recording> {
 
             verifyDownloadSize(totalBytesRead, estimatedLength);
         } catch (IOException e) {
-            Archivo.logger.severe("IOException: " + e.getLocalizedMessage());
+            Archivo.logger.error("IOException: ", e);
             throw new ArchiveTaskException("Problem downloading recording");
         } catch (InterruptedException e) {
-            Archivo.logger.severe("Decoding thread interrupted: " + e.getLocalizedMessage());
+            Archivo.logger.error("Decoding thread interrupted: ", e);
         }
     }
 
@@ -235,7 +236,7 @@ public class ArchiveTask extends Task<Recording> {
      */
     private boolean shouldDecrypt(Recording recording) {
         boolean decrypt = !recording.getDestination().toString().endsWith(".TiVo");
-        Archivo.logger.info("decrypt = " + decrypt);
+        Archivo.logger.info("decrypt = {}", decrypt);
         return decrypt;
     }
 
@@ -246,9 +247,7 @@ public class ArchiveTask extends Task<Recording> {
                 try {
                     length = Long.parseLong(header.getValue());
                 } catch (NumberFormatException e) {
-                    Archivo.logger.severe(String.format("Error parsing estimated length (%s): %s%n",
-                                    header.getValue(), e.getLocalizedMessage())
-                    );
+                    Archivo.logger.error("Error parsing estimated length ({}): ", header.getValue(), e);
                 }
             }
         }
@@ -267,15 +266,13 @@ public class ArchiveTask extends Task<Recording> {
                     ArchiveStatus.createDownloadingStatus(percent, secondsRemaining)
             ));
         } catch (ArithmeticException e) {
-            Archivo.logger.warning("ArithmeticException: " + e.getLocalizedMessage());
+            Archivo.logger.warn("ArithmeticException: ", e);
         }
     }
 
     private void verifyDownloadSize(long bytesRead, long bytesExpected) {
         if (bytesRead / (double) bytesExpected < ESTIMATED_SIZE_THRESHOLD) {
-            Archivo.logger.severe(String.format("Failed to download file (%,d bytes read, %,d bytes expected)",
-                            bytesRead, bytesExpected)
-            );
+            Archivo.logger.error("Failed to download file ({} bytes read, {} bytes expected)", bytesRead, bytesExpected);
             throw new ArchiveTaskException("Failed to download recording");
         }
     }

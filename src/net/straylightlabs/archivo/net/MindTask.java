@@ -38,7 +38,7 @@ public class MindTask extends Task<Void> {
         try {
             command.executeOn(client);
         } catch (IOException e) {
-            Archivo.logger.severe("Error executing MindTask: " + e.getLocalizedMessage());
+            Archivo.logger.error("Error executing MindTask: ", e);
             throw e;
         }
         return null;

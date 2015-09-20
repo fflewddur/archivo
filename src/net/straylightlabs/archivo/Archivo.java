@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo;
 
+import ch.qos.logback.classic.Level;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -39,6 +40,8 @@ import net.straylightlabs.archivo.view.RecordingDetailsController;
 import net.straylightlabs.archivo.view.RecordingListController;
 import net.straylightlabs.archivo.view.RootLayoutController;
 import net.straylightlabs.archivo.view.SetupDialog;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -46,15 +49,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-// TODO Add timeout for connecting to TiVo
-// TODO Add control for filtering TiVo recommendations from the recording list
-// TODO Add control for filtering DRM-protected recordings from the recording list
-// TODO Remember the user's last sort column and restore it at startup
-// TODO Implement collection of paths to tools for decoding, stripping commercials, and encoding video
-// TODO Implement queue of archival tasks that can be started, maybe paused?, and canceled
 
 public class Archivo extends Application {
     private Stage primaryStage;
@@ -67,7 +61,7 @@ public class Archivo extends Application {
     private RecordingDetailsController recordingDetailsController;
     private final ArchiveQueueManager archiveQueueManager;
 
-    public static final Logger logger = Logger.getLogger(Archivo.class.getName());
+    public final static Logger logger;
 
     public static final String APPLICATION_NAME = "Archivo";
     public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
@@ -75,6 +69,10 @@ public class Archivo extends Application {
     public static final String USER_AGENT = String.format("%s/%s", APPLICATION_NAME, APPLICATION_VERSION);
     public static final int WINDOW_MIN_HEIGHT = 400;
     public static final int WINDOW_MIN_WIDTH = 555;
+
+    static {
+        logger = LoggerFactory.getLogger(Archivo.class.toString());
+    }
 
     public Archivo() {
         super();
@@ -85,10 +83,11 @@ public class Archivo extends Application {
     }
 
     private void setLogLevel() {
+        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
         if (prefs.isLogVerbose()) {
-            logger.setLevel(Level.INFO);
+            root.setLevel(Level.DEBUG);
         } else {
-            logger.setLevel(Level.SEVERE);
+            root.setLevel(Level.ERROR);
         }
     }
 
@@ -116,7 +115,7 @@ public class Archivo extends Application {
                 mak = dialog.promptUser();
                 prefs.setMAK(mak);
             } catch (IllegalStateException e) {
-                logger.severe("Error getting MAK from user: " + e.getLocalizedMessage());
+                logger.error("Error getting MAK from user: ", e);
                 cleanShutdown();
             }
         }
@@ -154,7 +153,7 @@ public class Archivo extends Application {
                     msWaited += waitTimeMS;
                 }
             } catch (InterruptedException e) {
-                logger.severe("Interrupted while waiting for archive tasks to shutdown: " + e.getLocalizedMessage());
+                logger.error("Interrupted while waiting for archive tasks to shutdown: ", e);
             }
         }
         logger.info("Shutting down.");
@@ -217,7 +216,7 @@ public class Archivo extends Application {
             primaryStage.setScene(scene);
             primaryStage.show();
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error initializing main window: " + e.getLocalizedMessage(), e);
+            logger.error("Error initializing main window: ", e);
         }
     }
 
@@ -237,7 +236,7 @@ public class Archivo extends Application {
             );
             recordingListController.startTivoSearch();
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error initializing recording list: " + e.getLocalizedMessage(), e);
+            logger.error("Error initializing recording list: ", e);
         }
     }
 
@@ -252,13 +251,13 @@ public class Archivo extends Application {
             Pane recordingDetails = loader.load();
             rootController.getMainGrid().add(recordingDetails, 0, 1);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error initializing recording details: " + e.getLocalizedMessage(), e);
+            logger.error("Error initializing recording details: ", e);
         }
     }
 
     public void enqueueRecordingForArchiving(Recording recording) {
         if (!archiveQueueManager.enqueueArchiveTask(recording, getActiveTivo(), getMak())) {
-            logger.severe("Error adding recording to queue");
+            logger.error("Error adding recording to queue");
         }
     }
 
@@ -283,7 +282,7 @@ public class Archivo extends Application {
     }
 
     public void setStatusText(String status) {
-        logger.info(String.format("Setting status to '%s'", status));
+        logger.info("Setting status to '{}'", status);
         statusText.set(status);
         rootController.showStatus();
     }

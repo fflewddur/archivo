@@ -57,7 +57,7 @@ public class RootLayoutController implements Initializable {
 
     @FXML
     public void delete(ActionEvent event) {
-        Archivo.logger.severe("Delete is not yet implemented");
+        Archivo.logger.error("Delete is not yet implemented");
     }
 
     @FXML

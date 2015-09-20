@@ -41,7 +41,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.security.cert.Extension;
 import java.time.Duration;
 import java.util.*;
 import java.util.List;
@@ -106,7 +105,7 @@ public class RecordingDetailsController implements Initializable {
     public void archive(ActionEvent event) {
         Path destination = showSaveDialog(mainApp.getPrimaryStage());
         if (destination != null) {
-            Archivo.logger.info(String.format("Archive recording %s to %s...", recording.getFullTitle(), destination));
+            Archivo.logger.info("Archive recording {} to {}...", recording.getFullTitle(), destination);
             recording.statusProperty().setValue(ArchiveStatus.QUEUED);
             recording.setDestination(destination);
             mainApp.enqueueRecordingForArchiving(recording);
@@ -116,18 +115,18 @@ public class RecordingDetailsController implements Initializable {
 
     @FXML
     public void cancel(ActionEvent event) {
-        Archivo.logger.info(String.format("Cancel archiving of recording %s...", recording.getFullTitle()));
+        Archivo.logger.info("Cancel archiving of recording {}...", recording.getFullTitle());
         mainApp.cancelArchiving(recording);
         recording.statusProperty().setValue(ArchiveStatus.EMPTY);
     }
 
     @FXML
     public void open(ActionEvent event) {
-        Archivo.logger.info(String.format("Opening recording %s...", recording.getDestination()));
+        Archivo.logger.info("Opening recording {}...", recording.getDestination());
         try {
             Desktop.getDesktop().open(recording.getDestination().toFile());
         } catch (IOException e) {
-            Archivo.logger.severe(String.format("Error opening '%s': %s", recording.getDestination(), e.getLocalizedMessage()));
+            Archivo.logger.error("Error opening '{}': ", recording.getDestination(), e);
         }
     }
 
@@ -138,6 +137,7 @@ public class RecordingDetailsController implements Initializable {
         chooser.setInitialDirectory(mainApp.getLastFolder().toFile());
 
         File destination = chooser.showSaveDialog(parent);
+        destination = fixFilename(destination, getSelectedFileExtension(chooser));
         saveFileType(chooser);
         if (destination != null) {
             return destination.toPath();
@@ -154,7 +154,7 @@ public class RecordingDetailsController implements Initializable {
             FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter(type.getDescription(), type.getExtension());
             fileTypes.add(filter);
             if (type.getExtension().equalsIgnoreCase(previousExtension)) {
-                Archivo.logger.info("Setting extension filter: " + previousExtension);
+                Archivo.logger.info("Setting extension filter: {}", previousExtension);
                 selected = filter;
             }
         }
@@ -165,9 +165,26 @@ public class RecordingDetailsController implements Initializable {
     }
 
     private void saveFileType(FileChooser chooser) {
-        String extension = chooser.getSelectedExtensionFilter().getExtensions().get(0);
-        Archivo.logger.info("Selected extension filter: " + extension);
+        String extension = getSelectedFileExtension(chooser);
+        Archivo.logger.info("Selected extension filter: {}", extension);
         mainApp.getUserPrefs().setMostRecentType(FileType.fromExtension(extension));
+    }
+
+    private String getSelectedFileExtension(FileChooser chooser) {
+        return chooser.getSelectedExtensionFilter().getExtensions().get(0);
+    }
+
+    /**
+     * The JavaFX FileChoooser has a bug on Mac OS X that messes up file extensions with extra dots.
+     */
+    private File fixFilename(File destination, String extension) {
+        String destString = destination.toString();
+        if (!destString.endsWith(extension)) {
+            destString = destString.replaceAll("(\\.)+$", "");
+            Archivo.logger.info("Destination: {}, extension = {}", destString, extension);
+            destination = new File(destString + extension);
+        }
+        return destination;
     }
 
     public void clearRecording() {

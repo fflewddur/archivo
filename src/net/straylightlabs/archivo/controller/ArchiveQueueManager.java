@@ -54,23 +54,23 @@ public class ArchiveQueueManager extends Observable {
                 recording.statusProperty().setValue(ArchiveStatus.createDownloadingStatus(0, ArchiveStatus.TIME_UNKNOWN));
             });
             task.setOnSucceeded(event -> {
-                Archivo.logger.info(String.format("ArchiveTask succeeded for %s", recording.getFullTitle()));
+                Archivo.logger.info("ArchiveTask succeeded for {}", recording.getFullTitle());
                 removeTask(recording);
                 recording.statusProperty().setValue(ArchiveStatus.FINISHED);
             });
             task.setOnFailed(event -> {
                 Throwable e = event.getSource().getException();
-                Archivo.logger.severe(String.format("ArchiveTask failed for %s: %s", recording.getFullTitle(), e));
+                Archivo.logger.error("ArchiveTask failed for {}: ", recording.getFullTitle(), e);
                 e.printStackTrace();
                 removeTask(recording);
                 recording.statusProperty().setValue(ArchiveStatus.createErrorStatus(event.getSource().getException()));
             });
             task.setOnCancelled(event -> {
-                Archivo.logger.info(String.format("ArchiveTask canceled for %s", recording.getFullTitle()));
+                Archivo.logger.info("ArchiveTask canceled for {}", recording.getFullTitle());
                 removeTask(recording);
                 recording.statusProperty().setValue(ArchiveStatus.EMPTY);
             });
-            Archivo.logger.info("Submitting task to executor service: " + executorService);
+            Archivo.logger.info("Submitting task to executor service: {}", executorService);
             if (!hasTasks()) {
                 setChanged();
                 notifyObservers(true);
@@ -78,7 +78,7 @@ public class ArchiveQueueManager extends Observable {
             queuedTasks.put(recording, task);
             executorService.submit(task);
         } catch (RejectedExecutionException e) {
-            Archivo.logger.severe("Could not schedule archive task: " + e.getLocalizedMessage());
+            Archivo.logger.error("Could not schedule archive task: ", e);
             return false;
         }
         return true;

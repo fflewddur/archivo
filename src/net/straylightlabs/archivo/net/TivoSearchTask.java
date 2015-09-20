@@ -70,7 +70,7 @@ public class TivoSearchTask extends Task<Void> {
                         return;
                     }
 
-                    Archivo.logger.info("Discovered: " + serviceInstance);
+                    Archivo.logger.info("Discovered: {}", serviceInstance);
 
                     try {
                         Tivo tivo = buildTivoFromServiceInstance(serviceInstance);
@@ -91,7 +91,7 @@ public class TivoSearchTask extends Task<Void> {
                         return;
                     }
 
-                    Archivo.logger.info("Removed: " + serviceInstance);
+                    Archivo.logger.info("Removed: {}", serviceInstance);
 
                     try {
                         Tivo tivo = buildTivoFromServiceInstance(serviceInstance);
@@ -110,11 +110,11 @@ public class TivoSearchTask extends Task<Void> {
 
                 @Override
                 public void handleException(Object o, Exception e) {
-                    Archivo.logger.severe("Error while looking for TiVo devices: " + e.getLocalizedMessage());
+                    Archivo.logger.error("Error while looking for TiVo devices: ", e);
                 }
             });
         } else {
-            Archivo.logger.severe("Cannot start mDNS service because querier is not set up.");
+            Archivo.logger.error("Cannot start mDNS service because querier is not set up.");
         }
     }
 
@@ -124,7 +124,7 @@ public class TivoSearchTask extends Task<Void> {
             try {
                 service.close();
             } catch (IOException e) {
-                Archivo.logger.severe("Error stopping mDNS service: " + e.getLocalizedMessage());
+                Archivo.logger.error("Error stopping mDNS service: ", e);
             }
             return true;
         }

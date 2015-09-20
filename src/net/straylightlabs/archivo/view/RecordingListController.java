@@ -45,7 +45,6 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.ResourceBundle;
-import java.util.logging.Level;
 import java.util.stream.Collectors;
 
 public class RecordingListController implements Initializable, Observer {
@@ -91,8 +90,10 @@ public class RecordingListController implements Initializable, Observer {
         tivoList.setConverter(new Tivo.StringConverter());
         tivoList.getSelectionModel().selectedItemProperty().addListener(
                 (tivoList, oldTivo, curTivo) -> {
-                    mainApp.setLastDevice(curTivo);
-                    fetchRecordingsFrom(curTivo);
+                    if (curTivo != null) {
+                        mainApp.setLastDevice(curTivo);
+                        fetchRecordingsFrom(curTivo);
+                    }
                 }
         );
         tivoList.setItems(tivos);
@@ -154,8 +155,7 @@ public class RecordingListController implements Initializable, Observer {
             });
             bodyConfigTask.setOnFailed(event1 -> {
                 Throwable e = event1.getSource().getException();
-                Archivo.logger.log(Level.SEVERE,
-                        String.format("Error fetching details of %s: %s", tivo.getName(), e.getLocalizedMessage()), e);
+                Archivo.logger.error("Error fetching details of {}: ", tivo.getName(), e);
                 mainApp.clearStatusText();
                 enableUI();
             });
@@ -163,8 +163,7 @@ public class RecordingListController implements Initializable, Observer {
         });
         task.setOnFailed(event -> {
             Throwable e = event.getSource().getException();
-            Archivo.logger.log(Level.SEVERE,
-                    String.format("Error fetching recordings from %s: %s", tivo.getName(), e.getLocalizedMessage()), e);
+            Archivo.logger.error("Error fetching recordings from {}: ", tivo.getName(), e);
             mainApp.clearStatusText();
             mainApp.showErrorMessage("Problem fetching list of recordings",
                     String.format("Unfortunately we encountered a problem while fetching the list of available " +
