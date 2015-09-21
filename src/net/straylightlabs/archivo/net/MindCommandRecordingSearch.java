@@ -49,10 +49,10 @@ class MindCommandRecordingSearch extends MindCommand {
     public MindCommandRecordingSearch(String recordingId, String bodyId) {
         super();
         commandType = MindCommandType.RECORDING_SEARCH;
-        bodyData.put("responseTemplate", templateList);
-//        bodyData.put("levelOfDetail", "high");
-        bodyData.put("recordingId", recordingId);
-        bodyData.put("bodyId", bodyId);
+        bodyData.put(RESPONSE_TEMPLATE, templateList);
+//        bodyData.put(LOD, LOD_HIGH);
+        bodyData.put(RECORDING_ID, recordingId);
+        bodyData.put(BODY_ID, bodyId);
     }
 
     public Recording getRecording() {
@@ -63,10 +63,10 @@ class MindCommandRecordingSearch extends MindCommand {
             JSONArray recordingsJSON = response.getJSONArray("recording");
             for (Object obj : recordingsJSON) {
                 JSONObject recordingJSON = (JSONObject) obj;
-                if (recordingJSON.has("recordingId"))
-                    builder.recordingId(recordingJSON.getString("recordingId"));
-                if (recordingJSON.has("bodyId"))
-                    builder.bodyId(recordingJSON.getString("bodyId"));
+                if (recordingJSON.has(RECORDING_ID))
+                    builder.recordingId(recordingJSON.getString(RECORDING_ID));
+                if (recordingJSON.has(BODY_ID))
+                    builder.bodyId(recordingJSON.getString(BODY_ID));
                 if (recordingJSON.has("title"))
                     builder.seriesTitle(recordingJSON.getString("title"));
                 if (recordingJSON.has("subtitle"))
@@ -194,39 +194,39 @@ class MindCommandRecordingSearch extends MindCommand {
 
         // Tell the recordingList to only include recording objects
         template = new JSONObject();
-        template.put("type", "responseTemplate");
-        template.put("fieldName", Collections.singletonList("recording"));
-        template.put("typeName", "recordingList");
+        template.put(TYPE, RESPONSE_TEMPLATE);
+        template.put(FIELD_NAME, Collections.singletonList("recording"));
+        template.put(TYPE_NAME, "recordingList");
         templates.put(template);
 
         // Tell the recording object to only include info we need for our UI
         template = new JSONObject();
-        template.put("type", "responseTemplate");
-        template.put("fieldName", Arrays.asList("recordingId", "channel", "originalAirdate", "state", "subtitle",
+        template.put(TYPE, RESPONSE_TEMPLATE);
+        template.put(FIELD_NAME, Arrays.asList("recordingId", "channel", "originalAirdate", "state", "subtitle",
                 "startTime", "episodeNum", "description", "title", "duration", "seasonNumber",
                 "image", "drm", "subscriptionIdentifier", "bodyId"));
-        template.put("typeName", "recording");
+        template.put(TYPE_NAME, "recording");
         templates.put(template);
 
         // Only get useful channel information
         template = new JSONObject();
-        template.put("type", "responseTemplate");
-        template.put("fieldName", Arrays.asList("channelNumber", "name", "logoIndex"));
-        template.put("typeName", "channel");
+        template.put(TYPE, RESPONSE_TEMPLATE);
+        template.put(FIELD_NAME, Arrays.asList("channelNumber", "name", "logoIndex"));
+        template.put(TYPE_NAME, "channel");
         templates.put(template);
 
         // Only get useful DRM information
         template = new JSONObject();
-        template.put("type", "responseTemplate");
-        template.put("fieldName", Collections.singletonList("cgms"));
-        template.put("typeName", "drm");
+        template.put(TYPE, RESPONSE_TEMPLATE);
+        template.put(FIELD_NAME, Collections.singletonList("cgms"));
+        template.put(TYPE_NAME, "drm");
         templates.put(template);
 
         // Only get useful subscription information
         template = new JSONObject();
-        template.put("type", "responseTemplate");
-        template.put("fieldName", Collections.singletonList("subscriptionType"));
-        template.put("typeName", "subscriptionIdentifier");
+        template.put(TYPE, RESPONSE_TEMPLATE);
+        template.put(FIELD_NAME, Collections.singletonList("subscriptionType"));
+        template.put(TYPE_NAME, "subscriptionIdentifier");
         templates.put(template);
 
         return templates;

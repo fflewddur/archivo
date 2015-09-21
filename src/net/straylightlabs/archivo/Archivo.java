@@ -36,6 +36,8 @@ import javafx.stage.Stage;
 import net.straylightlabs.archivo.controller.ArchiveQueueManager;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
+import net.straylightlabs.archivo.net.MindCommandRecordingUpdate;
+import net.straylightlabs.archivo.net.MindTask;
 import net.straylightlabs.archivo.view.RecordingDetailsController;
 import net.straylightlabs.archivo.view.RecordingListController;
 import net.straylightlabs.archivo.view.RootLayoutController;
@@ -169,7 +171,7 @@ public class Archivo extends Application {
     private boolean confirmTaskCancellation() {
         if (archiveQueueManager.hasTasks()) {
             Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-            alert.setTitle("Cancel All Tasks?");
+            alert.setTitle("Cancel Task Confirmation");
             alert.setHeaderText("Really cancel all tasks and exit?");
             alert.setContentText("You are currently archiving recordings from your TiVo. Are you sure you want to " +
                     "close Archivo and cancel these tasks?");
@@ -281,6 +283,61 @@ public class Archivo extends Application {
      */
     public void cancelAll() {
         archiveQueueManager.cancelAllArchiveTasks();
+    }
+
+    public void deleteFromTivo(Recording recording) {
+        Archivo.logger.info("User requested we delete {}", recording.getFullTitle());
+        Tivo tivo = getActiveTivo();
+        if (tivo != null) {
+            if (confirmDelete(recording, tivo)) {
+                sendDeleteCommand(recording, tivo);
+            }
+        } else {
+            Archivo.logger.error("No TiVo is selected to delete from");
+        }
+    }
+
+    private boolean confirmDelete(Recording recording, Tivo tivo) {
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Remove Recording Confirmation");
+        alert.setHeaderText("Really remove this recording?");
+        alert.setContentText(String.format("Are you sure you want to delete %s from %s?",
+                recording.getFullTitle(), tivo.getName()));
+
+        ButtonType deleteButtonType = new ButtonType("Delete", ButtonBar.ButtonData.NO);
+        ButtonType keepButtonType = new ButtonType("Cancel", ButtonBar.ButtonData.CANCEL_CLOSE);
+
+        alert.getButtonTypes().setAll(deleteButtonType, keepButtonType);
+        ((Button) alert.getDialogPane().lookupButton(deleteButtonType)).setDefaultButton(false);
+        ((Button) alert.getDialogPane().lookupButton(keepButtonType)).setDefaultButton(true);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        return (result.get() == deleteButtonType);
+    }
+
+    private void sendDeleteCommand(Recording recording, Tivo tivo) {
+        assert (recording != null);
+        assert (tivo != null);
+
+        setStatusText(String.format("Deleting '%s' from %s...", recording.getTitle(), tivo.getName()));
+        MindCommandRecordingUpdate command = new MindCommandRecordingUpdate(recording.getRecordingId(), tivo.getBodyId());
+        MindTask task = new MindTask(tivo.getClient(), command);
+        task.setOnSucceeded(event -> {
+            recordingListController.removeRecording(recording);
+            clearStatusText();
+        });
+        task.setOnFailed(event -> {
+            Throwable e = event.getSource().getException();
+            Archivo.logger.error("Error fetching recordings from {}: ", tivo.getName(), e);
+            clearStatusText();
+            showErrorMessage("Problem deleting recording",
+                    String.format("Unfortunately we encountered a problem while removing '%s' from %s. " +
+                                    "This usually means that either your computer or your TiVo has lost " +
+                                    "its network connection.%n%nError message: %s",
+                            recording.getTitle(), tivo.getName(), e.getLocalizedMessage())
+            );
+        });
+        rpcExecutor.submit(task);
     }
 
     public Stage getPrimaryStage() {

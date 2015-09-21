@@ -40,9 +40,9 @@ public class MindCommandBodyConfigSearch extends MindCommand {
         super();
         this.commandType = MindCommandType.BODY_CONFIG_SEARCH;
         this.tivo = tivo;
-        bodyData.put("responseTemplate", templateList);
-        bodyData.put("bodyId", tivo.getBodyId());
-        bodyData.put("levelOfDetail", "high");
+        bodyData.put(RESPONSE_TEMPLATE, templateList);
+        bodyData.put(BODY_ID, tivo.getBodyId());
+        bodyData.put(LOD, LOD_HIGH);
     }
 
     @Override
@@ -65,16 +65,16 @@ public class MindCommandBodyConfigSearch extends MindCommand {
 
         // Only get the bodyConfig
         template = new JSONObject();
-        template.put("type", "responseTemplate");
-        template.put("fieldName", Collections.singletonList("bodyConfig"));
-        template.put("typeName", "bodyConfigList");
+        template.put(TYPE, "responseTemplate");
+        template.put(FIELD_NAME, Collections.singletonList("bodyConfig"));
+        template.put(TYPE_NAME, "bodyConfigList");
         templates.put(template);
 
         // Only get the disk information
         template = new JSONObject();
-        template.put("type", "responseTemplate");
-        template.put("fieldName", Arrays.asList("userDiskUsed", "userDiskSize"));
-        template.put("typeName", "bodyConfig");
+        template.put(TYPE, "responseTemplate");
+        template.put(FIELD_NAME, Arrays.asList("userDiskUsed", "userDiskSize"));
+        template.put(TYPE_NAME, "bodyConfig");
         templates.put(template);
 
         return templates;

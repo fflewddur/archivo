@@ -43,9 +43,9 @@ public class MindCommandIdSearch extends MindCommand {
         this.commandType = MindCommandType.ID_SEARCH;
         this.recording = recording;
         this.tivo = tivo;
-        bodyData.put("objectId", recording.getRecordingId());
-        bodyData.put("bodyId", recording.getBodyId());
-        bodyData.put("namespace", "mfs");
+        bodyData.put(OBJECT_ID, recording.getRecordingId());
+        bodyData.put(BODY_ID, recording.getBodyId());
+        bodyData.put(NAMESPACE, "mfs");
     }
 
     /**
@@ -61,8 +61,8 @@ public class MindCommandIdSearch extends MindCommand {
     public URL getDownloadUrl() {
         failOnInvalidState();
         try {
-            if (response.has("objectId")) {
-                JSONArray ids = response.getJSONArray("objectId");
+            if (response.has(OBJECT_ID)) {
+                JSONArray ids = response.getJSONArray(OBJECT_ID);
                 String id = ids.getString(0).replaceFirst("mfs:rc\\.", "");
                 String title = URLEncoder.encode(recording.getSeriesTitle(), RPC_ENCODING);
                 String tsFormat = "&Format=video/x-tivo-mpeg-ts";

@@ -25,7 +25,8 @@ public enum MindCommandType {
     BODY_CONFIG_SEARCH,
     ID_SEARCH,
     RECORDING_FOLDER_ITEM_SEARCH,
-    RECORDING_SEARCH;
+    RECORDING_SEARCH,
+    RECORDING_UPDATE;
 
     @Override public String toString() {
         // These strings must match the name of the command in the TiVo Mind API
@@ -40,6 +41,8 @@ public enum MindCommandType {
                 return "recordingFolderItemSearch";
             case RECORDING_SEARCH:
                 return "recordingSearch";
+            case RECORDING_UPDATE:
+                return "recordingUpdate";
         }
 
         return "unknown";

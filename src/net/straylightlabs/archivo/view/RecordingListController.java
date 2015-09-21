@@ -41,10 +41,7 @@ import net.straylightlabs.archivo.net.TivoSearchTask;
 
 import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Observable;
-import java.util.Observer;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RecordingListController implements Initializable, Observer {
@@ -327,6 +324,33 @@ public class RecordingListController implements Initializable, Observer {
                     }
                     listener.changed(observableRecording, oldRecording, newRecording);
                 });
+    }
+
+    /**
+     * Remove @recording for the recording list's data model.
+     */
+    public void removeRecording(Recording recording) {
+        ObservableList<TreeItem<Recording>> recordingItems = recordingTreeTable.getRoot().getChildren();
+        removeRecordingFromList(recording, recordingItems);
+    }
+
+    /**
+     * Recursively search our tree's data model for the recording to delete.
+     */
+    private void removeRecordingFromList(Recording recording, ObservableList<TreeItem<Recording>> list) {
+        Iterator<TreeItem<Recording>> i = list.iterator();
+        while (i.hasNext()) {
+            TreeItem<Recording> item = i.next();
+            if (!item.isLeaf()) {
+                removeRecordingFromList(recording, item.getChildren());
+            } else {
+                Recording other = item.getValue();
+                if (other.equals(recording)) {
+                    i.remove();
+                    return;
+                }
+            }
+        }
     }
 
     @Override

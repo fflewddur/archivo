@@ -43,8 +43,8 @@ public class MindCommandRecordingFolderItemSearch extends MindCommand {
         super();
         this.commandType = MindCommandType.RECORDING_FOLDER_ITEM_SEARCH;
         this.tivo = tivo;
-        bodyData.put("responseTemplate", templateList);
-        bodyData.put("bodyId", "-");
+        bodyData.put(RESPONSE_TEMPLATE, templateList);
+        bodyData.put(BODY_ID, "-");
         // Get all of the recordings, don't group by title
         bodyData.put("flatten", "true");
         bodyData.put("noLimit", "true");
@@ -64,7 +64,7 @@ public class MindCommandRecordingFolderItemSearch extends MindCommand {
         Map<String, List<Recording>> seriesToRecordings = new HashMap<>();
         for (int i = 0; i < items.length(); i++) {
             JSONObject o = items.getJSONObject(i);
-            String bodyId = o.getString("bodyId");
+            String bodyId = o.getString(BODY_ID);
             tivo.setBodyId(bodyId);
             String recordingId = o.getString("childRecordingId");
             MindCommandRecordingSearch command = new MindCommandRecordingSearch(recordingId, bodyId);
@@ -105,9 +105,9 @@ public class MindCommandRecordingFolderItemSearch extends MindCommand {
 
         // Only get the recording ID
         template = new JSONObject();
-        template.put("type", "responseTemplate");
-        template.put("fieldName", Collections.singletonList("childRecordingId"));
-        template.put("typeName", "recordingFolderItem");
+        template.put(TYPE, "responseTemplate");
+        template.put(FIELD_NAME, Collections.singletonList("childRecordingId"));
+        template.put(TYPE_NAME, "recordingFolderItem");
         templates.put(template);
 
         return templates;

@@ -96,7 +96,7 @@ public class RootLayoutController implements Initializable, Observer {
 
     @FXML
     public void delete(ActionEvent event) {
-        Archivo.logger.error("Delete is not yet implemented");
+        mainApp.deleteFromTivo(selectedRecording);
     }
 
     @FXML

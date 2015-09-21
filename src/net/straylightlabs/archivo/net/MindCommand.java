@@ -37,7 +37,21 @@ public abstract class MindCommand {
     protected final JSONObject bodyData;
     protected JSONObject response;
 
-    public final String RPC_ENCODING = "UTF-8";
+    public static final String RPC_ENCODING = "UTF-8";
+
+    // We use these values in the subclasses
+    public static final String BODY_ID = "bodyId";
+    public static final String FIELD_NAME = "fieldName";
+    public static final String LOD = "levelOfDetail";
+    public static final String LOD_HIGH = "high";
+    public static final String NAMESPACE = "namespace";
+    public static final String OBJECT_ID = "objectId";
+    public static final String RECORDING_ID = "recordingId";
+    public static final String RESPONSE_TEMPLATE = "responseTemplate";
+    public static final String STATE = "state";
+    public static final String STATE_DELETE = "deleted";
+    public static final String TYPE = "type";
+    public static final String TYPE_NAME = "typeName";
 
     protected MindCommand() {
         this.commandType = MindCommandType.UNKNOWN;
