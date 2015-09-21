@@ -46,6 +46,9 @@ public class UserPrefs {
     public static final String WINDOW_MAXIMIZED = "windowMaximized";
     public static final String WINDOW_HEIGHT = "windowHeight";
     public static final String WINDOW_WIDTH = "windowWidth";
+    public static final String COMSKIP_PATH = "comskipPath";
+    public static final String FFMPEG_PATH = "ffmpegPath";
+    public static final String HANDBRAKE_PATH = "handbrakePath";
 
     public UserPrefs() {
         try {
@@ -78,14 +81,22 @@ public class UserPrefs {
         return logVerbose;
     }
 
-    public String getMAK() {
+    public synchronized String getMAK() {
         String mak = prefs.get(MAK, null);
         Archivo.logger.info("MAK = {}", mak);
         return mak;
     }
 
-    public void setMAK(String val) {
+    public synchronized void setMAK(String val) {
         prefs.put(MAK, val);
+    }
+
+    public synchronized boolean getSkipCommercials() {
+        return prefs.getBoolean(SKIP_COMMERCIALS, true);
+    }
+
+    public synchronized void setSkipCommercials(boolean val) {
+        prefs.putBoolean(SKIP_COMMERCIALS, val);
     }
 
     /**
@@ -215,5 +226,17 @@ public class UserPrefs {
 
     public void setWindowWidth(int value) {
         prefs.putInt(WINDOW_WIDTH, value);
+    }
+
+    public synchronized String getComskipPath() {
+        return prefs.get(COMSKIP_PATH, "/Users/todd/Downloads/Recordings/comskip");
+    }
+
+    public synchronized String getFfmpegPath() {
+        return prefs.get(FFMPEG_PATH, "/Users/todd/Downloads/Recordings/ffmpeg");
+    }
+
+    public synchronized String getHandbrakePath() {
+        return prefs.get(HANDBRAKE_PATH, "/Users/todd/Downloads/Recordings/handbrake");
     }
 }

@@ -56,6 +56,18 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
                     setText(String.format("Downloading... (%s)", formatTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
                     break;
+                case REMUXING:
+                    setText("Repairing video file...");
+                    setProgress(-1);
+                    break;
+                case FINDING_COMMERCIALS:
+                    setText("Finding commercials...");
+                    setProgress(-1);
+                    break;
+                case REMOVING_COMMERCIALS:
+                    setText("Removing commercials...");
+                    setProgress(-1);
+                    break;
                 case TRANSCODING:
                     setText(String.format("Transcoding... (%s)", formatTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());

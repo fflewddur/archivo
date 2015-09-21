@@ -31,6 +31,9 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
     public final static int TIME_UNKNOWN = -1;
     public final static ArchiveStatus EMPTY = new ArchiveStatus(TaskStatus.NONE);
     public final static ArchiveStatus QUEUED = new ArchiveStatus(TaskStatus.QUEUED);
+    public final static ArchiveStatus REMUXING = new ArchiveStatus(TaskStatus.REMUXING);
+    public final static ArchiveStatus FINDING_COMMERCIALS = new ArchiveStatus(TaskStatus.FINDING_COMMERCIALS);
+    public final static ArchiveStatus REMOVING_COMMERCIALS = new ArchiveStatus(TaskStatus.REMOVING_COMMERCIALS);
     public final static ArchiveStatus FINISHED = new ArchiveStatus(TaskStatus.FINISHED);
 
     private ArchiveStatus(TaskStatus status) {
@@ -130,6 +133,9 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
 
     public enum TaskStatus {
         TRANSCODING,
+        REMOVING_COMMERCIALS,
+        FINDING_COMMERCIALS,
+        REMUXING,
         DOWNLOADING,
         QUEUED,
         FINISHED,
@@ -145,6 +151,9 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
                 case QUEUED:
                 case DOWNLOADING:
                 case TRANSCODING:
+                case REMOVING_COMMERCIALS:
+                case FINDING_COMMERCIALS:
+                case REMUXING:
                     return true;
                 default:
                     throw new AssertionError("Unknown TaskStatus");

@@ -20,8 +20,11 @@
 package net.straylightlabs.archivo.model;
 
 public enum FileType {
-    TIVO("Encrypted TiVo Files", "*.TiVo"),
-    MPEG("MPEG Files", "*.mpg");
+    H264_UNIVERSAL("H.264 Universal", "*.mp4"),
+    H264_NORMAL("H.264 Normal", "*.mp4"),
+    H264_HIGH("H.264 High Profile ", "*.mp4"),
+    TIVO("Encrypted TiVo", "*.TiVo"),
+    TS("MPEG-TS", "*.ts");
 
     private String description;
     private String extension;
@@ -41,7 +44,7 @@ public enum FileType {
     }
 
     public static FileType getDefault() {
-        return MPEG;
+        return H264_NORMAL;
     }
 
     public String getDescription() {

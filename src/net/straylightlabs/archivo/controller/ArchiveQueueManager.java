@@ -48,7 +48,7 @@ public class ArchiveQueueManager extends Observable {
 
     public boolean enqueueArchiveTask(Recording recording, Tivo tivo, String mak) {
         try {
-            ArchiveTask task = new ArchiveTask(recording, tivo, mak);
+            ArchiveTask task = new ArchiveTask(recording, tivo, mak, mainApp.getUserPrefs());
             task.setOnRunning(event -> {
                 mainApp.setStatusText(String.format("Archiving %s...", recording.getFullTitle()));
                 recording.statusProperty().setValue(ArchiveStatus.createDownloadingStatus(0, ArchiveStatus.TIME_UNKNOWN));

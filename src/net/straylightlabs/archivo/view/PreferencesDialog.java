@@ -20,10 +20,7 @@
 package net.straylightlabs.archivo.view;
 
 import javafx.geometry.Insets;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Modality;
 import javafx.stage.Window;
@@ -54,12 +51,16 @@ public class PreferencesDialog {
         GridPane grid = new GridPane();
         grid.setPadding(new Insets(10, 10, 10, 10));
         grid.setHgap(10);
-        grid.setVgap(10);
+        grid.setVgap(20);
 
         grid.add(new Label("Media access key"), 0, 1);
         TextField mak = new TextField();
         mak.setText(userPrefs.getMAK());
         grid.add(mak, 1, 1);
+
+        CheckBox comskip = new CheckBox("Try to remove commercials");
+        comskip.setSelected(userPrefs.getSkipCommercials());
+        grid.add(comskip, 0, 2, 2, 1);
 
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
@@ -75,6 +76,7 @@ public class PreferencesDialog {
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
                 mainApp.updateMAK(mak.getText());
+                userPrefs.setSkipCommercials(comskip.isSelected());
             }
             return null;
         });

@@ -22,7 +22,9 @@ package net.straylightlabs.archivo.controller;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import net.straylightlabs.archivo.Archivo;
+import net.straylightlabs.archivo.UserPrefs;
 import net.straylightlabs.archivo.model.ArchiveStatus;
+import net.straylightlabs.archivo.model.EditDecisionList;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
 import net.straylightlabs.archivo.net.MindCommandIdSearch;
@@ -43,8 +45,13 @@ import org.apache.http.impl.client.HttpClients;
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Handle the tasks of fetching the recording file from a TiVo, decrypting it, and transcoding it.
@@ -53,6 +60,11 @@ public class ArchiveTask extends Task<Recording> {
     private final Recording recording;
     private final Tivo tivo;
     private final String mak;
+    private final UserPrefs prefs;
+    private Path downloadPath; // downloaded file
+    private Path fixedPath; // re-muxed file
+    private Path cutPath; // comskipped file
+
 
     private static final int BUFFER_SIZE = 8192; // 8 KB
     private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 16; // 16 MB
@@ -61,10 +73,11 @@ public class ArchiveTask extends Task<Recording> {
     private static final int RETRY_DELAY = 5000; // delay between retry attempts, in ms
     private static final double ESTIMATED_SIZE_THRESHOLD = 0.8; // Need to download this % of a file to consider it successful
 
-    public ArchiveTask(Recording recording, Tivo tivo, String mak) {
+    public ArchiveTask(Recording recording, Tivo tivo, String mak, final UserPrefs prefs) {
         this.recording = recording;
         this.tivo = tivo;
         this.mak = mak;
+        this.prefs = prefs;
     }
 
     @Override
@@ -86,8 +99,17 @@ public class ArchiveTask extends Task<Recording> {
             command.executeOn(tivo.getClient());
             URL url = command.getDownloadUrl();
             Archivo.logger.info("URL: {}", url);
-            Archivo.logger.info("Saving file to {}", recording.getDestination());
+            downloadPath = buildPath(recording.getDestination(), "download.ts");
+            Archivo.logger.info("Saving file to {}", downloadPath);
             getRecording(recording, url);
+            if (shouldDecrypt(recording)) {
+                remux();
+                if (prefs.getSkipCommercials()) {
+                    detectCommercials();
+                    cutCommercials();
+                }
+                transcode();
+            }
         } catch (IOException e) {
             Archivo.logger.error("Error fetching recording information: ", e);
             throw new ArchiveTaskException("Problem fetching recording information");
@@ -155,7 +177,7 @@ public class ArchiveTask extends Task<Recording> {
     private void handleResponse(CloseableHttpResponse response, Recording recording) throws ArchiveTaskException {
         long estimatedLength = getEstimatedLengthFromHeaders(response);
         boolean decrypt = shouldDecrypt(recording);
-        try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(recording.getDestination()));
+        try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(downloadPath));
              BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent(), BUFFER_SIZE);
              PipedInputStream pipedInputStream = new PipedInputStream(PIPE_BUFFER_SIZE);
              PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream)
@@ -165,7 +187,7 @@ public class ArchiveTask extends Task<Recording> {
             Thread thread = null;
             if (decrypt) {
                 thread = new Thread(() -> {
-                    TivoDecoder decoder = new TivoDecoder(pipedInputStream, outputStream, mak);
+                    TivoDecoder decoder = new TivoDecoder.Builder().input(pipedInputStream).output(outputStream).mak(mak).build();
                     if (!decoder.decode()) {
                         Archivo.logger.error("Failed to decode file");
                         throw new ArchiveTaskException("Problem decoding recording");
@@ -271,5 +293,127 @@ public class ArchiveTask extends Task<Recording> {
             Archivo.logger.error("Failed to download file ({} bytes read, {} bytes expected)", bytesRead, bytesExpected);
             throw new ArchiveTaskException("Failed to download recording");
         }
+    }
+
+    /**
+     * TiVo files often have timestamp problems. Remux to fix them.
+     */
+    private void remux() {
+        Platform.runLater(() -> recording.statusProperty().setValue(ArchiveStatus.REMUXING));
+
+        Runtime runtime = Runtime.getRuntime();
+        String ffmpegPath = prefs.getFfmpegPath();
+        fixedPath = buildPath(recording.getDestination(), "fixed.ts");
+        Archivo.logger.info("ffmpeg path = {} outputPath = {}", ffmpegPath, fixedPath);
+        String[] cmd = {ffmpegPath, "-i", downloadPath.toString(), "-codec", "copy", "-f", "mpegts", fixedPath.toString()};
+        Archivo.logger.info("Remux command: {}", (Object) cmd);
+        try {
+            Process process = runtime.exec(cmd);
+            process.waitFor();
+        } catch (InterruptedException | IOException e) {
+            Archivo.logger.error("Error running ffmpeg to remux download: ", e);
+            throw new ArchiveTaskException("Error remuxing recording");
+        }
+    }
+
+    private void detectCommercials() {
+        Platform.runLater(() -> recording.statusProperty().setValue(ArchiveStatus.FINDING_COMMERCIALS));
+
+        Runtime runtime = Runtime.getRuntime();
+        String comskipPath = prefs.getComskipPath();
+        String[] cmd = {comskipPath, "--ts", fixedPath.toString()};
+        Archivo.logger.info("Comskip command: {}", (Object) cmd);
+        try {
+            Process process = runtime.exec(cmd);
+            process.waitFor();
+        } catch (InterruptedException | IOException e) {
+            Archivo.logger.error("Error running comskip: ", e);
+            throw new ArchiveTaskException("Error finding commercials");
+        }
+    }
+
+    private void cutCommercials() {
+        Platform.runLater(() -> recording.statusProperty().setValue(ArchiveStatus.REMOVING_COMMERCIALS));
+
+        cutPath = buildPath(recording.getDestination(), "cut.ts");
+        Path edlPath = buildPath(fixedPath, "edl");
+        int filePartCounter = 1;
+        Runtime runtime = Runtime.getRuntime();
+        String ffmpegPath = prefs.getFfmpegPath();
+        Path partList = buildPath(fixedPath, "parts");
+        try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(partList))) {
+            EditDecisionList edl = EditDecisionList.createFromFile(edlPath);
+            List<String> cmdPrototype = new ArrayList<>();
+            cmdPrototype.add(ffmpegPath);
+            cmdPrototype.add("-i");
+            cmdPrototype.add(fixedPath.toString());
+            cmdPrototype.add("-codec");
+            cmdPrototype.add("copy");
+
+            Archivo.logger.info("EDL: {}", edl);
+            for (EditDecisionList.Segment segment : edl.getSegmentsToKeep()) {
+                List<String> cmd = new ArrayList<>(cmdPrototype);
+                cmd.addAll(segment.buildFfmpegCutParamList().stream().collect(Collectors.toList()));
+                Path partPath = buildPath(fixedPath, String.format("part%02d.ts", filePartCounter++));
+                // TODO escape single quotes in partPath
+                writer.println(String.format("file '%s'", partPath));
+                cmd.add(partPath.toString());
+
+                String[] cmdArray = new String[cmd.size()];
+                cmd.toArray(cmdArray);
+                Archivo.logger.info("ffmpeg command: {}", (Object) cmdArray);
+                try {
+                    Process process = runtime.exec(cmdArray);
+                    process.waitFor();
+                } catch (InterruptedException | IOException e) {
+                    Archivo.logger.error("Error running ffmpeg to cut commercials: ", e);
+                    throw new ArchiveTaskException("Error removing commercials");
+                }
+            }
+        } catch (IOException e) {
+            Archivo.logger.error("Error reading EDL file: ", e);
+            return;
+        }
+
+        String[] cmdArray = {ffmpegPath, "-f", "concat", "-i", partList.toString(), "-codec", "copy", cutPath.toString()};
+        Archivo.logger.info("ffmpeg command: {}", (Object) cmdArray);
+        try {
+            Process process = runtime.exec(cmdArray);
+            process.waitFor();
+            Archivo.logger.info("ffmpeg exit value: {}", process.exitValue());
+        } catch (InterruptedException | IOException e) {
+            Archivo.logger.error("Error running ffmpeg to join files: ", e);
+            throw new ArchiveTaskException("Error removing commercials");
+        }
+    }
+
+    private void transcode() {
+        Platform.runLater(() -> recording.statusProperty().setValue(ArchiveStatus.createTranscodingStatus(-1, -1)));
+
+        Runtime runtime = Runtime.getRuntime();
+        String handbrakePath = prefs.getHandbrakePath();
+        Path sourcePath = cutPath;
+        if (sourcePath == null) {
+            sourcePath = fixedPath;
+        }
+        String[] cmd = {handbrakePath, "-i", sourcePath.toString(), "-o", recording.getDestination().toString(), "--preset", "Normal"};
+        Archivo.logger.info("HandBrake command: {}", (Object) cmd);
+        try {
+            Process process = runtime.exec(cmd);
+            process.waitFor();
+            Archivo.logger.info("HandBrake exit value: {}", process.exitValue());
+        } catch (InterruptedException | IOException e) {
+            Archivo.logger.error("Error running HandBrake: ", e);
+            throw new ArchiveTaskException("Error finding commercials");
+        }
+    }
+
+    private Path buildPath(Path input, String newSuffix) {
+        String filename = input.getFileName().toString();
+        int lastDot = filename.lastIndexOf('.');
+        if (lastDot > 0) {
+            filename = filename.substring(0, lastDot + 1);
+        }
+        return Paths.get(input.getParent().toString(), filename + newSuffix);
     }
 }
