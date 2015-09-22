@@ -41,7 +41,7 @@ import java.util.ResourceBundle;
 public class RootLayoutController implements Initializable, Observer {
     private Archivo mainApp;
     private Recording selectedRecording;
-    private ChangeListener statusChangeListener;
+    private ChangeListener<ArchiveStatus> statusChangeListener;
 
     @FXML
     private MenuBar menubar;
@@ -65,9 +65,7 @@ public class RootLayoutController implements Initializable, Observer {
 
     public RootLayoutController() {
         statusChangeListener = (observable, oldValue, newValue) -> {
-            ArchiveStatus oldStatus = (ArchiveStatus) oldValue;
-            ArchiveStatus newStatus = (ArchiveStatus) newValue;
-            if (oldStatus.getStatus() != newStatus.getStatus()) {
+            if (oldValue.getStatus() != newValue.getStatus()) {
                 updateMenuItems(selectedRecording);
             }
         };

@@ -1,0 +1,27 @@
+<component name="ArtifactManager">
+  <artifact type="javafx" name="Archivo">
+    <output-path>$PROJECT_DIR$/out/artifacts/Archivo</output-path>
+    <properties id="javafx-properties">
+      <options>
+        <option name="appClass" value="net.straylightlabs.archivo.Archivo" />
+        <option name="description" value="" />
+        <option name="htmlParamFile" value="" />
+        <option name="paramFile" value="" />
+        <option name="title" value="Archivo" />
+        <option name="vendor" value="Straylight Labs LLC" />
+      </options>
+    </properties>
+    <root id="root">
+      <element id="archive" name="Archivo.jar">
+        <element id="module-output" name="Archivo" />
+      </element>
+      <element id="library" level="project" name="httpclient" />
+      <element id="library" level="project" name="json" />
+      <element id="library" level="project" name="mdnsjava" />
+      <element id="library" level="project" name="tivo-libre" />
+      <element id="directory" name="resources">
+        <element id="dir-copy" path="$PROJECT_DIR$/resources" />
+      </element>
+    </root>
+  </artifact>
+</component>
