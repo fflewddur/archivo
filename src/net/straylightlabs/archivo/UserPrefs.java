@@ -182,11 +182,11 @@ public class UserPrefs {
     }
 
     public String getMostRecentFileType() {
-        return prefs.get(MOST_RECENT_TYPE, FileType.getDefault().getExtension());
+        return prefs.get(MOST_RECENT_TYPE, FileType.getDefault().getDescription());
     }
 
     public void setMostRecentType(FileType type) {
-        prefs.put(MOST_RECENT_TYPE, type.getExtension());
+        prefs.put(MOST_RECENT_TYPE, type.getDescription());
     }
 
     public boolean isWindowMaximized() {

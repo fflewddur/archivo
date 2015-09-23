@@ -40,34 +40,34 @@ public class FfmpegOutputReader extends ProcessOutputReader {
 
     @Override
     public void processLine(String line) {
-        if (duration == 0) {
-            Matcher matcher = DURATION.matcher(line);
-            if (matcher.find()) {
-                int hours = Integer.parseInt(matcher.group(1)) * 60 * 60;
-                int minutes = Integer.parseInt(matcher.group(2)) * 60;
-                duration = Integer.parseInt(matcher.group(3)) + hours + minutes;
-            }
-        } else {
-            Matcher matcher = CURRENT_TIME.matcher(line);
-            if (matcher.find()) {
-                int hours = Integer.parseInt(matcher.group(1)) * 60 * 60;
-                int minutes = Integer.parseInt(matcher.group(2)) * 60;
-                int currentSeconds = Integer.parseInt(matcher.group(3)) + hours + minutes;
-                double percentComplete = currentSeconds / (double) duration;
+        if (task == ArchiveStatus.TaskStatus.REMUXING) {
+            if (duration == 0) {
+                Matcher matcher = DURATION.matcher(line);
+                if (matcher.find()) {
+                    int hours = Integer.parseInt(matcher.group(1)) * 60 * 60;
+                    int minutes = Integer.parseInt(matcher.group(2)) * 60;
+                    duration = Integer.parseInt(matcher.group(3)) + hours + minutes;
+                }
+            } else {
+                Matcher matcher = CURRENT_TIME.matcher(line);
+                if (matcher.find()) {
+                    int hours = Integer.parseInt(matcher.group(1)) * 60 * 60;
+                    int minutes = Integer.parseInt(matcher.group(2)) * 60;
+                    int currentSeconds = Integer.parseInt(matcher.group(3)) + hours + minutes;
+                    double percentComplete = currentSeconds / (double) duration;
 
-                switch (task) {
-                    case REMUXING:
-//                        Archivo.logger.info("Remuxing progress: {} time remaining: {}", percentComplete, getSecondsRemaining(percentComplete));
-                        Platform.runLater(() -> recording.statusProperty().setValue(
-                                        ArchiveStatus.createRemuxingStatus(percentComplete, getSecondsRemaining(percentComplete)))
-                        );
-                        break;
-                    case REMOVING_COMMERCIALS:
+//                    switch (task) {
+//                        case REMUXING:
+                    Platform.runLater(() -> recording.statusProperty().setValue(
+                                    ArchiveStatus.createRemuxingStatus(percentComplete, getSecondsRemaining(percentComplete)))
+                    );
+//                            break;
+//                    case REMOVING_COMMERCIALS:
 //                        Archivo.logger.info("Removing commercials progress: {} time remaining: {}", percentComplete, getSecondsRemaining(percentComplete));
-                        Platform.runLater(() -> recording.statusProperty().setValue(
-                                        ArchiveStatus.createRemovingCommercialsStatus(percentComplete, getSecondsRemaining(percentComplete)))
-                        );
-                        break;
+//                        Platform.runLater(() -> recording.statusProperty().setValue(
+//                                        ArchiveStatus.createRemovingCommercialsStatus(percentComplete, getSecondsRemaining(percentComplete)))
+//                        );
+//                        break;
                 }
             }
         }

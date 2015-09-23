@@ -2,7 +2,7 @@
 Archivo is a cross-platform app for archiving recordings from a TiVo to your computer. It is designed to "just work" and require very little user input or configuration.
 
 ## Features
-Archivo is currently in development. It is intended to eventually support the following features:
+Archivo is currently in development. It will eventually support the following features:
 
 * Automatically find TiVos on your local network (*complete*)
 * List the recordings available on each TiVo (*complete*)
@@ -14,7 +14,7 @@ Archivo is currently in development. It is intended to eventually support the fo
 ## Requirements
 * Java 8u40 or higher
 * A TiVo Roamio or Premiere (Series 4 and Series 5)
-* For best performance, your computer should have at least a dual-core processor and 1 GB of RAM
+* For best performance, your computer should have at least a dual-core processor and 1 GB of memory
 * Plenty of disk space: archiving a one-hour HD recording may temporarily use up to 10 GB of disk space
 
 ## Known Issues

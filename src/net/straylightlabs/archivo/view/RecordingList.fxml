@@ -43,7 +43,7 @@
             <columns>
                 <TreeTableColumn fx:id="showColumn" minWidth="400" text="Show"/>
                 <TreeTableColumn fx:id="dateColumn" minWidth="100" text="Recorded"/>
-                <TreeTableColumn fx:id="statusColumn" minWidth="300" text="Status"/>
+                <TreeTableColumn fx:id="statusColumn" minWidth="350" text="Status"/>
             </columns>
         </TreeTableView>
     </VBox>

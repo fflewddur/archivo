@@ -23,10 +23,7 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.UserPrefs;
-import net.straylightlabs.archivo.model.ArchiveStatus;
-import net.straylightlabs.archivo.model.EditDecisionList;
-import net.straylightlabs.archivo.model.Recording;
-import net.straylightlabs.archivo.model.Tivo;
+import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.MindCommandIdSearch;
 import net.straylightlabs.tivolibre.TivoDecoder;
 import org.apache.http.Header;
@@ -52,7 +49,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -65,7 +61,8 @@ public class ArchiveTask extends Task<Recording> {
     private final UserPrefs prefs;
     private Path downloadPath; // downloaded file
     private Path fixedPath; // re-muxed file
-    private Path cutPath; // comskipped file
+    private Path edlPath; // EDL file from Comskip
+    private Path cutPath; // file with commercials removed
 
     private static final int BUFFER_SIZE = 8192; // 8 KB
     private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 16; // 16 MB
@@ -311,6 +308,7 @@ public class ArchiveTask extends Task<Recording> {
 
         String ffmpegPath = prefs.getFfmpegPath();
         fixedPath = buildPath(recording.getDestination(), "fixed.ts");
+        cleanupFiles(fixedPath);
         Archivo.logger.info("ffmpeg path = {} outputPath = {}", ffmpegPath, fixedPath);
         List<String> cmd = new ArrayList<>();
         cmd.add(ffmpegPath);
@@ -342,6 +340,8 @@ public class ArchiveTask extends Task<Recording> {
         String comskipPath = prefs.getComskipPath();
         String comskipIniPath = Paths.get(Paths.get(comskipPath).getParent().toString(), "comskip.ini").toString();
         Path logoPath = buildPath(fixedPath, "logo.txt");
+        edlPath = buildPath(fixedPath, "edl");
+        cleanupFiles(logoPath, edlPath);
         List<String> cmd = new ArrayList<>();
         cmd.add(comskipPath);
         cmd.add("--ini");
@@ -369,10 +369,10 @@ public class ArchiveTask extends Task<Recording> {
         );
 
         cutPath = buildPath(recording.getDestination(), "cut.ts");
-        Path edlPath = buildPath(fixedPath, "edl");
-        int filePartCounter = 1;
-        String ffmpegPath = prefs.getFfmpegPath();
         Path partList = buildPath(fixedPath, "parts");
+        cleanupFiles(cutPath, partList);
+        String ffmpegPath = prefs.getFfmpegPath();
+        int filePartCounter = 1;
         List<Path> partPaths = new ArrayList<>();
         try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(partList))) {
             EditDecisionList edl = EditDecisionList.createFromFile(edlPath);
@@ -398,9 +398,11 @@ public class ArchiveTask extends Task<Recording> {
                 Archivo.logger.info("ffmpeg command: {}", cmd);
                 try {
                     FfmpegOutputReader outputReader = new FfmpegOutputReader(recording, ArchiveStatus.TaskStatus.NONE);
+                    cleanupFiles(partPath);
                     runProcess(cmd, outputReader);
+                    double progress = (curSegment++ / (double) toKeep.size()) * 0.9; // The final 10% is for concatenation
                     Platform.runLater(() -> recording.statusProperty().setValue(
-                                    ArchiveStatus.createRemovingCommercialsStatus(curSegment / (double) toKeep.size(), ArchiveStatus.TIME_UNKNOWN))
+                                    ArchiveStatus.createRemovingCommercialsStatus(progress, ArchiveStatus.TIME_UNKNOWN))
                     );
                 } catch (InterruptedException | IOException e) {
                     Archivo.logger.error("Error running ffmpeg to cut commercials: ", e);
@@ -409,15 +411,15 @@ public class ArchiveTask extends Task<Recording> {
             }
         } catch (IOException e) {
             Archivo.logger.error("Error reading EDL file '{}': ", edlPath, e);
-            cleanupFiles(partList);
+            cleanupFiles(partList, fixedPath);
             cleanupFiles(partPaths);
             return;
         } finally {
-            cleanupFiles(edlPath);
+            cleanupFiles(edlPath, fixedPath);
         }
 
         Platform.runLater(() -> recording.statusProperty().setValue(
-                        ArchiveStatus.createRemovingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
+                        ArchiveStatus.createRemovingCommercialsStatus(.95, 30))
         );
 
         List<String> cmd = new ArrayList<>();
@@ -452,14 +454,19 @@ public class ArchiveTask extends Task<Recording> {
         if (sourcePath == null) {
             sourcePath = fixedPath;
         }
+        cleanupFiles(recording.getDestination());
         List<String> cmd = new ArrayList<>();
         cmd.add(handbrakePath);
         cmd.add("-i");
         cmd.add(sourcePath.toString());
         cmd.add("-o");
         cmd.add(recording.getDestination().toString());
-        cmd.add("--preset");
-        cmd.add("Normal");
+        FileType fileType = recording.getDestinationType();
+        String handbrakePreset = fileType.getHandbrakePreset();
+        if (handbrakePreset != null) {
+            cmd.add("--preset");
+            cmd.add(handbrakePreset);
+        }
         cmd.add("-5");
         Archivo.logger.info("HandBrake command: {}", cmd);
         try {
@@ -482,24 +489,25 @@ public class ArchiveTask extends Task<Recording> {
         Process process = builder.start();
         outputReader.setInputStream(process.getInputStream());
         Thread readerThread = new Thread(outputReader);
-        readerThread.run();
-        Archivo.logger.info("Checking if process is alive...");
-//        while (process.isAlive()) {
-        while (!process.waitFor(0, TimeUnit.MILLISECONDS)) {
-            Archivo.logger.info("Process is alive!");
+        readerThread.start();
+        while (process.isAlive()) {
             if (isCancelled()) {
                 Archivo.logger.info("Process cancelled, waiting for it to exit");
-                process.destroy();
-                process.waitFor();
                 readerThread.interrupt();
+                process.destroyForcibly();
+                process.waitFor();
                 readerThread.join();
                 Archivo.logger.info("Process has exited");
                 return false;
             } else {
-                Thread.sleep(100);
+                try {
+                    Thread.sleep(200); // check 5 times each second
+                } catch (InterruptedException e) {
+                    // continue our loop; an interruption likely means isCancelled() will now return true
+                }
             }
         }
-        Archivo.logger.info("process is no longer alive");
+
         if (process.exitValue() == 0) {
             return true;
         } else {

@@ -106,9 +106,10 @@ public class RecordingDetailsController implements Initializable {
     public void archive(ActionEvent event) {
         Path destination = showSaveDialog(mainApp.getPrimaryStage());
         if (destination != null) {
-            Archivo.logger.info("Archive recording {} to {}...", recording.getFullTitle(), destination);
+            Archivo.logger.info("Archive recording {} to {} (file type = {})...",
+                    recording.getFullTitle(), destination, recording.getDestinationType()
+            );
             recording.statusProperty().setValue(ArchiveStatus.QUEUED);
-            recording.setDestination(destination);
             mainApp.enqueueRecordingForArchiving(recording);
             mainApp.setLastFolder(destination.getParent());
         }
@@ -139,8 +140,10 @@ public class RecordingDetailsController implements Initializable {
 
         ObjectProperty<FileChooser.ExtensionFilter> selectedExtensionFilterProperty = chooser.selectedExtensionFilterProperty();
         File destination = chooser.showSaveDialog(parent);
-        saveFileType(selectedExtensionFilterProperty);
+        FileType type = saveFileType(selectedExtensionFilterProperty);
         if (destination != null) {
+            recording.setDestination(destination.toPath());
+            recording.setDestinationType(type);
             return destination.toPath();
         } else {
             return null;
@@ -150,12 +153,12 @@ public class RecordingDetailsController implements Initializable {
     private void setupFileTypes(FileChooser chooser) {
         List<FileChooser.ExtensionFilter> fileTypes = new ArrayList<>();
         FileChooser.ExtensionFilter selected = null;
-        String previousExtension = mainApp.getUserPrefs().getMostRecentFileType();
+        String previousFileType = mainApp.getUserPrefs().getMostRecentFileType();
         for (FileType type : FileType.values()) {
             FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter(type.getDescription(), type.getExtension());
             fileTypes.add(filter);
-            if (type.getExtension().equalsIgnoreCase(previousExtension)) {
-                Archivo.logger.info("Setting extension filter: {}", previousExtension);
+            if (type.getDescription().equalsIgnoreCase(previousFileType)) {
+                Archivo.logger.info("Setting extension filter: {}", previousFileType);
                 selected = filter;
             }
         }
@@ -165,14 +168,16 @@ public class RecordingDetailsController implements Initializable {
         }
     }
 
-    private void saveFileType(ObjectProperty<FileChooser.ExtensionFilter> selectedExtensionFilterProperty) {
+    private FileType saveFileType(ObjectProperty<FileChooser.ExtensionFilter> selectedExtensionFilterProperty) {
         FileChooser.ExtensionFilter filter = selectedExtensionFilterProperty.get();
+        FileType fileType = null;
         if (filter != null) {
-            List<String> extensions = filter.getExtensions();
-            String extension = extensions.get(0);
-            Archivo.logger.info("Selected extension filter: {}", extension);
-            mainApp.getUserPrefs().setMostRecentType(FileType.fromExtension(extension));
+            String description = filter.getDescription();
+            Archivo.logger.info("Selected extension filter: {}", description);
+            fileType = FileType.fromDescription(description);
+            mainApp.getUserPrefs().setMostRecentType(fileType);
         }
+        return fileType;
     }
 
     public void clearRecording() {

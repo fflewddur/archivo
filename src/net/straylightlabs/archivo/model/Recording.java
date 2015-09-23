@@ -67,6 +67,7 @@ public class Recording {
     // Combine season and episode number(s) into a more useful string
     private final String seasonAndEpisode;
     private Path destination;
+    private FileType destinationType;
 
     public final static int DESIRED_IMAGE_WIDTH = 200;
     public final static int DESIRED_IMAGE_HEIGHT = 150;
@@ -272,6 +273,14 @@ public class Recording {
 
     public void setDestination(Path val) {
         destination = val;
+    }
+
+    public FileType getDestinationType() {
+        return destinationType;
+    }
+
+    public void setDestinationType(FileType type) {
+        destinationType = type;
     }
 
     public String getFullTitle() {

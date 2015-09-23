@@ -20,27 +20,35 @@
 package net.straylightlabs.archivo.model;
 
 public enum FileType {
-    H264_UNIVERSAL("H.264 Universal", "*.mp4"),
-    H264_NORMAL("H.264 Normal", "*.mp4"),
-    H264_HIGH("H.264 High Profile ", "*.mp4"),
-    TIVO("Encrypted TiVo", "*.TiVo"),
-    TS("MPEG-TS", "*.ts");
+    ANDROID_PHONE("Android Files", "*.mp4", "Android"),
+    ANDROID_TABLET("Android Tablet Files", "*.mp4", "Android Tablet"),
+    APPLE_TV("AppleTV 1 & 2 Files", "*.m4v", "AppleTV"),
+    APPLE_TV3("AppleTV 3 Files", "*.m4v", "AppleTV 3"),
+    H264_HIGH("Standard H.264 (High Profile) Files ", "*.mp4", "High Profile"),
+    H264_NORMAL("Standard H.264 Files", "*.mp4", "Normal"),
+    IPAD("iPad Files", "*.mp4", "iPad"),
+    IPHONE("iPhone & iPod Touch Files", "*.mp4", "iPhone & iPod touch"),
+    TIVO("Encrypted TiVo Files", "*.TiVo", null),
+    TS("MPEG-TS Files", "*.ts", null),
+    WINDOWS_PHONE("Windows Phone Files", "*.mp4", "Windows Phone 8");
 
-    private String description;
-    private String extension;
+    private final String description;
+    private final String extension;
+    private final String handbrakePreset;
 
-    FileType(String description, String extension) {
+    FileType(String description, String extension, String preset) {
         this.description = description;
         this.extension = extension;
+        this.handbrakePreset = preset;
     }
 
-    public static FileType fromExtension(String extension) {
+    public static FileType fromDescription(String description) {
         for (FileType ft : values()) {
-            if (ft.extension.equalsIgnoreCase(extension)) {
+            if (ft.description.equalsIgnoreCase(description)) {
                 return ft;
             }
         }
-        throw new IllegalArgumentException("Unknown extension: " + extension);
+        throw new IllegalArgumentException("Unknown description: " + description);
     }
 
     public static FileType getDefault() {
@@ -53,5 +61,9 @@ public enum FileType {
 
     public String getExtension() {
         return extension;
+    }
+
+    public String getHandbrakePreset() {
+        return handbrakePreset;
     }
 }
