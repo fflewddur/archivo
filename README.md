@@ -4,12 +4,12 @@ Archivo is a cross-platform app for archiving recordings from a TiVo to your com
 ## Features
 Archivo is currently in development. It is intended to eventually support the following features:
 
-* Automatically find TiVos on your local network (complete)
-* List the recordings available on each TiVo (complete)
-* Copy recordings from a TiVo to a computer (complete)
-* Convert recordings to more convenient video formats (in progress)
-* Remove commercials from recordings (in progress)
-* Delete recordings from the TiVo (complete)
+* Automatically find TiVos on your local network (*complete*)
+* List the recordings available on each TiVo (*complete*)
+* Copy recordings from a TiVo to a computer (*complete*)
+* Convert recordings to more convenient video formats (**in progress**)
+* Remove commercials from recordings (**in progress**)
+* Delete recordings from the TiVo (*complete*)
 
 ## Requirements
 * Java 8u40 or higher
