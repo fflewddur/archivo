@@ -143,20 +143,7 @@ public class RecordingListController implements Initializable, Observer {
         MindTask task = new MindTask(tivo.getClient(), command);
         task.setOnSucceeded(event -> {
             fillTreeTableView(command.getSeries());
-            MindCommandBodyConfigSearch bodyConfigSearch = new MindCommandBodyConfigSearch(tivo);
-            MindTask bodyConfigTask = new MindTask(tivo.getClient(), bodyConfigSearch);
-            bodyConfigTask.setOnSucceeded(event1 -> {
-                updateStorageControls(tivo);
-                mainApp.clearStatusText();
-                enableUI();
-            });
-            bodyConfigTask.setOnFailed(event1 -> {
-                Throwable e = event1.getSource().getException();
-                Archivo.logger.error("Error fetching details of {}: ", tivo.getName(), e);
-                mainApp.clearStatusText();
-                enableUI();
-            });
-            mainApp.getRpcExecutor().submit(bodyConfigTask);
+            updateTivoDetails(tivo);
         });
         task.setOnFailed(event -> {
             Throwable e = event.getSource().getException();
@@ -224,6 +211,23 @@ public class RecordingListController implements Initializable, Observer {
             recordingTreeTable.getSelectionModel().selectFirst();
             recordingTreeTable.requestFocus();
         });
+    }
+
+    public void updateTivoDetails(Tivo tivo) {
+        MindCommandBodyConfigSearch bodyConfigSearch = new MindCommandBodyConfigSearch(tivo);
+        MindTask bodyConfigTask = new MindTask(tivo.getClient(), bodyConfigSearch);
+        bodyConfigTask.setOnSucceeded(event -> {
+            updateStorageControls(tivo);
+            mainApp.clearStatusText();
+            enableUI();
+        });
+        bodyConfigTask.setOnFailed(event -> {
+            Throwable e = event.getSource().getException();
+            Archivo.logger.error("Error fetching details of {}: ", tivo.getName(), e);
+            mainApp.clearStatusText();
+            enableUI();
+        });
+        mainApp.getRpcExecutor().submit(bodyConfigTask);
     }
 
     /**
