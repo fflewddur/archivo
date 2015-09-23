@@ -50,7 +50,9 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -64,7 +66,6 @@ public class ArchiveTask extends Task<Recording> {
     private Path downloadPath; // downloaded file
     private Path fixedPath; // re-muxed file
     private Path cutPath; // comskipped file
-
 
     private static final int BUFFER_SIZE = 8192; // 8 KB
     private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 16; // 16 MB
@@ -103,12 +104,17 @@ public class ArchiveTask extends Task<Recording> {
             Archivo.logger.info("Saving file to {}", downloadPath);
             getRecording(recording, url);
             if (shouldDecrypt(recording)) {
+                // TODO For each of these commands:
+                // 0) if the file already exists, delete it
+                // 1) use the task thread to check for task cancellation
+
                 remux();
                 if (prefs.getSkipCommercials()) {
                     detectCommercials();
                     cutCommercials();
                 }
                 transcode();
+                cleanupFiles(fixedPath);
             }
         } catch (IOException e) {
             Archivo.logger.error("Error fetching recording information: ", e);
@@ -299,48 +305,75 @@ public class ArchiveTask extends Task<Recording> {
      * TiVo files often have timestamp problems. Remux to fix them.
      */
     private void remux() {
-        Platform.runLater(() -> recording.statusProperty().setValue(ArchiveStatus.REMUXING));
+        Platform.runLater(() -> recording.statusProperty().setValue(
+                        ArchiveStatus.createRemuxingStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
+        );
 
-        Runtime runtime = Runtime.getRuntime();
         String ffmpegPath = prefs.getFfmpegPath();
         fixedPath = buildPath(recording.getDestination(), "fixed.ts");
         Archivo.logger.info("ffmpeg path = {} outputPath = {}", ffmpegPath, fixedPath);
-        String[] cmd = {ffmpegPath, "-i", downloadPath.toString(), "-codec", "copy", "-f", "mpegts", fixedPath.toString()};
-        Archivo.logger.info("Remux command: {}", (Object) cmd);
+        List<String> cmd = new ArrayList<>();
+        cmd.add(ffmpegPath);
+        cmd.add("-i");
+        cmd.add(downloadPath.toString());
+        cmd.add("-codec");
+        cmd.add("copy");
+        cmd.add("-f");
+        cmd.add("mpegts");
+        cmd.add(fixedPath.toString());
+        Archivo.logger.info("Remux command: {}", cmd);
+        Archivo.logger.info("Current directory: {}", System.getProperty("user.dir"));
         try {
-            Process process = runtime.exec(cmd);
-            process.waitFor();
+            FfmpegOutputReader outputReader = new FfmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMUXING);
+            runProcess(cmd, outputReader);
         } catch (InterruptedException | IOException e) {
             Archivo.logger.error("Error running ffmpeg to remux download: ", e);
             throw new ArchiveTaskException("Error remuxing recording");
+        } finally {
+            cleanupFiles(downloadPath);
         }
     }
 
     private void detectCommercials() {
-        Platform.runLater(() -> recording.statusProperty().setValue(ArchiveStatus.FINDING_COMMERCIALS));
+        Platform.runLater(() -> recording.statusProperty().setValue(
+                        ArchiveStatus.createFindingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
+        );
 
-        Runtime runtime = Runtime.getRuntime();
         String comskipPath = prefs.getComskipPath();
-        String[] cmd = {comskipPath, "--ts", fixedPath.toString()};
-        Archivo.logger.info("Comskip command: {}", (Object) cmd);
+        String comskipIniPath = Paths.get(Paths.get(comskipPath).getParent().toString(), "comskip.ini").toString();
+        Path logoPath = buildPath(fixedPath, "logo.txt");
+        List<String> cmd = new ArrayList<>();
+        cmd.add(comskipPath);
+        cmd.add("--ini");
+        cmd.add(comskipIniPath);
+        cmd.add("--logo");
+        cmd.add(logoPath.toString());
+        cmd.add("--ts");
+        cmd.add(fixedPath.toString());
+        cmd.add(fixedPath.getParent().toString());
+        Archivo.logger.info("Comskip command: {}", cmd);
         try {
-            Process process = runtime.exec(cmd);
-            process.waitFor();
+            ComskipOutputReader outputReader = new ComskipOutputReader(recording);
+            runProcess(cmd, outputReader);
         } catch (InterruptedException | IOException e) {
             Archivo.logger.error("Error running comskip: ", e);
             throw new ArchiveTaskException("Error finding commercials");
+        } finally {
+            cleanupFiles(logoPath);
         }
     }
 
     private void cutCommercials() {
-        Platform.runLater(() -> recording.statusProperty().setValue(ArchiveStatus.REMOVING_COMMERCIALS));
+        Platform.runLater(() -> recording.statusProperty().setValue(
+                        ArchiveStatus.createRemovingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
+        );
 
         cutPath = buildPath(recording.getDestination(), "cut.ts");
         Path edlPath = buildPath(fixedPath, "edl");
         int filePartCounter = 1;
-        Runtime runtime = Runtime.getRuntime();
         String ffmpegPath = prefs.getFfmpegPath();
         Path partList = buildPath(fixedPath, "parts");
+        List<Path> partPaths = new ArrayList<>();
         try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(partList))) {
             EditDecisionList edl = EditDecisionList.createFromFile(edlPath);
             List<String> cmdPrototype = new ArrayList<>();
@@ -351,61 +384,142 @@ public class ArchiveTask extends Task<Recording> {
             cmdPrototype.add("copy");
 
             Archivo.logger.info("EDL: {}", edl);
-            for (EditDecisionList.Segment segment : edl.getSegmentsToKeep()) {
+            List<EditDecisionList.Segment> toKeep = edl.getSegmentsToKeep();
+            int curSegment = 1;
+            Path escapedPath = Paths.get(fixedPath.toString().replace("\'", ""));
+            for (EditDecisionList.Segment segment : toKeep) {
                 List<String> cmd = new ArrayList<>(cmdPrototype);
                 cmd.addAll(segment.buildFfmpegCutParamList().stream().collect(Collectors.toList()));
-                Path partPath = buildPath(fixedPath, String.format("part%02d.ts", filePartCounter++));
-                // TODO escape single quotes in partPath
-                writer.println(String.format("file '%s'", partPath));
+                Path partPath = buildPath(escapedPath, String.format("part%02d.ts", filePartCounter++));
+                writer.println(String.format("file '%s'", partPath.toString().replace("'", "\\'")));
+                partPaths.add(partPath);
                 cmd.add(partPath.toString());
 
-                String[] cmdArray = new String[cmd.size()];
-                cmd.toArray(cmdArray);
-                Archivo.logger.info("ffmpeg command: {}", (Object) cmdArray);
+                Archivo.logger.info("ffmpeg command: {}", cmd);
                 try {
-                    Process process = runtime.exec(cmdArray);
-                    process.waitFor();
+                    FfmpegOutputReader outputReader = new FfmpegOutputReader(recording, ArchiveStatus.TaskStatus.NONE);
+                    runProcess(cmd, outputReader);
+                    Platform.runLater(() -> recording.statusProperty().setValue(
+                                    ArchiveStatus.createRemovingCommercialsStatus(curSegment / (double) toKeep.size(), ArchiveStatus.TIME_UNKNOWN))
+                    );
                 } catch (InterruptedException | IOException e) {
                     Archivo.logger.error("Error running ffmpeg to cut commercials: ", e);
                     throw new ArchiveTaskException("Error removing commercials");
                 }
             }
         } catch (IOException e) {
-            Archivo.logger.error("Error reading EDL file: ", e);
+            Archivo.logger.error("Error reading EDL file '{}': ", edlPath, e);
+            cleanupFiles(partList);
+            cleanupFiles(partPaths);
             return;
+        } finally {
+            cleanupFiles(edlPath);
         }
 
-        String[] cmdArray = {ffmpegPath, "-f", "concat", "-i", partList.toString(), "-codec", "copy", cutPath.toString()};
-        Archivo.logger.info("ffmpeg command: {}", (Object) cmdArray);
+        Platform.runLater(() -> recording.statusProperty().setValue(
+                        ArchiveStatus.createRemovingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
+        );
+
+        List<String> cmd = new ArrayList<>();
+        cmd.add(ffmpegPath);
+        cmd.add("-f");
+        cmd.add("concat");
+        cmd.add("-i");
+        cmd.add(partList.toString());
+        cmd.add("-codec");
+        cmd.add("copy");
+        cmd.add(cutPath.toString());
+        Archivo.logger.info("ffmpeg command: {}", cmd);
         try {
-            Process process = runtime.exec(cmdArray);
-            process.waitFor();
-            Archivo.logger.info("ffmpeg exit value: {}", process.exitValue());
+            FfmpegOutputReader outputReader = new FfmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMOVING_COMMERCIALS);
+            runProcess(cmd, outputReader);
         } catch (InterruptedException | IOException e) {
             Archivo.logger.error("Error running ffmpeg to join files: ", e);
             throw new ArchiveTaskException("Error removing commercials");
+        } finally {
+            cleanupFiles(partList);
+            cleanupFiles(partPaths);
         }
     }
 
     private void transcode() {
-        Platform.runLater(() -> recording.statusProperty().setValue(ArchiveStatus.createTranscodingStatus(-1, -1)));
+        Platform.runLater(() -> recording.statusProperty().setValue(
+                        ArchiveStatus.createTranscodingStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
+        );
 
-        Runtime runtime = Runtime.getRuntime();
         String handbrakePath = prefs.getHandbrakePath();
         Path sourcePath = cutPath;
         if (sourcePath == null) {
             sourcePath = fixedPath;
         }
-        String[] cmd = {handbrakePath, "-i", sourcePath.toString(), "-o", recording.getDestination().toString(), "--preset", "Normal"};
-        Archivo.logger.info("HandBrake command: {}", (Object) cmd);
+        List<String> cmd = new ArrayList<>();
+        cmd.add(handbrakePath);
+        cmd.add("-i");
+        cmd.add(sourcePath.toString());
+        cmd.add("-o");
+        cmd.add(recording.getDestination().toString());
+        cmd.add("--preset");
+        cmd.add("Normal");
+        cmd.add("-5");
+        Archivo.logger.info("HandBrake command: {}", cmd);
         try {
-            Process process = runtime.exec(cmd);
-            process.waitFor();
-            Archivo.logger.info("HandBrake exit value: {}", process.exitValue());
+            HandbrakeOutputReader outputReader = new HandbrakeOutputReader(recording);
+            runProcess(cmd, outputReader);
         } catch (InterruptedException | IOException e) {
             Archivo.logger.error("Error running HandBrake: ", e);
-            throw new ArchiveTaskException("Error finding commercials");
+            throw new ArchiveTaskException("Error running HandBrake");
+        } finally {
+            cleanupFiles(cutPath);
         }
+    }
+
+    private boolean runProcess(List<String> command, ProcessOutputReader outputReader) throws IOException, InterruptedException {
+        if (isCancelled()) {
+            return false;
+        }
+
+        ProcessBuilder builder = new ProcessBuilder().command(command).redirectErrorStream(true);
+        Process process = builder.start();
+        outputReader.setInputStream(process.getInputStream());
+        Thread readerThread = new Thread(outputReader);
+        readerThread.run();
+        Archivo.logger.info("Checking if process is alive...");
+//        while (process.isAlive()) {
+        while (!process.waitFor(0, TimeUnit.MILLISECONDS)) {
+            Archivo.logger.info("Process is alive!");
+            if (isCancelled()) {
+                Archivo.logger.info("Process cancelled, waiting for it to exit");
+                process.destroy();
+                process.waitFor();
+                readerThread.interrupt();
+                readerThread.join();
+                Archivo.logger.info("Process has exited");
+                return false;
+            } else {
+                Thread.sleep(100);
+            }
+        }
+        Archivo.logger.info("process is no longer alive");
+        if (process.exitValue() == 0) {
+            return true;
+        } else {
+            Archivo.logger.error("Error running command {}: exit code = {}", command, process.exitValue());
+            return false;
+        }
+    }
+
+    private void cleanupFiles(Path... files) {
+        cleanupFiles(Arrays.asList(files));
+    }
+
+    private void cleanupFiles(List<Path> files) {
+        files.stream().forEach(f -> {
+            try {
+                Files.deleteIfExists(f);
+            } catch (IOException e) {
+                Archivo.logger.error("Error removing {}: ", f, e);
+            }
+        });
     }
 
     private Path buildPath(Path input, String newSuffix) {

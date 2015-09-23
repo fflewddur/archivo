@@ -20,8 +20,11 @@
       <element id="library" level="project" name="mdnsjava" />
       <element id="library" level="project" name="tivo-libre" />
       <element id="directory" name="resources">
-        <element id="dir-copy" path="$PROJECT_DIR$/resources" />
+        <element id="file-copy" path="$PROJECT_DIR$/resources/cdata.p12" />
+        <element id="file-copy" path="$PROJECT_DIR$/resources/style.css" />
       </element>
+      <element id="library" level="project" name="logback" />
+      <element id="library" level="project" name="slf4j-api" />
     </root>
   </artifact>
 </component>

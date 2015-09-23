@@ -37,7 +37,7 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
             progressIndicator.setPrefHeight(20);
             progressIndicator.setPrefWidth(20);
             progressIndicator.setSkin(new TaskProgressIndicatorSkin(progressIndicator));
-//            progressIndicator.getStyleClass().add("recording-progress-indicator");
+            progressIndicator.getStyleClass().add("recording-progress-indicator");
         }
         return progressIndicator;
     }
@@ -57,19 +57,19 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
                     setProgress(status.getProgress());
                     break;
                 case REMUXING:
-                    setText("Repairing video file...");
-                    setProgress(-1);
+                    setText(String.format("Repairing video file... (%s)", formatTime(status.getSecondsRemaining())));
+                    setProgress(status.getProgress());
                     break;
                 case FINDING_COMMERCIALS:
-                    setText("Finding commercials...");
-                    setProgress(-1);
+                    setText(String.format("Finding commercials... (%s)", formatTime(status.getSecondsRemaining())));
+                    setProgress(status.getProgress());
                     break;
                 case REMOVING_COMMERCIALS:
-                    setText("Removing commercials...");
-                    setProgress(-1);
+                    setText(String.format("Removing commercials... (%s)", formatTime(status.getSecondsRemaining())));
+                    setProgress(status.getProgress());
                     break;
                 case TRANSCODING:
-                    setText(String.format("Transcoding... (%s)", formatTime(status.getSecondsRemaining())));
+                    setText(String.format("Converting... (%s)", formatTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
                     break;
                 case FINISHED:

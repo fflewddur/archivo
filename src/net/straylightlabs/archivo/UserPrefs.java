@@ -177,21 +177,6 @@ public class UserPrefs {
         return lastFolder;
     }
 
-    /**
-     * Test for the existence of some common folders. If none exist, default to the user's home directory.
-     */
-    private String getPlatformVideoFolder() {
-        String userHomePath = System.getProperty("user.home");
-        List<String> possibleFolders = Arrays.asList("Videos", "Movies", "My Videos");
-        for (String possibleFolder : possibleFolders) {
-            Path videoPath = Paths.get(userHomePath, possibleFolder);
-            if (Files.isDirectory(videoPath)) {
-                return videoPath.toString();
-            }
-        }
-        return userHomePath;
-    }
-
     public void setLastFolder(Path lastFolder) {
         prefs.put(MOST_RECENT_FOLDER, lastFolder.toString());
     }
@@ -229,14 +214,38 @@ public class UserPrefs {
     }
 
     public synchronized String getComskipPath() {
-        return prefs.get(COMSKIP_PATH, "/Users/todd/Downloads/Recordings/comskip");
+        return prefs.get(COMSKIP_PATH, Paths.get(".", "tools", "comskip" + getExeSuffix()).toString());
     }
 
     public synchronized String getFfmpegPath() {
-        return prefs.get(FFMPEG_PATH, "/Users/todd/Downloads/Recordings/ffmpeg");
+        return prefs.get(FFMPEG_PATH, Paths.get(".", "tools", "ffmpeg" + getExeSuffix()).toString());
     }
 
     public synchronized String getHandbrakePath() {
-        return prefs.get(HANDBRAKE_PATH, "/Users/todd/Downloads/Recordings/handbrake");
+        return prefs.get(HANDBRAKE_PATH, Paths.get(".", "tools", "handbrake" + getExeSuffix()).toString());
+    }
+
+    /**
+     * Test for the existence of some common folders. If none exist, default to the user's home directory.
+     */
+    private String getPlatformVideoFolder() {
+        String userHomePath = System.getProperty("user.home");
+        List<String> possibleFolders = Arrays.asList("Videos", "Movies", "My Videos");
+        for (String possibleFolder : possibleFolders) {
+            Path videoPath = Paths.get(userHomePath, possibleFolder);
+            if (Files.isDirectory(videoPath)) {
+                return videoPath.toString();
+            }
+        }
+        return userHomePath;
+    }
+
+    private String getExeSuffix() {
+        String osName = System.getProperty("os.name");
+        if (osName.startsWith("Windows")) {
+            return ".exe";
+        } else {
+            return "";
+        }
     }
 }

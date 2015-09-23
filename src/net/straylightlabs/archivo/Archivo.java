@@ -323,6 +323,7 @@ public class Archivo extends Application {
         MindCommandRecordingUpdate command = new MindCommandRecordingUpdate(recording.getRecordingId(), tivo.getBodyId());
         MindTask task = new MindTask(tivo.getClient(), command);
         task.setOnSucceeded(event -> {
+            // TODO Run a BodyConfig command to update our disk space used value
             recordingListController.removeRecording(recording);
             clearStatusText();
         });

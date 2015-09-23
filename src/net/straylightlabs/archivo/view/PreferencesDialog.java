@@ -49,7 +49,7 @@ public class PreferencesDialog {
         dialog.setTitle("Preferences");
 
         GridPane grid = new GridPane();
-        grid.setPadding(new Insets(10, 10, 10, 10));
+        grid.setPadding(new Insets(20, 20, 20, 20));
         grid.setHgap(10);
         grid.setVgap(20);
 

@@ -29,11 +29,9 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
     private final String message;
 
     public final static int TIME_UNKNOWN = -1;
+    public final static int INDETERMINATE = -1;
     public final static ArchiveStatus EMPTY = new ArchiveStatus(TaskStatus.NONE);
     public final static ArchiveStatus QUEUED = new ArchiveStatus(TaskStatus.QUEUED);
-    public final static ArchiveStatus REMUXING = new ArchiveStatus(TaskStatus.REMUXING);
-    public final static ArchiveStatus FINDING_COMMERCIALS = new ArchiveStatus(TaskStatus.FINDING_COMMERCIALS);
-    public final static ArchiveStatus REMOVING_COMMERCIALS = new ArchiveStatus(TaskStatus.REMOVING_COMMERCIALS);
     public final static ArchiveStatus FINISHED = new ArchiveStatus(TaskStatus.FINISHED);
 
     private ArchiveStatus(TaskStatus status) {
@@ -74,10 +72,37 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
     }
 
     public static ArchiveStatus createDownloadingStatus(double progress, int secondsRemaining) {
+        if (progress >= 1.0) {
+            progress = .99;
+        }
         return new ArchiveStatus(TaskStatus.DOWNLOADING, progress, secondsRemaining);
     }
 
+    public static ArchiveStatus createRemuxingStatus(double progress, int secondsRemaining) {
+        if (progress >= 1.0) {
+            progress = .99;
+        }
+        return new ArchiveStatus(TaskStatus.REMUXING, progress, secondsRemaining);
+    }
+
+    public static ArchiveStatus createFindingCommercialsStatus(double progress, int secondsRemaining) {
+        if (progress >= 1.0) {
+            progress = .99;
+        }
+        return new ArchiveStatus(TaskStatus.FINDING_COMMERCIALS, progress, secondsRemaining);
+    }
+
+    public static ArchiveStatus createRemovingCommercialsStatus(double progress, int secondsRemaining) {
+        if (progress >= 1.0) {
+            progress = .99;
+        }
+        return new ArchiveStatus(TaskStatus.REMOVING_COMMERCIALS, progress, secondsRemaining);
+    }
+
     public static ArchiveStatus createTranscodingStatus(double progress, int secondsRemaining) {
+        if (progress >= 1.0) {
+            progress = .99;
+        }
         return new ArchiveStatus(TaskStatus.TRANSCODING, progress, secondsRemaining);
     }
 
