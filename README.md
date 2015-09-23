@@ -21,11 +21,11 @@ Archivo is currently in development. It is intended to eventually support the fo
 If you find a problem with Archivo, please help us fix it by reporting it at https://github.com/fflewddur/archivo/issues.
 
 ## Development
-Archivo is Free Software, so everyone is welcome to view, modify, and redistribute its source code. The only requirement is that you must in turn allow everyone to view, modify, and redistribute your own modifications (learn about about this topic at http://www.gnu.org/licenses/quick-guide-gplv3.en.html). If you're interested in joining the development, check us out on GitHub at https://github.com/fflewddur/archivo/.
+Archivo is Free Software, so everyone is welcome to view, modify, and redistribute its source code. The only requirement is that you must in turn allow everyone to view, modify, and redistribute your own modifications (learn more about this topic at http://www.gnu.org/licenses/quick-guide-gplv3.en.html). If you're interested in joining the development, check us out on GitHub at https://github.com/fflewddur/archivo/.
 
 ## Acknowledgments
 
-Development of this project was made substantially easier by the existence of the excellent KMTTG project (https://sourceforge.net/projects/kmttg/). If you're looking for more control over your TiVo than Archivo gives you, KMTTG is probably the tool you're looking for.
+Development of this project was made substantially easier by the existence of the excellent KMTTG project (https://sourceforge.net/projects/kmttg/). If you want more control over your TiVo than Archivo gives you, KMTTG is probably the tool you're looking for.
 
 Archivo also makes use of the following Free Software projects:
 * **FFmpeg** - For repairing video files and trimming commercials (https://www.ffmpeg.org/)
