@@ -20,6 +20,11 @@
     -fx-text-fill: -light-text;
 }
 
+.preference-header {
+    -fx-font-weight: bold;
+    -fx-padding: 10 0 0 0;
+}
+
 /*******************************************************************************
  *                                                                             *
  * ProgressIndicator                                                           *
@@ -27,9 +32,9 @@
  ******************************************************************************/
 
 .recording-progress-indicator {
-    -fx-background-color: green;
+/*    -fx-background-color: green; */
 }
-
+/*
 .recording-progress-indicator > .determinate-indicator > .indicator {
     -fx-background-color: -light;
     -fx-padding: 0.0;
@@ -40,12 +45,4 @@
     -fx-background-insets: 0.0, 0.4em;
     -fx-padding: 1.0em;
 }
-
-.recording-progress-indicator > .determinate-indicator > .percentage {
-    -fx-fill: -dark;
-    -fx-translate-y: -2.1em;
-    -fx-font-size: 6pt;
-    -fx-padding: 0.0;
-    -fx-scale-y: 0;
-}
-
+*/

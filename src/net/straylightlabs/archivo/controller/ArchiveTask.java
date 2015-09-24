@@ -49,6 +49,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -98,21 +99,25 @@ public class ArchiveTask extends Task<Recording> {
             URL url = command.getDownloadUrl();
             Archivo.logger.info("URL: {}", url);
             downloadPath = buildPath(recording.getDestination(), "download.ts");
+            fixedPath = buildPath(recording.getDestination(), "fixed.ts");
+            cutPath = buildPath(recording.getDestination(), "cut.ts");
             Archivo.logger.info("Saving file to {}", downloadPath);
             getRecording(recording, url);
             if (shouldDecrypt(recording)) {
-                // TODO For each of these commands:
-                // 0) if the file already exists, delete it
-                // 1) use the task thread to check for task cancellation
-
                 remux();
                 if (prefs.getSkipCommercials()) {
                     detectCommercials();
                     cutCommercials();
                 }
-                transcode();
+                if (recording.getDestinationType().needsTranscoding()) {
+                    transcode();
+                } else {
+                    cleanupFiles(recording.getDestination());
+                    Files.move(fixedPath, recording.getDestination());
+                }
                 cleanupFiles(fixedPath);
             }
+            cleanupFiles(downloadPath);
         } catch (IOException e) {
             Archivo.logger.error("Error fetching recording information: ", e);
             throw new ArchiveTaskException("Problem fetching recording information");
@@ -307,7 +312,6 @@ public class ArchiveTask extends Task<Recording> {
         );
 
         String ffmpegPath = prefs.getFfmpegPath();
-        fixedPath = buildPath(recording.getDestination(), "fixed.ts");
         cleanupFiles(fixedPath);
         Archivo.logger.info("ffmpeg path = {} outputPath = {}", ffmpegPath, fixedPath);
         List<String> cmd = new ArrayList<>();
@@ -323,10 +327,12 @@ public class ArchiveTask extends Task<Recording> {
         Archivo.logger.info("Current directory: {}", System.getProperty("user.dir"));
         try {
             FfmpegOutputReader outputReader = new FfmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMUXING);
-            runProcess(cmd, outputReader);
+            if (!runProcess(cmd, outputReader)) {
+                throw new ArchiveTaskException("Error repairing video");
+            }
         } catch (InterruptedException | IOException e) {
             Archivo.logger.error("Error running ffmpeg to remux download: ", e);
-            throw new ArchiveTaskException("Error remuxing recording");
+            throw new ArchiveTaskException("Error repairing video");
         } finally {
             cleanupFiles(downloadPath);
         }
@@ -340,26 +346,31 @@ public class ArchiveTask extends Task<Recording> {
         String comskipPath = prefs.getComskipPath();
         String comskipIniPath = Paths.get(Paths.get(comskipPath).getParent().toString(), "comskip.ini").toString();
         Path logoPath = buildPath(fixedPath, "logo.txt");
+        Path logPath = buildPath(fixedPath, "log");
+        Path txtPath = buildPath(fixedPath, "txt");
         edlPath = buildPath(fixedPath, "edl");
         cleanupFiles(logoPath, edlPath);
         List<String> cmd = new ArrayList<>();
         cmd.add(comskipPath);
         cmd.add("--ini");
         cmd.add(comskipIniPath);
-        cmd.add("--logo");
-        cmd.add(logoPath.toString());
+//        cmd.add("--logo");
+//        cmd.add(logoPath.toString());
         cmd.add("--ts");
         cmd.add(fixedPath.toString());
         cmd.add(fixedPath.getParent().toString());
         Archivo.logger.info("Comskip command: {}", cmd);
         try {
             ComskipOutputReader outputReader = new ComskipOutputReader(recording);
-            runProcess(cmd, outputReader);
+            outputReader.addExitCode(1); // Means that commercials were found
+            if (!runProcess(cmd, outputReader)) {
+                throw new ArchiveTaskException("Error finding commercials");
+            }
         } catch (InterruptedException | IOException e) {
             Archivo.logger.error("Error running comskip: ", e);
             throw new ArchiveTaskException("Error finding commercials");
         } finally {
-            cleanupFiles(logoPath);
+            cleanupFiles(logoPath, logPath, txtPath);
         }
     }
 
@@ -368,7 +379,6 @@ public class ArchiveTask extends Task<Recording> {
                         ArchiveStatus.createRemovingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
-        cutPath = buildPath(recording.getDestination(), "cut.ts");
         Path partList = buildPath(fixedPath, "parts");
         cleanupFiles(cutPath, partList);
         String ffmpegPath = prefs.getFfmpegPath();
@@ -399,7 +409,9 @@ public class ArchiveTask extends Task<Recording> {
                 try {
                     FfmpegOutputReader outputReader = new FfmpegOutputReader(recording, ArchiveStatus.TaskStatus.NONE);
                     cleanupFiles(partPath);
-                    runProcess(cmd, outputReader);
+                    if (!runProcess(cmd, outputReader)) {
+                        throw new ArchiveTaskException("Error removing commercials");
+                    }
                     double progress = (curSegment++ / (double) toKeep.size()) * 0.9; // The final 10% is for concatenation
                     Platform.runLater(() -> recording.statusProperty().setValue(
                                     ArchiveStatus.createRemovingCommercialsStatus(progress, ArchiveStatus.TIME_UNKNOWN))
@@ -411,7 +423,7 @@ public class ArchiveTask extends Task<Recording> {
             }
         } catch (IOException e) {
             Archivo.logger.error("Error reading EDL file '{}': ", edlPath, e);
-            cleanupFiles(partList, fixedPath);
+            cleanupFiles(partList);
             cleanupFiles(partPaths);
             return;
         } finally {
@@ -434,7 +446,9 @@ public class ArchiveTask extends Task<Recording> {
         Archivo.logger.info("ffmpeg command: {}", cmd);
         try {
             FfmpegOutputReader outputReader = new FfmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMOVING_COMMERCIALS);
-            runProcess(cmd, outputReader);
+            if (!runProcess(cmd, outputReader)) {
+                throw new ArchiveTaskException("Error removing commercials");
+            }
         } catch (InterruptedException | IOException e) {
             Archivo.logger.error("Error running ffmpeg to join files: ", e);
             throw new ArchiveTaskException("Error removing commercials");
@@ -449,9 +463,11 @@ public class ArchiveTask extends Task<Recording> {
                         ArchiveStatus.createTranscodingStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
+        VideoResolution videoLimit = prefs.getVideoResolution();
+        AudioChannel audioLimit = prefs.getAudioChannels();
         String handbrakePath = prefs.getHandbrakePath();
         Path sourcePath = cutPath;
-        if (sourcePath == null) {
+        if (!Files.exists(sourcePath)) {
             sourcePath = fixedPath;
         }
         cleanupFiles(recording.getDestination());
@@ -462,19 +478,30 @@ public class ArchiveTask extends Task<Recording> {
         cmd.add("-o");
         cmd.add(recording.getDestination().toString());
         FileType fileType = recording.getDestinationType();
-        String handbrakePreset = fileType.getHandbrakePreset();
-        if (handbrakePreset != null) {
-            cmd.add("--preset");
-            cmd.add(handbrakePreset);
+        Map<String, String> handbrakeArgs = fileType.getHandbrakeArgs();
+        if (audioLimit == AudioChannel.STEREO) {
+            Archivo.logger.info("Audio limit == STEREO");
+            // Overwrite the existing list of audio encoders with just one
+            handbrakeArgs.put("-E", FileType.getPlatformAudioEncoder());
+            handbrakeArgs.put("-a", "1");
+            handbrakeArgs.put("-6", "dpl2");
+//            if (audioLimit == AudioChannel.STEREO) {
+//                cmd.add("dpl2");
+//            } else {
+//                cmd.add("mono");
+//            }
         }
-        cmd.add("-5");
+        handbrakeArgs.put("-Y", ((Integer) videoLimit.getHeight()).toString());
+        cmd.addAll(mapToList(handbrakeArgs));
         Archivo.logger.info("HandBrake command: {}", cmd);
         try {
             HandbrakeOutputReader outputReader = new HandbrakeOutputReader(recording);
-            runProcess(cmd, outputReader);
+            if (!runProcess(cmd, outputReader)) {
+                throw new ArchiveTaskException("Error compressing video");
+            }
         } catch (InterruptedException | IOException e) {
             Archivo.logger.error("Error running HandBrake: ", e);
-            throw new ArchiveTaskException("Error running HandBrake");
+            throw new ArchiveTaskException("Error compressing video");
         } finally {
             cleanupFiles(cutPath);
         }
@@ -508,10 +535,11 @@ public class ArchiveTask extends Task<Recording> {
             }
         }
 
-        if (process.exitValue() == 0) {
+        int exitCode = process.exitValue();
+        if (outputReader.isValidExitCode(exitCode)) {
             return true;
         } else {
-            Archivo.logger.error("Error running command {}: exit code = {}", command, process.exitValue());
+            Archivo.logger.error("Error running command {}: exit code = {}", command, exitCode);
             return false;
         }
     }
@@ -537,5 +565,17 @@ public class ArchiveTask extends Task<Recording> {
             filename = filename.substring(0, lastDot + 1);
         }
         return Paths.get(input.getParent().toString(), filename + newSuffix);
+    }
+
+    private <E> List<E> mapToList(Map<E, E> map) {
+        List<E> list = new ArrayList<>();
+        for (Map.Entry<E, E> entry : map.entrySet()) {
+            list.add(entry.getKey());
+            E value = entry.getValue();
+            if (value != null) {
+                list.add(value);
+            }
+        }
+        return list;
     }
 }

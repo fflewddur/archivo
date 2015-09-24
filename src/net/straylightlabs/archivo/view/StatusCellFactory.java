@@ -69,7 +69,7 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
                     setProgress(status.getProgress());
                     break;
                 case TRANSCODING:
-                    setText(String.format("Converting... (%s)", formatTime(status.getSecondsRemaining())));
+                    setText(String.format("Compressing video... (%s)", formatTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
                     break;
                 case FINISHED:

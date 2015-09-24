@@ -20,8 +20,10 @@
 package net.straylightlabs.archivo;
 
 import javafx.application.Application;
+import net.straylightlabs.archivo.model.AudioChannel;
 import net.straylightlabs.archivo.model.FileType;
 import net.straylightlabs.archivo.model.Tivo;
+import net.straylightlabs.archivo.model.VideoResolution;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -43,6 +45,8 @@ public class UserPrefs {
     public static final String MOST_RECENT_FOLDER = "lastFolder";
     public static final String MOST_RECENT_TYPE = "lastFileType";
     public static final String SKIP_COMMERCIALS = "skipCommercials";
+    public static final String VIDEO_LIMIT = "maxVideoResolution";
+    public static final String AUDIO_LIMIT = "maxAudioChannels";
     public static final String WINDOW_MAXIMIZED = "windowMaximized";
     public static final String WINDOW_HEIGHT = "windowHeight";
     public static final String WINDOW_WIDTH = "windowWidth";
@@ -97,6 +101,24 @@ public class UserPrefs {
 
     public synchronized void setSkipCommercials(boolean val) {
         prefs.putBoolean(SKIP_COMMERCIALS, val);
+    }
+
+    public synchronized VideoResolution getVideoResolution() {
+        int height = prefs.getInt(VIDEO_LIMIT, 1080);
+        return VideoResolution.fromHeight(height);
+    }
+
+    public synchronized void setVideoResolution(VideoResolution limit) {
+        prefs.putInt(VIDEO_LIMIT, limit.getHeight());
+    }
+
+    public synchronized AudioChannel getAudioChannels() {
+        String channel = prefs.get(AUDIO_LIMIT, "all");
+        return AudioChannel.fromChannels(channel);
+    }
+
+    public synchronized void setAudioChannels(AudioChannel limit) {
+        prefs.put(AUDIO_LIMIT, limit.getChannels());
     }
 
     /**

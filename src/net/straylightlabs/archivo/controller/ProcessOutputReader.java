@@ -29,9 +29,12 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 public abstract class ProcessOutputReader implements Runnable {
     protected final Recording recording;
+    protected final Set<Integer> exitCodes;
     private final LocalDateTime startTime;
     private InputStream inputStream;
 
@@ -39,11 +42,21 @@ public abstract class ProcessOutputReader implements Runnable {
 
     public ProcessOutputReader(Recording recording) {
         this.recording = recording;
+        exitCodes = new HashSet<>();
+        exitCodes.add(0);
         startTime = LocalDateTime.now();
     }
 
     public void setInputStream(InputStream inputStream) {
         this.inputStream = inputStream;
+    }
+
+    public void addExitCode(int code) {
+        exitCodes.add(code);
+    }
+
+    public boolean isValidExitCode(int code) {
+        return exitCodes.contains(code);
     }
 
     @Override

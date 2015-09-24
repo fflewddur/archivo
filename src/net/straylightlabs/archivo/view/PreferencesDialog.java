@@ -19,13 +19,23 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.*;
+import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.stage.Modality;
 import javafx.stage.Window;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.UserPrefs;
+import net.straylightlabs.archivo.model.AudioChannel;
+import net.straylightlabs.archivo.model.VideoResolution;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * This dialog is for user-configurable options.
@@ -35,11 +45,28 @@ public class PreferencesDialog {
     private final Archivo mainApp;
     private final UserPrefs userPrefs;
 
+    private final ObservableList<VideoResolution> videoResolutions;
+    private final ObservableList<AudioChannel> audioChannels;
+
     public PreferencesDialog(Window parent, Archivo mainApp) {
         dialog = new Dialog<>();
         this.mainApp = mainApp;
         userPrefs = mainApp.getUserPrefs();
+        videoResolutions = buildVideoResolutionList();
+        audioChannels = buildAudioChannelList();
         initDialog(parent);
+    }
+
+    private ObservableList<VideoResolution> buildVideoResolutionList() {
+        List<VideoResolution> resolutions = new ArrayList<>();
+        resolutions.addAll(Arrays.asList(VideoResolution.values()));
+        return FXCollections.observableArrayList(resolutions);
+    }
+
+    private ObservableList<AudioChannel> buildAudioChannelList() {
+        List<AudioChannel> channels = new ArrayList<>();
+        channels.addAll(Arrays.asList(AudioChannel.values()));
+        return FXCollections.observableArrayList(channels);
     }
 
     private void initDialog(Window parent) {
@@ -49,27 +76,48 @@ public class PreferencesDialog {
         dialog.setTitle("Preferences");
 
         GridPane grid = new GridPane();
-        grid.setPadding(new Insets(20, 20, 20, 20));
+        grid.setPadding(new Insets(5, 15, 15, 15));
         grid.setHgap(10);
-        grid.setVgap(20);
+        grid.setVgap(10);
+        ColumnConstraints col1 = new ColumnConstraints();
+        col1.setPrefWidth(10);
+        grid.getColumnConstraints().addAll(col1);
 
-        grid.add(new Label("Media access key"), 0, 1);
+        Label header = createHeader("TiVo Settings");
+        grid.add(header, 0, 0, 3, 1);
+
+        Label label = createLabelWithTooltip("Media access key", "The media access key associated with your TiVo account");
+        grid.add(label, 1, 1);
         TextField mak = new TextField();
         mak.setText(userPrefs.getMAK());
-        grid.add(mak, 1, 1);
+        grid.add(mak, 2, 1);
+
+        header = createHeader("Archive Preferences");
+        grid.add(header, 0, 2, 3, 1);
 
         CheckBox comskip = new CheckBox("Try to remove commercials");
         comskip.setSelected(userPrefs.getSkipCommercials());
-        grid.add(comskip, 0, 2, 2, 1);
+        grid.add(comskip, 1, 3, 2, 1);
+
+        label = createLabelWithTooltip("Limit video resolution to", "If your selected file type has a larger resolution than this, archived recordings will be scaled down to this size");
+        grid.add(label, 1, 4);
+        ChoiceBox<VideoResolution> videoResolution = new ChoiceBox<>(videoResolutions);
+        videoResolution.setValue(userPrefs.getVideoResolution());
+        grid.add(videoResolution, 2, 4);
+
+        label = createLabelWithTooltip("Limit audio channels to", "If your selected file type supports multiple audio channels, archived recordings will have their sound limited to these channels");
+        grid.add(label, 1, 5);
+        ChoiceBox<AudioChannel> audioChannel = new ChoiceBox<>(audioChannels);
+        audioChannel.setValue(userPrefs.getAudioChannels());
+        grid.add(audioChannel, 2, 5);
 
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
-        // Only enable the OK button after the user has entered the MAK
-//        Node okButton = dialog.getDialogPane().lookupButton(ButtonType.OK);
-//        okButton.setDisable(true);
-//        mak.textProperty().addListener(((observable, oldValue, newValue) -> {
-//            okButton.setDisable(newValue.trim().isEmpty());
-//        }));
+        // Disable the OK button if the user deletes their MAK
+        Node okButton = dialog.getDialogPane().lookupButton(ButtonType.OK);
+        mak.textProperty().addListener(((observable, oldValue, newValue) -> {
+            okButton.setDisable(newValue.trim().isEmpty());
+        }));
 
         dialog.getDialogPane().setContent(grid);
 
@@ -77,6 +125,8 @@ public class PreferencesDialog {
             if (button == ButtonType.OK) {
                 mainApp.updateMAK(mak.getText());
                 userPrefs.setSkipCommercials(comskip.isSelected());
+                userPrefs.setVideoResolution(videoResolution.getValue());
+                userPrefs.setAudioChannels(audioChannel.getValue());
             }
             return null;
         });
@@ -87,5 +137,17 @@ public class PreferencesDialog {
      */
     public void show() {
         dialog.show();
+    }
+
+    private Label createHeader(String text) {
+        Label header = new Label(text);
+        header.getStyleClass().add("preference-header");
+        return header;
+    }
+
+    private Label createLabelWithTooltip(String text, String tip) {
+        Label label = new Label(text);
+        label.setTooltip(new Tooltip(tip));
+        return label;
     }
 }

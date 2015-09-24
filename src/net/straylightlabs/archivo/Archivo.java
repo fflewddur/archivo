@@ -30,6 +30,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonBar;
 import javafx.scene.control.ButtonType;
+import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
@@ -218,6 +219,8 @@ public class Archivo extends Application {
             Scene scene = new Scene(rootLayout);
             scene.getStylesheets().add("style.css");
             primaryStage.setScene(scene);
+
+            primaryStage.getIcons().add(new Image("logo.png"));
             primaryStage.show();
         } catch (IOException e) {
             logger.error("Error initializing main window: ", e);
