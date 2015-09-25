@@ -220,7 +220,13 @@ public class Archivo extends Application {
             scene.getStylesheets().add("style.css");
             primaryStage.setScene(scene);
 
-            primaryStage.getIcons().add(new Image("logo.png"));
+            primaryStage.getIcons().addAll(
+                    new Image("archivo-16.png"),
+                    new Image("archivo-32.png"),
+                    new Image("archivo-64.png"),
+                    new Image("archivo-128.png"),
+                    new Image("archivo-48.png")
+            );
             primaryStage.show();
         } catch (IOException e) {
             logger.error("Error initializing main window: ", e);
