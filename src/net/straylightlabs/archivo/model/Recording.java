@@ -219,10 +219,12 @@ public class Recording {
         return originalAirDate;
     }
 
+    @SuppressWarnings("unused")
     public RecordingState getState() {
         return state;
     }
 
+    @SuppressWarnings("unused")
     public RecordingReason getReason() {
         return reason;
     }
@@ -345,7 +347,7 @@ public class Recording {
         boolean prevCharIsSpace = false;
         for (Character c : filename.toCharArray()) {
             int type = Character.getType(c);
-            if (Character.isLetterOrDigit(c) || c == '\'' || c == '.' || type == Character.DASH_PUNCTUATION) {
+            if (Character.isLetterOrDigit(c) || c == '\'' || c == '.' || c == '&' || type == Character.DASH_PUNCTUATION) {
                 sb.append(c);
                 prevCharIsSpace = false;
             } else if (type == Character.OTHER_PUNCTUATION) {
@@ -444,6 +446,7 @@ public class Recording {
             return this;
         }
 
+        @SuppressWarnings("unused")
         public Builder channel(String name, String number, URL logoURL) {
             channel = new Channel(name, number, logoURL);
             return this;
@@ -499,6 +502,7 @@ public class Recording {
             return this;
         }
 
+        @SuppressWarnings("unused")
         public Builder isChildRecording(boolean val) {
             isChildRecording = val;
             return this;
