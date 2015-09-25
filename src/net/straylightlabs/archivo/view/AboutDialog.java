@@ -25,6 +25,7 @@ import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
@@ -44,6 +45,7 @@ public class AboutDialog {
     private final Dialog dialog;
 
     private static final String HOMEPAGE = "https://github.com/fflewddur/archivo";
+    private static final int DIALOG_WIDTH = 400;
 
     public AboutDialog(Window parent) {
         dialog = new Dialog();
@@ -68,38 +70,20 @@ public class AboutDialog {
             try {
                 Desktop.getDesktop().browse(new URI(HOMEPAGE));
             } catch (URISyntaxException | IOException e) {
-
+                Archivo.logger.error("Error opening web browser: ", e);
             }
         });
         pane.getChildren().addAll(text, link);
 
-        Label label = new Label("Archivo is free software: you can redistribute it and/or modify " +
+        addWrappedLabel("Archivo is free software: you can redistribute it and/or modify " +
                 "it under the terms of the GNU General Public License as published by " +
                 "the Free Software Foundation, either version 3 of the License, or " +
-                "(at your option) any later version.");
-        label.setPrefWidth(400);
-        label.setWrapText(true);
-        pane.getChildren().add(label);
+                "(at your option) any later version.", pane);
 
-
-//        TextFlow textFlow = new TextFlow(text, link);
+        addWrappedLabel(String.format("Running on Java %s from %s", System.getProperty("java.version"),
+                System.getProperty("java.vendor")), pane);
 
         dialog.getDialogPane().setContent(pane);
-//        dialog.setContentText(String.format("\u00a9 2015 Straylight Labs LLC.\n" +
-//                                "https://github.com/fflewddur/archivo\n\n" +
-//                                "%s is free software: you can redistribute it and/or modify " +
-//                                "it under the terms of the GNU General Public License as published by " +
-//                                "the Free Software Foundation, either version 3 of the License, or " +
-//                                "(at your option) any later version.\n\n" +
-//                                "%s is distributed in the hope that it will be useful, " +
-//                                "but WITHOUT ANY WARRANTY; without even the implied warranty of " +
-//                                "MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the " +
-//                                "GNU General Public License for more details.\n\n" +
-//                                "You should have received a copy of the GNU General Public License " +
-//                                "along with %s. If not, see <http://www.gnu.org/licenses/>.\n\n" +
-//                                "Logo designed by Freepik",
-//                        Archivo.APPLICATION_NAME, Archivo.APPLICATION_NAME, Archivo.APPLICATION_NAME)
-//        );
 
         dialog.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
         ((Button) dialog.getDialogPane().lookupButton(ButtonType.CLOSE)).setDefaultButton(true);
@@ -107,5 +91,12 @@ public class AboutDialog {
 
     public void show() {
         dialog.show();
+    }
+
+    private void addWrappedLabel(String text, Pane pane) {
+        Label label = new Label(text);
+        label.setPrefWidth(DIALOG_WIDTH);
+        label.setWrapText(true);
+        pane.getChildren().add(label);
     }
 }

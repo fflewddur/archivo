@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -64,8 +65,8 @@ public class RootLayoutController implements Initializable, Observer {
 
 
     public RootLayoutController() {
-        statusChangeListener = (observable, oldValue, newValue) -> {
-            if (oldValue.getStatus() != newValue.getStatus()) {
+        statusChangeListener = (observable, oldStatus, newStatus) -> {
+            if (oldStatus != newStatus) {
                 updateMenuItems(selectedRecording);
             }
         };
@@ -144,6 +145,10 @@ public class RootLayoutController implements Initializable, Observer {
     }
 
     public void recordingSelected(Recording recording) {
+        if (selectedRecording == recording) {
+            return;
+        }
+
         if (selectedRecording != null) {
             selectedRecording.statusProperty().removeListener(statusChangeListener);
         }
@@ -156,23 +161,16 @@ public class RootLayoutController implements Initializable, Observer {
 
 
     private void updateMenuItems(Recording recording) {
-        archiveMenuItem.setDisable(false);
-        cancelMenuItem.setDisable(true);
-        playMenuItem.setDisable(true);
-        deleteMenuItem.setDisable(false);
-
-        if (recording == null || recording.isSeriesHeading()) {
+        if (recording == null) {
             archiveMenuItem.setDisable(true);
+            cancelMenuItem.setDisable(true);
+            playMenuItem.setDisable(true);
             deleteMenuItem.setDisable(true);
         } else {
-            if (recording.isCopyProtected()) {
-                archiveMenuItem.setDisable(true);
-            } else if (recording.getStatus().getStatus().isCancelable()) {
-                archiveMenuItem.setDisable(true);
-                cancelMenuItem.setDisable(false);
-            } else if (recording.getStatus().getStatus() == ArchiveStatus.TaskStatus.FINISHED) {
-                playMenuItem.setDisable(false);
-            }
+            archiveMenuItem.disableProperty().bind(Bindings.or(recording.isArchivableProperty().not(), recording.isCancellableProperty()));
+            cancelMenuItem.disableProperty().bind(recording.isCancellableProperty().not());
+            playMenuItem.disableProperty().bind(recording.isPlayableProperty().not());
+            deleteMenuItem.disableProperty().bind(recording.isRemovableProperty().not());
         }
     }
 

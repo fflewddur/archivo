@@ -17,35 +17,34 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.straylightlabs.archivo.model;
+package net.straylightlabs.archivo.utilities;
 
-public enum AudioChannel {
-    SURROUND("Surround sound", "all"),
-    STEREO("Stereo", "2");
+public class OSHelper {
+    private static final String osName;
+    private static final Runtime runtime;
 
-    private final String label;
-    private final String channels;
-
-    AudioChannel(String label, String channels) {
-        this.label = label;
-        this.channels = channels;
+    static {
+        osName = System.getProperty("os.name").toLowerCase();
+        runtime = Runtime.getRuntime();
     }
 
-    public static AudioChannel fromChannels(String channels) {
-        switch (channels) {
-            case "2":
-                return AudioChannel.STEREO;
-            default:
-                return AudioChannel.SURROUND;
+    public static boolean isWindows() {
+        return osName.startsWith("windows");
+    }
+
+    public static boolean isMacOS() {
+        return osName.startsWith("mac os");
+    }
+
+    public static String getExeSuffix() {
+        if (isWindows()) {
+            return ".exe";
+        } else {
+            return "";
         }
     }
 
-    public String getChannels() {
-        return channels;
-    }
-
-    @Override
-    public String toString() {
-        return label;
+    public static int getProcessorCores() {
+        return runtime.availableProcessors();
     }
 }

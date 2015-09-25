@@ -19,10 +19,7 @@
 
 package net.straylightlabs.archivo.model;
 
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.property.StringProperty;
+import javafx.beans.property.*;
 
 import java.net.URL;
 import java.nio.file.Path;
@@ -42,7 +39,13 @@ public class Recording {
     // Items displayed in the RecordingListView need to be observable properties
     private final StringProperty title;
     private final ObjectProperty<LocalDateTime> dateRecorded;
-    private ObjectProperty<ArchiveStatus> status;
+    private final ObjectProperty<ArchiveStatus> status;
+    // Denotes Recordings used as the header line for the series in RecordingListView
+    private final BooleanProperty isSeriesHeading;
+    private final BooleanProperty isArchivable;
+    private final BooleanProperty isCancellable;
+    private final BooleanProperty isPlayable;
+    private final BooleanProperty isRemovable;
 
     private final String recordingId;
     private final String bodyId;
@@ -59,8 +62,6 @@ public class Recording {
     private final RecordingReason reason;
     private final boolean isCopyable;
 
-    // Denotes Recordings used as the header line for the series in RecordingListView
-    private final boolean isSeriesHeading;
     // Denotes Recordings that are child nodes in the RecordingListView
     private boolean isChildRecording;
     private final int numEpisodes;
@@ -90,14 +91,18 @@ public class Recording {
         reason = builder.reason;
         isCopyable = builder.isCopyable;
 
-        isSeriesHeading = builder.isSeriesHeading;
         isChildRecording = builder.isChildRecording;
         numEpisodes = builder.numEpisodes;
         seasonAndEpisode = buildSeasonAndEpisode(seriesNumber, episodeNumbers);
 
+        isSeriesHeading = new SimpleBooleanProperty(builder.isSeriesHeading);
         title = new SimpleStringProperty(buildTitle());
         dateRecorded = new SimpleObjectProperty<>(builder.dateRecorded);
         status = new SimpleObjectProperty<>(ArchiveStatus.EMPTY);
+        isRemovable = new SimpleBooleanProperty(!builder.isSeriesHeading);
+        isArchivable = new SimpleBooleanProperty(isArchivable());
+        isCancellable = new SimpleBooleanProperty(false);
+        isPlayable = new SimpleBooleanProperty(false);
     }
 
     /**
@@ -131,7 +136,7 @@ public class Recording {
      * and just the series name for header recordings.
      */
     private String buildTitle() {
-        if (isSeriesHeading) {
+        if (isSeriesHeading.get()) {
             return buildSeriesHeadingTitle();
         } else if (isChildRecording) {
             return buildChildRecordingTitle();
@@ -173,6 +178,10 @@ public class Recording {
         } else {
             return UNTITLED_TEXT;
         }
+    }
+
+    private boolean isArchivable() {
+        return isCopyable && !isSeriesHeading.get() && !isInProgress() && !status.get().getStatus().isCancelable();
     }
 
     public String getRecordingId() {
@@ -239,10 +248,6 @@ public class Recording {
 
     public boolean isInProgress() {
         return state == RecordingState.IN_PROGRESS;
-    }
-
-    public boolean isSeriesHeading() {
-        return isSeriesHeading;
     }
 
     /**
@@ -384,8 +389,60 @@ public class Recording {
         return status.get();
     }
 
+    public void setStatus(ArchiveStatus status) {
+        this.status.setValue(status);
+        updateIsArchivable();
+        updateIsCancellable();
+        updateIsPlayable();
+    }
+
     public ObjectProperty<ArchiveStatus> statusProperty() {
         return status;
+    }
+
+    public boolean isSeriesHeading() {
+        return isSeriesHeading.get();
+    }
+
+    public BooleanProperty seriesHeadingProperty() {
+        return isSeriesHeading;
+    }
+
+    public BooleanProperty isArchivableProperty() {
+        return isArchivable;
+    }
+
+    public BooleanProperty isCancellableProperty() {
+        return isCancellable;
+    }
+
+    public BooleanProperty isPlayableProperty() {
+        return isPlayable;
+    }
+
+    public BooleanProperty isRemovableProperty() {
+        return isRemovable;
+    }
+
+    private void updateIsArchivable() {
+        boolean isArchivable = isArchivable();
+        if (this.isArchivable.get() != isArchivable) {
+            this.isArchivable.set(isArchivable);
+        }
+    }
+
+    private void updateIsCancellable() {
+        boolean isCancellable = status.getValue().getStatus().isCancelable();
+        if (this.isCancellable.get() != isCancellable) {
+            this.isCancellable.set(isCancellable);
+        }
+    }
+
+    private void updateIsPlayable() {
+        boolean isPlayable = status.getValue().getStatus() == ArchiveStatus.TaskStatus.FINISHED;
+        if (this.isPlayable.get() != isPlayable) {
+            this.isPlayable.set(isPlayable);
+        }
     }
 
     public static class Builder {

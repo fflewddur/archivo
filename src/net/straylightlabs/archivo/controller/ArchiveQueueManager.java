@@ -51,24 +51,24 @@ public class ArchiveQueueManager extends Observable {
             ArchiveTask task = new ArchiveTask(recording, tivo, mak, mainApp.getUserPrefs());
             task.setOnRunning(event -> {
                 mainApp.setStatusText(String.format("Archiving %s...", recording.getFullTitle()));
-                recording.statusProperty().setValue(ArchiveStatus.createDownloadingStatus(-1, ArchiveStatus.TIME_UNKNOWN));
+                recording.setStatus(ArchiveStatus.createDownloadingStatus(-1, ArchiveStatus.TIME_UNKNOWN));
             });
             task.setOnSucceeded(event -> {
                 Archivo.logger.info("ArchiveTask succeeded for {}", recording.getFullTitle());
                 removeTask(recording);
-                recording.statusProperty().setValue(ArchiveStatus.FINISHED);
+                recording.setStatus(ArchiveStatus.FINISHED);
             });
             task.setOnFailed(event -> {
                 Throwable e = event.getSource().getException();
                 Archivo.logger.error("ArchiveTask failed for {}: ", recording.getFullTitle(), e);
                 e.printStackTrace();
                 removeTask(recording);
-                recording.statusProperty().setValue(ArchiveStatus.createErrorStatus(event.getSource().getException()));
+                recording.setStatus(ArchiveStatus.createErrorStatus(event.getSource().getException()));
             });
             task.setOnCancelled(event -> {
                 Archivo.logger.info("ArchiveTask canceled for {}", recording.getFullTitle());
                 removeTask(recording);
-                recording.statusProperty().setValue(ArchiveStatus.EMPTY);
+                recording.setStatus(ArchiveStatus.EMPTY);
             });
             Archivo.logger.info("Submitting task to executor service: {}", executorService);
             if (!hasTasks()) {

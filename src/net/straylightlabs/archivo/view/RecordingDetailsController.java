@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.beans.binding.Bindings;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
@@ -51,7 +52,7 @@ public class RecordingDetailsController implements Initializable {
     private Map<URL, Image> imageCache;
     private Recording recording;
 
-    private ChangeListener statusChangeListener;
+    private ChangeListener<ArchiveStatus> statusChangeListener;
 
     @FXML
     private Label title;
@@ -85,10 +86,8 @@ public class RecordingDetailsController implements Initializable {
     public RecordingDetailsController(Archivo mainApp) {
         this.mainApp = mainApp;
         imageCache = new HashMap<>();
-        statusChangeListener = (observable, oldValue, newValue) -> {
-            ArchiveStatus oldStatus = (ArchiveStatus) oldValue;
-            ArchiveStatus newStatus = (ArchiveStatus) newValue;
-            if (oldStatus.getStatus() != newStatus.getStatus()) {
+        statusChangeListener = (observable, oldStatus, newStatus) -> {
+            if (oldStatus != newStatus) {
                 updateControls();
             }
         };
@@ -109,7 +108,7 @@ public class RecordingDetailsController implements Initializable {
             Archivo.logger.info("Archive recording {} to {} (file type = {})...",
                     recording.getFullTitle(), destination, recording.getDestinationType()
             );
-            recording.statusProperty().setValue(ArchiveStatus.QUEUED);
+            recording.setStatus(ArchiveStatus.QUEUED);
             mainApp.enqueueRecordingForArchiving(recording);
             mainApp.setLastFolder(destination.getParent());
         }
@@ -119,7 +118,7 @@ public class RecordingDetailsController implements Initializable {
     public void cancel(ActionEvent event) {
         Archivo.logger.info("Cancel archiving of recording {}...", recording.getFullTitle());
         mainApp.cancelArchiving(recording);
-        recording.statusProperty().setValue(ArchiveStatus.EMPTY);
+        recording.setStatus(ArchiveStatus.EMPTY);
     }
 
     @FXML
@@ -347,14 +346,14 @@ public class RecordingDetailsController implements Initializable {
     }
 
     private void updateControls() {
+        archiveButton.disableProperty().bind(Bindings.or(recording.isArchivableProperty().not(), recording.isCancellableProperty()));
+
         if (recording == null || recording.isSeriesHeading()) {
             hideNode(archiveButton);
         } else {
             if (recording.isCopyProtected() || recording.isInProgress()) {
-                archiveButton.setDisable(true);
                 showNode(archiveButton);
             } else if (recording.getStatus().getStatus().isCancelable()) {
-                archiveButton.setDisable(true);
                 showNode(archiveButton);
                 showNode(cancelButton);
                 hideNode(playButton);
@@ -363,7 +362,6 @@ public class RecordingDetailsController implements Initializable {
                 hideNode(cancelButton);
                 showNode(playButton);
             } else {
-                archiveButton.setDisable(false);
                 showNode(archiveButton);
                 hideNode(cancelButton);
                 hideNode(playButton);

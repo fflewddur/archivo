@@ -45,13 +45,13 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         this.status = status;
         this.progress = progress;
         this.secondsRemaining = secondsRemaining;
-        this.message = "";
+        message = "";
     }
 
     private ArchiveStatus(TaskStatus status, String message) {
         this.status = status;
-        this.progress = 0;
-        this.secondsRemaining = 0;
+        progress = 0;
+        secondsRemaining = 0;
         this.message = message;
     }
 
@@ -128,7 +128,7 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         int hash = 17;
         hash = hash * 31 + status.ordinal();
         long bits = Double.doubleToLongBits(progress);
-        hash = hash * 31 + (int)(bits ^ (bits >>> 32));
+        hash = hash * 31 + (int) (bits ^ (bits >>> 32));
         hash = hash * 31 + secondsRemaining;
         hash = hash * 31 + message.hashCode();
         return hash;
@@ -140,7 +140,7 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
             return this.status.ordinal() - o.status.ordinal();
         } else if (Double.compare(this.progress, o.progress) != 0) {
             return Double.compare(this.progress, o.progress);
-        } else if (!this.message.equals(o.message)){
+        } else if (!this.message.equals(o.message)) {
             return this.message.compareTo(o.message);
         }
         return 0;
@@ -165,7 +165,7 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         QUEUED,
         FINISHED,
         ERROR,
-        NONE,;
+        NONE;
 
         public boolean isCancelable() {
             switch (this) {

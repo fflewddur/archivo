@@ -29,8 +29,8 @@ import javafx.scene.layout.GridPane;
 import javafx.stage.Modality;
 import javafx.stage.Window;
 import net.straylightlabs.archivo.Archivo;
-import net.straylightlabs.archivo.UserPrefs;
 import net.straylightlabs.archivo.model.AudioChannel;
+import net.straylightlabs.archivo.model.UserPrefs;
 import net.straylightlabs.archivo.model.VideoResolution;
 
 import java.util.ArrayList;

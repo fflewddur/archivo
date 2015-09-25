@@ -37,6 +37,7 @@ import javafx.stage.Stage;
 import net.straylightlabs.archivo.controller.ArchiveQueueManager;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
+import net.straylightlabs.archivo.model.UserPrefs;
 import net.straylightlabs.archivo.net.MindCommandRecordingUpdate;
 import net.straylightlabs.archivo.net.MindTask;
 import net.straylightlabs.archivo.view.RecordingDetailsController;

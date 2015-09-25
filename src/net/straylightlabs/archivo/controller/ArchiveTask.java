@@ -22,9 +22,9 @@ package net.straylightlabs.archivo.controller;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import net.straylightlabs.archivo.Archivo;
-import net.straylightlabs.archivo.UserPrefs;
 import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.MindCommandIdSearch;
+import net.straylightlabs.archivo.utilities.OSHelper;
 import net.straylightlabs.tivolibre.TivoDecoder;
 import org.apache.http.Header;
 import org.apache.http.auth.AuthScope;
@@ -288,7 +288,7 @@ public class ArchiveTask extends Task<Recording> {
             int secondsRemaining = (int) (kbRemaining / kbs);
             Archivo.logger.info(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
                     totalBytesRead, estimatedLength, (int) (percent * 100), elapsedTime, kbs));
-            Platform.runLater(() -> recording.statusProperty().setValue(
+            Platform.runLater(() -> recording.setStatus(
                     ArchiveStatus.createDownloadingStatus(percent, secondsRemaining)
             ));
         } catch (ArithmeticException e) {
@@ -307,7 +307,7 @@ public class ArchiveTask extends Task<Recording> {
      * TiVo files often have timestamp problems. Remux to fix them.
      */
     private void remux() {
-        Platform.runLater(() -> recording.statusProperty().setValue(
+        Platform.runLater(() -> recording.setStatus(
                         ArchiveStatus.createRemuxingStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
@@ -339,7 +339,7 @@ public class ArchiveTask extends Task<Recording> {
     }
 
     private void detectCommercials() {
-        Platform.runLater(() -> recording.statusProperty().setValue(
+        Platform.runLater(() -> recording.setStatus(
                         ArchiveStatus.createFindingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
@@ -354,8 +354,8 @@ public class ArchiveTask extends Task<Recording> {
         cmd.add(comskipPath);
         cmd.add("--ini");
         cmd.add(comskipIniPath);
-//        cmd.add("--logo");
-//        cmd.add(logoPath.toString());
+        cmd.add("--threads");
+        cmd.add(String.valueOf(OSHelper.getProcessorCores()));
         cmd.add("--ts");
         cmd.add(fixedPath.toString());
         cmd.add(fixedPath.getParent().toString());
@@ -375,7 +375,7 @@ public class ArchiveTask extends Task<Recording> {
     }
 
     private void cutCommercials() {
-        Platform.runLater(() -> recording.statusProperty().setValue(
+        Platform.runLater(() -> recording.setStatus(
                         ArchiveStatus.createRemovingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
@@ -413,7 +413,7 @@ public class ArchiveTask extends Task<Recording> {
                         throw new ArchiveTaskException("Error removing commercials");
                     }
                     double progress = (curSegment++ / (double) toKeep.size()) * 0.9; // The final 10% is for concatenation
-                    Platform.runLater(() -> recording.statusProperty().setValue(
+                    Platform.runLater(() -> recording.setStatus(
                                     ArchiveStatus.createRemovingCommercialsStatus(progress, ArchiveStatus.TIME_UNKNOWN))
                     );
                 } catch (InterruptedException | IOException e) {
@@ -430,7 +430,7 @@ public class ArchiveTask extends Task<Recording> {
             cleanupFiles(edlPath, fixedPath);
         }
 
-        Platform.runLater(() -> recording.statusProperty().setValue(
+        Platform.runLater(() -> recording.setStatus(
                         ArchiveStatus.createRemovingCommercialsStatus(.95, 30))
         );
 
@@ -459,7 +459,7 @@ public class ArchiveTask extends Task<Recording> {
     }
 
     private void transcode() {
-        Platform.runLater(() -> recording.statusProperty().setValue(
+        Platform.runLater(() -> recording.setStatus(
                         ArchiveStatus.createTranscodingStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
@@ -485,13 +485,8 @@ public class ArchiveTask extends Task<Recording> {
             handbrakeArgs.put("-E", FileType.getPlatformAudioEncoder());
             handbrakeArgs.put("-a", "1");
             handbrakeArgs.put("-6", "dpl2");
-//            if (audioLimit == AudioChannel.STEREO) {
-//                cmd.add("dpl2");
-//            } else {
-//                cmd.add("mono");
-//            }
         }
-        handbrakeArgs.put("-Y", ((Integer) videoLimit.getHeight()).toString());
+        handbrakeArgs.put("-Y", String.valueOf(videoLimit.getHeight()));
         cmd.addAll(mapToList(handbrakeArgs));
         Archivo.logger.info("HandBrake command: {}", cmd);
         try {

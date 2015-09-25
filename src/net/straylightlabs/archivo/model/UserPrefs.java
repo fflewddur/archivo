@@ -17,13 +17,11 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.straylightlabs.archivo;
+package net.straylightlabs.archivo.model;
 
 import javafx.application.Application;
-import net.straylightlabs.archivo.model.AudioChannel;
-import net.straylightlabs.archivo.model.FileType;
-import net.straylightlabs.archivo.model.Tivo;
-import net.straylightlabs.archivo.model.VideoResolution;
+import net.straylightlabs.archivo.Archivo;
+import net.straylightlabs.archivo.utilities.OSHelper;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -236,15 +234,15 @@ public class UserPrefs {
     }
 
     public synchronized String getComskipPath() {
-        return prefs.get(COMSKIP_PATH, Paths.get(".", "tools", "comskip" + getExeSuffix()).toString());
+        return prefs.get(COMSKIP_PATH, Paths.get("tools", "comskip" + OSHelper.getExeSuffix()).toString());
     }
 
     public synchronized String getFfmpegPath() {
-        return prefs.get(FFMPEG_PATH, Paths.get(".", "tools", "ffmpeg" + getExeSuffix()).toString());
+        return prefs.get(FFMPEG_PATH, Paths.get("tools", "ffmpeg" + OSHelper.getExeSuffix()).toString());
     }
 
     public synchronized String getHandbrakePath() {
-        return prefs.get(HANDBRAKE_PATH, Paths.get(".", "tools", "handbrake" + getExeSuffix()).toString());
+        return prefs.get(HANDBRAKE_PATH, Paths.get("tools", "handbrake" + OSHelper.getExeSuffix()).toString());
     }
 
     /**
@@ -260,14 +258,5 @@ public class UserPrefs {
             }
         }
         return userHomePath;
-    }
-
-    private String getExeSuffix() {
-        String osName = System.getProperty("os.name");
-        if (osName.startsWith("Windows")) {
-            return ".exe";
-        } else {
-            return "";
-        }
     }
 }

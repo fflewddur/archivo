@@ -58,7 +58,7 @@ public class FfmpegOutputReader extends ProcessOutputReader {
 
 //                    switch (task) {
 //                        case REMUXING:
-                    Platform.runLater(() -> recording.statusProperty().setValue(
+                    Platform.runLater(() -> recording.setStatus(
                                     ArchiveStatus.createRemuxingStatus(percentComplete, getSecondsRemaining(percentComplete)))
                     );
 //                            break;

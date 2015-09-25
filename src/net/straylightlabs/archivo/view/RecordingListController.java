@@ -20,6 +20,7 @@
 package net.straylightlabs.archivo.view;
 
 import javafx.application.Platform;
+import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -84,17 +85,6 @@ public class RecordingListController implements Initializable, Observer {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        tivoList.setConverter(new Tivo.StringConverter());
-        tivoList.getSelectionModel().selectedItemProperty().addListener(
-                (tivoList, oldTivo, curTivo) -> {
-                    if (curTivo != null) {
-                        mainApp.setLastDevice(curTivo);
-                        fetchRecordingsFrom(curTivo);
-                    }
-                }
-        );
-        tivoList.setItems(tivos);
-
         recordingTreeTable.setShowRoot(false);
         recordingTreeTable.setPlaceholder(tablePlaceholderMessage);
 
@@ -106,6 +96,19 @@ public class RecordingListController implements Initializable, Observer {
         statusColumn.setCellValueFactory(data -> data.getValue().getValue().statusProperty());
         statusColumn.setCellFactory(col -> new StatusCellFactory());
 
+        setupContextMenuRowFactory();
+
+        tivoList.setConverter(new Tivo.StringConverter());
+        tivoList.getSelectionModel().selectedItemProperty().addListener(
+                (tivoList, oldTivo, curTivo) -> {
+                    if (curTivo != null) {
+                        mainApp.setLastDevice(curTivo);
+                        fetchRecordingsFrom(curTivo);
+                    }
+                }
+        );
+        tivoList.setItems(tivos);
+
         // When the list of TiVos is first populated, automatically select one
         tivos.addListener(new TivoListChangeListener());
 
@@ -115,6 +118,40 @@ public class RecordingListController implements Initializable, Observer {
         }
 
         setupStyles();
+    }
+
+    private void setupContextMenuRowFactory() {
+        recordingTreeTable.setRowFactory((table) -> {
+            final TreeTableRow<Recording> row = new TreeTableRow<>();
+            final ContextMenu menu = new ContextMenu();
+            MenuItem archive = new MenuItem("Archive...");
+            archive.setOnAction(event -> mainApp.getRecordingDetailsController().archive(event));
+            MenuItem cancel = new MenuItem("Cancel");
+            cancel.setOnAction(event -> mainApp.getRecordingDetailsController().cancel(event));
+            MenuItem play = new MenuItem("Play");
+            play.setOnAction(event -> mainApp.getRecordingDetailsController().play(event));
+            MenuItem delete = new MenuItem("Remove from TiVo...");
+
+            delete.setOnAction(event -> mainApp.deleteFromTivo(table.getSelectionModel().getSelectedItem().getValue()));
+            menu.getItems().addAll(archive, cancel, play, new SeparatorMenuItem(), delete);
+
+            row.itemProperty().addListener((observable, oldValue, newValue) -> {
+                if (newValue != null) {
+                    archive.disableProperty().bind(newValue.isArchivableProperty().not());
+                    cancel.disableProperty().bind(newValue.isCancellableProperty().not());
+                    play.disableProperty().bind(newValue.isPlayableProperty().not());
+                    delete.disableProperty().bind(newValue.isRemovableProperty().not());
+                }
+            });
+
+            row.contextMenuProperty().bind(
+                    Bindings.when(Bindings.isNotNull(row.itemProperty()))
+                            .then(menu)
+                            .otherwise((ContextMenu) null)
+            );
+
+            return row;
+        });
     }
 
     private void setupStyles() {
