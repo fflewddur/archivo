@@ -224,6 +224,7 @@ public class Archivo extends Application {
                     new Image("archivo-16.png"),
                     new Image("archivo-32.png"),
                     new Image("archivo-64.png"),
+                    new Image("archivo-96.png"),
                     new Image("archivo-128.png"),
                     new Image("archivo-48.png")
             );
