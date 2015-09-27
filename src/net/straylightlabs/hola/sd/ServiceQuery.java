@@ -21,18 +21,31 @@ package net.straylightlabs.hola.sd;
 
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.hola.dns.Domain;
+import net.straylightlabs.hola.dns.Message;
 import net.straylightlabs.hola.dns.Question;
+import net.straylightlabs.hola.dns.Response;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
+import java.net.SocketTimeoutException;
 
 public class ServiceQuery {
     private final Service service;
     private final Domain domain;
+    private MulticastSocket socket;
 
     public static final String MDNS_IP4_ADDRESS = "224.0.0.251";
     public static final int MDNS_PORT = 5353;
+
+    /**
+     * The browsing socket will timeout after this many milliseconds
+     */
+    private static final int BROWSING_TIMEOUT = 250;
+    /**
+     * Stop browsing after this many consecutive timeouts
+     */
+    private static final int MAX_BROWSING_TIMEOUTS = 4;
 
     public static ServiceQuery createFor(Service service, Domain domain) {
         return new ServiceQuery(service, domain);
@@ -49,38 +62,66 @@ public class ServiceQuery {
         System.out.println("Domain = " + domain);
         System.out.println("Question = \n" + question.dumpBuffer());
 
-        MulticastSocket socket = new MulticastSocket();
+        try {
+            openSocket();
+            question.askOn(socket);
+            collectResponses();
+        } finally {
+            closeSocket();
+        }
+
+    }
+
+    private void openSocket() throws IOException {
+        socket = new MulticastSocket();
         socket.setReuseAddress(true);
+        socket.setSoTimeout(BROWSING_TIMEOUT);
+    }
 
-        question.askOn(socket);
-
-        while (true) {
-            byte[] responseBuffer = new byte[1024];
-            DatagramPacket response = new DatagramPacket(responseBuffer, responseBuffer.length);
+    private void collectResponses() throws IOException {
+        for (int timeouts = 0; timeouts < MAX_BROWSING_TIMEOUTS; ) {
+            byte[] responseBuffer = new byte[Message.MAX_LENGTH];
+            DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
             Archivo.logger.info("Waiting for response...");
-            socket.receive(response);
-            Archivo.logger.info("response received!");
-
-            Archivo.logger.info("length = {}", response.getLength());
-            for (int i = 0; i < response.getLength(); i++) {
-                System.out.format("%02x ", responseBuffer[i]);
-                if ((i + 1) % 8 == 0) {
-                    System.out.println();
-                }
+            try {
+                socket.receive(responsePacket);
+                Response response = Response.createFrom(responsePacket);
+                System.out.println("Response received: " + response);
+                timeouts = 0;
+            } catch (SocketTimeoutException e) {
+                timeouts++;
+//                continue;
             }
 
-            for (int i = 12; i < response.getLength(); i++) {
-                int len = responseBuffer[i] & 0xff;
-                System.out.print("Len = " + len + ": ");
-                for (int j = 1; j <= len; j++) {
-                    System.out.print((char) responseBuffer[i + j]);
-                }
-                i += len;
-                System.out.println();
-                if (len == 0) {
-                    break;
-                }
-            }
+//            Archivo.logger.info("response received!");
+//
+//            Archivo.logger.info("length = {}", responsePacket.getLength());
+//            for (int i = 0; i < responsePacket.getLength(); i++) {
+//                System.out.format("%02x ", responseBuffer[i]);
+//                if ((i + 1) % 8 == 0) {
+//                    System.out.println();
+//                }
+//            }
+//
+//            for (int i = 12; i < responsePacket.getLength(); i++) {
+//                int len = responseBuffer[i] & 0xff;
+//                System.out.print("Len = " + len + ": ");
+//                for (int j = 1; j <= len; j++) {
+//                    System.out.print((char) responseBuffer[i + j]);
+//                }
+//                i += len;
+//                System.out.println();
+//                if (len == 0) {
+//                    break;
+//                }
+//            }
+        }
+    }
+
+    private void closeSocket() {
+        if (socket != null) {
+            socket.close();
+            socket = null;
         }
     }
 }

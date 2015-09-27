@@ -64,8 +64,8 @@ public class Question extends Message {
         buffer.put(labelBytes);
     }
 
-    protected void buildHeader() {
-        super.buildHeader();
+    private void buildHeader() {
+//        super.buildHeader();
         buffer.putShort((short) 0x0); // ID should be 0
         buffer.put((byte) 0x0);
         buffer.put((byte) 0x0);

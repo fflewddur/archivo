@@ -24,17 +24,30 @@ import java.nio.ByteBuffer;
 public abstract class Message {
     protected final ByteBuffer buffer;
 
-    protected final static int BUFFER_SIZE = 1024 * 10; // 10 KB
+    public final static int MAX_LENGTH = 9000; // max size of mDNS packets, in bytes
+    public final static int HEADER_LENGTH = 12; // DNS headers are 12 bytes
+
+    private final static int USHORT_MASK = 0xFFFF;
 
     protected Message() {
-        buffer = ByteBuffer.allocate(BUFFER_SIZE);
+        buffer = ByteBuffer.allocate(MAX_LENGTH);
     }
 
-    protected void buildHeader() {
-        if (buffer.position() != 0) {
-            throw new IllegalStateException("buildHeader must be called before any other buffer operations");
-        }
+    protected int readUnsignedShort() {
+        return buffer.getShort() & USHORT_MASK;
     }
+
+//    protected void buildHeader() {
+//        if (buffer.position() != 0) {
+//            throw new IllegalStateException("buildHeader must be called before any other buffer operations");
+//        }
+//    }
+//
+//    protected void parseHeader() {
+//        if (buffer.position() != 0) {
+//            throw new IllegalStateException("parseHeader must be called before any other buffer operations");
+//        }
+//    }
 
     public String dumpBuffer() {
         StringBuilder sb = new StringBuilder();
