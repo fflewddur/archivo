@@ -38,7 +38,7 @@ public class HolaDriver {
         try {
             Service service = Service.fromName("_tivo-mindrpc._tcp");
             ServiceQuery query = ServiceQuery.createFor(service, Domain.LOCAL);
-            query.browse();
+            query.runOnce();
         } catch (UnknownHostException e) {
             Archivo.logger.error("Unknown host: ", e);
         } catch (IOException e) {

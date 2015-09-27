@@ -41,11 +41,7 @@ public class ServiceQuery {
     /**
      * The browsing socket will timeout after this many milliseconds
      */
-    private static final int BROWSING_TIMEOUT = 250;
-    /**
-     * Stop browsing after this many consecutive timeouts
-     */
-    private static final int MAX_BROWSING_TIMEOUTS = 4;
+    private static final int BROWSING_TIMEOUT = 500;
 
     public static ServiceQuery createFor(Service service, Domain domain) {
         return new ServiceQuery(service, domain);
@@ -56,7 +52,7 @@ public class ServiceQuery {
         this.domain = domain;
     }
 
-    public void browse() throws IOException {
+    public void runOnce() throws IOException {
         Question question = new Question(service, domain);
         System.out.println("Service = " + service);
         System.out.println("Domain = " + domain);
@@ -69,7 +65,6 @@ public class ServiceQuery {
         } finally {
             closeSocket();
         }
-
     }
 
     private void openSocket() throws IOException {
@@ -79,7 +74,7 @@ public class ServiceQuery {
     }
 
     private void collectResponses() throws IOException {
-        for (int timeouts = 0; timeouts < MAX_BROWSING_TIMEOUTS; ) {
+        for (int timeouts = 0; timeouts == 0; ) {
             byte[] responseBuffer = new byte[Message.MAX_LENGTH];
             DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
             Archivo.logger.info("Waiting for response...");
@@ -90,31 +85,7 @@ public class ServiceQuery {
                 timeouts = 0;
             } catch (SocketTimeoutException e) {
                 timeouts++;
-//                continue;
             }
-
-//            Archivo.logger.info("response received!");
-//
-//            Archivo.logger.info("length = {}", responsePacket.getLength());
-//            for (int i = 0; i < responsePacket.getLength(); i++) {
-//                System.out.format("%02x ", responseBuffer[i]);
-//                if ((i + 1) % 8 == 0) {
-//                    System.out.println();
-//                }
-//            }
-//
-//            for (int i = 12; i < responsePacket.getLength(); i++) {
-//                int len = responseBuffer[i] & 0xff;
-//                System.out.print("Len = " + len + ": ");
-//                for (int j = 1; j <= len; j++) {
-//                    System.out.print((char) responseBuffer[i + j]);
-//                }
-//                i += len;
-//                System.out.println();
-//                if (len == 0) {
-//                    break;
-//                }
-//            }
         }
     }
 

@@ -21,13 +21,22 @@ package net.straylightlabs.hola.sd;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Service {
     private final String name;
     private final List<String> labels;
 
+    private static final Pattern SERVICE_PATTERN = Pattern.compile("^((_[a-zA-Z0-9-]+\\.)?_(tcp|udp))\\.?|$");
+
     public static Service fromName(String name) {
-        return new Service(name);
+        Matcher matcher = SERVICE_PATTERN.matcher(name);
+        if (matcher.find()) {
+            return new Service(matcher.group(1));
+        } else {
+            throw new IllegalArgumentException("Name does not match service syntax");
+        }
     }
 
     private Service(String name) {
@@ -37,6 +46,10 @@ public class Service {
 
         this.name = name;
         labels = Arrays.asList(name.split("\\."));
+    }
+
+    public String getName() {
+        return name;
     }
 
     public List<String> getLabels() {

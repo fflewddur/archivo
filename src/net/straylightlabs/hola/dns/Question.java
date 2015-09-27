@@ -27,17 +27,37 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.net.UnknownHostException;
+import java.nio.ByteBuffer;
 
 public class Question extends Message {
     private final Service service;
     private final Domain domain;
+    private final QType type;
+    private final QClass qClass;
 
     private final static short UNICAST_RESPONSE_BIT = (short) 0x8000;
+
+    public static Question fromBuffer(ByteBuffer buffer) {
+        String name = Record.readNameFromBuffer(buffer);
+        QType type = QType.fromInt(buffer.getShort() & Record.USHORT_MASK);
+        QClass qClass = QClass.fromInt(buffer.getShort() & Record.USHORT_MASK);
+        return new Question(name, type, qClass);
+    }
+
+    private Question(String name, QType type, QClass qClass) {
+        super();
+        this.service = Service.fromName(name);
+        this.domain = Domain.fromName(name);
+        this.type = type;
+        this.qClass = qClass;
+    }
 
     public Question(Service service, Domain domain) {
         super();
         this.service = service;
         this.domain = domain;
+        this.type = QType.PTR;
+        this.qClass = QClass.IN;
         build();
     }
 
@@ -50,12 +70,11 @@ public class Question extends Message {
         addLabelToBuffer("");
 
         // QTYPE
-        buffer.putShort(Record.Type.PTR.asShort());
+        buffer.putShort((short) type.asUnsignedShort());
 
         // QCLASS
         // FIXME Only set unicast bit for initial queries
-        short qclass = (short) (Record.Class.IN.asShort() | UNICAST_RESPONSE_BIT);
-        buffer.putShort(qclass);
+        buffer.putShort((short) (qClass.asUnsignedShort() | UNICAST_RESPONSE_BIT));
     }
 
     private void addLabelToBuffer(String label) {
@@ -82,6 +101,77 @@ public class Question extends Message {
             socket.send(packet);
         } catch (UnknownHostException e) {
             System.err.println("UnknownHostException " + e);
+        }
+    }
+
+    @Override
+    public String toString() {
+        return "Question{" +
+                "service=" + service +
+                ", domain=" + domain +
+                ", type=" + type +
+                ", qClass=" + qClass +
+                '}';
+    }
+
+    enum QType {
+        A(1),
+        NS(2),
+        CNAME(5),
+        SOA(6),
+        MB(7),
+        MG(8),
+        MR(9),
+        NULL(10),
+        WKS(11),
+        PTR(12),
+        HINFO(13),
+        MINFO(14),
+        MX(15),
+        TXT(16),
+        ANY(255);
+
+        private final int value;
+
+        public static QType fromInt(int val) {
+            for (QType type : values()) {
+                if (type.value == val) {
+                    return type;
+                }
+            }
+            throw new IllegalArgumentException("Can't convert " + val + " to a QType");
+        }
+
+        QType(int value) {
+            this.value = value;
+        }
+
+        public int asUnsignedShort() {
+            return value & Record.USHORT_MASK;
+        }
+    }
+
+    enum QClass {
+        IN(1),
+        ANY(255);
+
+        private final int value;
+
+        public static QClass fromInt(int val) {
+            for (QClass c : values()) {
+                if (c.value == (val & ~UNICAST_RESPONSE_BIT)) {
+                    return c;
+                }
+            }
+            throw new IllegalArgumentException("Can't convert " + val + " to a QClass");
+        }
+
+        QClass(int value) {
+            this.value = value;
+        }
+
+        public int asUnsignedShort() {
+            return value & Record.USHORT_MASK;
         }
     }
 }

@@ -51,7 +51,11 @@ public abstract class Message {
 
     public String dumpBuffer() {
         StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < buffer.position(); i++) {
+        int length = buffer.position();
+        if (length == 0) {
+            length = buffer.limit();
+        }
+        for (int i = 0; i < length; i++) {
             sb.append(String.format("%02x", buffer.get(i)));
             if ((i + 1) % 8 == 0) {
                 sb.append('\n');

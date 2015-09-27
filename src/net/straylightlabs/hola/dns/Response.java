@@ -26,7 +26,10 @@ import java.util.List;
 
 public class Response extends Message {
     private final List<Record> records;
+    private int numQuestions;
     private int numAnswers;
+    private int numNameServers;
+    private int numAdditionalRecords;
 
     private final static int QR_MASK = 0x8000;
     private final static int OPCODE_MASK = 0x7800;
@@ -34,6 +37,7 @@ public class Response extends Message {
 
     public static Response createFrom(DatagramPacket packet) {
         Response response = new Response(packet);
+        System.out.println("Response = \n" + response.dumpBuffer());
         response.parseRecords();
         return response;
     }
@@ -48,13 +52,30 @@ public class Response extends Message {
         System.arraycopy(packet.getData(), packet.getOffset(), dstBuffer, 0, packet.getLength());
         buffer.limit(packet.getLength());
         buffer.position(0);
+
     }
 
     private void parseRecords() {
         parseHeader();
+        System.out.println("numQuestions: " + numQuestions);
+        for (int i = 0; i < numQuestions; i++) {
+            Question question = Question.fromBuffer(buffer);
+            System.out.println("Question: " + question);
+        }
+        System.out.println("numAnswers: " + numAnswers);
         for (int i = 0; i < numAnswers; i++) {
             Record record = Record.fromBuffer(buffer);
-            System.out.println("Record: " + record);
+            System.out.println("Answer: " + record);
+        }
+        System.out.println("numNameServers: " + numNameServers);
+        for (int i = 0; i < numNameServers; i++) {
+            Record record = Record.fromBuffer(buffer);
+            System.out.println("Name server: " + record);
+        }
+        System.out.println("numAdditionalRecords: " + numAdditionalRecords);
+        for (int i = 0; i < numAdditionalRecords; i++) {
+            Record record = Record.fromBuffer(buffer);
+            System.out.println("Additional record: " + record);
         }
     }
 
@@ -71,9 +92,9 @@ public class Response extends Message {
         if ((codes & RCODE_MASK) != 0) {
             throw new IllegalArgumentException("mDNS response packets can't have RCODE values");
         }
-        int numQuestions = readUnsignedShort();
+        numQuestions = readUnsignedShort();
         numAnswers = readUnsignedShort();
-        int numNameServers = readUnsignedShort();
-        int numAdditionalRecords = readUnsignedShort();
+        numNameServers = readUnsignedShort();
+        numAdditionalRecords = readUnsignedShort();
     }
 }
