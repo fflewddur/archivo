@@ -17,17 +17,25 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.straylightlabs.hola;
+package net.straylightlabs.hola.sd;
 
+import net.straylightlabs.hola.dns.Response;
 
-import net.straylightlabs.hola.dns.DomainTest;
-import net.straylightlabs.hola.dns.QuestionTest;
-import net.straylightlabs.hola.dns.RecordTest;
-import net.straylightlabs.hola.sd.ServiceTest;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+import java.net.InetAddress;
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses({DomainTest.class, QuestionTest.class, RecordTest.class, ServiceTest.class})
-public class TestSuite {
+public class Instance {
+    private final InetAddress address;
+    private final int port;
+
+    public static Instance createFrom(Response response) {
+        InetAddress address = response.getInetAddress();
+        int port = response.getPort();
+
+        return new Instance(address, port);
+    }
+
+    private Instance(InetAddress address, int port) {
+        this.address = address;
+        this.port = port;
+    }
 }

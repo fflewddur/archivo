@@ -20,6 +20,7 @@
 package net.straylightlabs.hola.dns;
 
 import java.io.UnsupportedEncodingException;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,29 +38,34 @@ abstract class Record {
 
     public static Record fromBuffer(ByteBuffer buffer) {
         String name = readNameFromBuffer(buffer);
-        System.out.println("name: " + name);
-        System.out.println("position: " + buffer.position());
         Type type = Type.fromInt(buffer.getShort() & USHORT_MASK);
 //        int rrClassByte = buffer.getShort() & 0x7FFF;
         int tmp = buffer.getShort() & 0xFFFF;
         boolean flushCache = (tmp & 0x8000) == 0x8000;
-        System.out.format("rrclass: 0x%08x type: %s flushCache: %s%n", tmp, type, flushCache);
         int rrClassByte = tmp & 0x7FFF;
         Class recordClass = Class.fromInt(rrClassByte);
         long ttl = buffer.getInt() & UINT_MASK;
         int rdLength = buffer.getShort() & USHORT_MASK;
-        System.out.println("rdLength = " + rdLength);
-//        byte[] rdata;
-//        if (rdLength > 0) {
-//            rdata = new byte[rdLength];
-//            buffer.get(rdata);
-//        } else {
-//            rdata = new byte[0];
-//        }
 
         switch (type) {
+            case A:
+                try {
+                    return new ARecord(buffer, name, recordClass, ttl);
+                } catch (UnknownHostException e) {
+                    throw new IllegalArgumentException("Buffer does not represent a valid A record");
+                }
+            case AAAA:
+                try {
+                    return new AaaaRecord(buffer, name, recordClass, ttl);
+                } catch (UnknownHostException e) {
+                    throw new IllegalArgumentException("Buffer does not represent a valid AAAA record");
+                }
             case PTR:
                 return new PtrRecord(buffer, name, recordClass, ttl);
+            case SRV:
+                return new SrvRecord(buffer, name, recordClass, ttl);
+            case TXT:
+                return new TxtRecord(buffer, name, recordClass, ttl, rdLength);
             default:
                 throw new IllegalArgumentException("Buffer represents an unsupported record type");
         }
@@ -114,6 +120,26 @@ abstract class Record {
             }
         }
         return label;
+    }
+
+    public static List<String> readStringsFromBuffer(ByteBuffer buffer, int length) {
+        List<String> strings = new ArrayList<>();
+        int bytesRead = 0;
+        do {
+            int stringLength = buffer.get() & 0xFF;
+            String label = readLabel(buffer, stringLength);
+            bytesRead += label.length() + 1;
+            strings.add(label);
+        } while (bytesRead < length);
+        return strings;
+    }
+
+    String getName() {
+        return name;
+    }
+
+    long getTTL() {
+        return ttl;
     }
 
     @Override

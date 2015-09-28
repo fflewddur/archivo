@@ -21,11 +21,13 @@ package net.straylightlabs.hola;
 
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.hola.dns.Domain;
+import net.straylightlabs.hola.sd.Instance;
+import net.straylightlabs.hola.sd.Query;
 import net.straylightlabs.hola.sd.Service;
-import net.straylightlabs.hola.sd.ServiceQuery;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.List;
 
 /**
  * A minimal implementation of mDNS-SD, as described in RFCs 6762 & 6763.
@@ -37,8 +39,10 @@ public class HolaDriver {
     public static void main(String[] args) {
         try {
             Service service = Service.fromName("_tivo-mindrpc._tcp");
-            ServiceQuery query = ServiceQuery.createFor(service, Domain.LOCAL);
-            query.runOnce();
+//            Service service = Service.fromName("_appletv-v2._tcp");
+            Query query = Query.createFor(service, Domain.LOCAL);
+            List<Instance> instances = query.runOnce();
+            instances.stream().forEach(System.out::println);
         } catch (UnknownHostException e) {
             Archivo.logger.error("Unknown host: ", e);
         } catch (IOException e) {

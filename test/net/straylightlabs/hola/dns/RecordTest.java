@@ -51,7 +51,22 @@ public class RecordTest {
         assertTrue("position = 25: " + buffer.position(), buffer.position() == 25);
     }
 
-    private ByteBuffer createBufferForNames(String... names) {
+    @Test
+    public void testParserNoRData() {
+        ByteBuffer buffer = createBufferForNames("_http._tcp.local.");
+        buffer.putShort((short) Record.Type.PTR.asUnsignedShort());
+        buffer.putShort((short) Record.Class.IN.asUnsignedShort());
+        buffer.putInt(3600);
+        buffer.putShort((short) 0);
+        buffer.rewind();
+
+        Record record = Record.fromBuffer(buffer);
+        assertTrue("is instanceof PtrRecord", record instanceof PtrRecord);
+        assertTrue("name == _http._tcp.local.: " + record.getName(), record.getName().equals("_http._tcp.local."));
+        assertTrue("TTL == 3600", record.getTTL() == 3600);
+    }
+
+    public static ByteBuffer createBufferForNames(String... names) {
         ByteBuffer buffer = ByteBuffer.allocate(9000);
         for (String name : names) {
             String[] labels = name.split("\\.");

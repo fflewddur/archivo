@@ -55,6 +55,26 @@ public class Domain {
     }
 
     @Override
+    public boolean equals(Object o) {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+
+        Domain domain = (Domain) o;
+
+        return name.equals(domain.name);
+
+    }
+
+    @Override
+    public int hashCode() {
+        return name.hashCode();
+    }
+
+    @Override
     public String toString() {
         return "Domain{" +
                 "name='" + name + '\'' +

@@ -21,6 +21,9 @@ package net.straylightlabs.hola.dns;
 
 import org.junit.Test;
 
+import java.util.List;
+
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class DomainTest {
@@ -38,5 +41,39 @@ public class DomainTest {
         Domain domain;
         domain = Domain.fromName("_http._tcp.local");
         assertTrue("fromName(_http._tcp.local) == local: " + domain.getName(), domain.getName().equals("local"));
+    }
+
+    @Test
+    public void testShortLabel() {
+        Domain domain = Domain.fromName("_http._tcp.local");
+        List<String> labels = domain.getLabels();
+        assertTrue("labels.size() = 1", labels.size() == 1);
+        assertTrue("labels.get(0) = local", labels.get(0).equals("local"));
+    }
+
+    @Test
+    public void testLongerLabel() {
+        Domain domain = Domain.fromName("_http._tcp.straylightlabs.net");
+        List<String> labels = domain.getLabels();
+        assertTrue("labels.size() = 2", labels.size() == 2);
+        assertTrue("labels.get(0) = straylightlabs", labels.get(0).equals("straylightlabs"));
+        assertTrue("labels.get(1) = net", labels.get(1).equals("net"));
+    }
+
+    @Test
+    public void testEquals() {
+        Domain a = Domain.fromName("_http._tcp.straylightlabs.net");
+        Domain b = Domain.fromName("_http._tcp.straylightlabs.net");
+        Domain c = Domain.fromName("local");
+        Domain d = Domain.fromName("local");
+
+        assertTrue("a == b", a.equals(b));
+        assertTrue("b == a", b.equals(a));
+        assertTrue("c == d", c.equals(d));
+        assertTrue("d == c", d.equals(c));
+        assertFalse("a != c", a.equals(c));
+        assertFalse("a != d", a.equals(d));
+        assertFalse("b != c", b.equals(c));
+        assertFalse("b != d", b.equals(d));
     }
 }

@@ -20,22 +20,39 @@
 package net.straylightlabs.hola.dns;
 
 import java.nio.ByteBuffer;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
-class PtrRecord extends Record {
-    private final String ptrName;
+public class TxtRecord extends Record {
+    private Map<String, String> pairs;
 
-    public PtrRecord(ByteBuffer buffer, String name, Class recordClass, long ttl) {
+    public TxtRecord(ByteBuffer buffer, String name, Record.Class recordClass, long ttl, int length) {
         super(name, recordClass, ttl);
-        ptrName = readNameFromBuffer(buffer);
+        List<String> strings = readStringsFromBuffer(buffer, length);
+        pairs = parseDataStrings(strings);
+    }
+
+    private Map<String, String> parseDataStrings(List<String> strings) {
+        Map<String, String> pairs = new HashMap<>();
+        strings.stream().forEach(s -> {
+            String[] parts = s.split("=");
+            pairs.put(parts[0], parts[1]);
+        });
+        return pairs;
+    }
+
+    public String getValueFor(String key) {
+        return pairs.get(key);
     }
 
     @Override
     public String toString() {
-        return "PtrRecord{" +
+        return "TxtRecord{" +
                 "name='" + name + '\'' +
                 ", recordClass=" + recordClass +
                 ", ttl=" + ttl +
-                ", ptrName='" + ptrName + '\'' +
+                ", pairs=" + pairs +
                 '}';
     }
 }

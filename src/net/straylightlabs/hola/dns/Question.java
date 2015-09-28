@@ -19,8 +19,8 @@
 
 package net.straylightlabs.hola.dns;
 
+import net.straylightlabs.hola.sd.Query;
 import net.straylightlabs.hola.sd.Service;
-import net.straylightlabs.hola.sd.ServiceQuery;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -32,7 +32,7 @@ import java.nio.ByteBuffer;
 public class Question extends Message {
     private final Service service;
     private final Domain domain;
-    private final QType type;
+    private final QType qType;
     private final QClass qClass;
 
     private final static short UNICAST_RESPONSE_BIT = (short) 0x8000;
@@ -48,7 +48,7 @@ public class Question extends Message {
         super();
         this.service = Service.fromName(name);
         this.domain = Domain.fromName(name);
-        this.type = type;
+        this.qType = type;
         this.qClass = qClass;
     }
 
@@ -56,7 +56,7 @@ public class Question extends Message {
         super();
         this.service = service;
         this.domain = domain;
-        this.type = QType.PTR;
+        this.qType = QType.PTR;
         this.qClass = QClass.IN;
         build();
     }
@@ -70,7 +70,7 @@ public class Question extends Message {
         addLabelToBuffer("");
 
         // QTYPE
-        buffer.putShort((short) type.asUnsignedShort());
+        buffer.putShort((short) qType.asUnsignedShort());
 
         // QCLASS
         // FIXME Only set unicast bit for initial queries
@@ -95,8 +95,8 @@ public class Question extends Message {
 
     public void askOn(MulticastSocket socket) throws IOException {
         try {
-            InetAddress group = InetAddress.getByName(ServiceQuery.MDNS_IP4_ADDRESS);
-            DatagramPacket packet = new DatagramPacket(buffer.array(), buffer.position(), group, ServiceQuery.MDNS_PORT);
+            InetAddress group = InetAddress.getByName(Query.MDNS_IP4_ADDRESS);
+            DatagramPacket packet = new DatagramPacket(buffer.array(), buffer.position(), group, Query.MDNS_PORT);
             packet.setAddress(group);
             socket.send(packet);
         } catch (UnknownHostException e) {
@@ -104,12 +104,28 @@ public class Question extends Message {
         }
     }
 
+    Service getService() {
+        return service;
+    }
+
+    Domain getDomain() {
+        return domain;
+    }
+
+    QType getQType() {
+        return qType;
+    }
+
+    QClass getQClass() {
+        return qClass;
+    }
+
     @Override
     public String toString() {
         return "Question{" +
                 "service=" + service +
                 ", domain=" + domain +
-                ", type=" + type +
+                ", qType=" + qType +
                 ", qClass=" + qClass +
                 '}';
     }

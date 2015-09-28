@@ -19,23 +19,27 @@
 
 package net.straylightlabs.hola.dns;
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.nio.ByteBuffer;
 
-class PtrRecord extends Record {
-    private final String ptrName;
+public class ARecord extends Record {
+    private InetAddress address;
 
-    public PtrRecord(ByteBuffer buffer, String name, Class recordClass, long ttl) {
+    public ARecord(ByteBuffer buffer, String name, Class recordClass, long ttl) throws UnknownHostException {
         super(name, recordClass, ttl);
-        ptrName = readNameFromBuffer(buffer);
+        byte[] addressBytes = new byte[4];
+        buffer.get(addressBytes);
+        address = InetAddress.getByAddress(addressBytes);
     }
 
     @Override
     public String toString() {
-        return "PtrRecord{" +
+        return "ARecord{" +
                 "name='" + name + '\'' +
                 ", recordClass=" + recordClass +
                 ", ttl=" + ttl +
-                ", ptrName='" + ptrName + '\'' +
+                ", address=" + address +
                 '}';
     }
 }

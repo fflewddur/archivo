@@ -21,10 +21,12 @@ package net.straylightlabs.hola.dns;
 
 
 import java.net.DatagramPacket;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.List;
 
 public class Response extends Message {
+    private final List<Question> questions;
     private final List<Record> records;
     private int numQuestions;
     private int numAnswers;
@@ -37,12 +39,12 @@ public class Response extends Message {
 
     public static Response createFrom(DatagramPacket packet) {
         Response response = new Response(packet);
-        System.out.println("Response = \n" + response.dumpBuffer());
         response.parseRecords();
         return response;
     }
 
     private Response() {
+        questions = new ArrayList<>();
         records = new ArrayList<>();
     }
 
@@ -57,24 +59,24 @@ public class Response extends Message {
 
     private void parseRecords() {
         parseHeader();
-        System.out.println("numQuestions: " + numQuestions);
         for (int i = 0; i < numQuestions; i++) {
             Question question = Question.fromBuffer(buffer);
+            questions.add(question);
             System.out.println("Question: " + question);
         }
-        System.out.println("numAnswers: " + numAnswers);
         for (int i = 0; i < numAnswers; i++) {
             Record record = Record.fromBuffer(buffer);
+            records.add(record);
             System.out.println("Answer: " + record);
         }
-        System.out.println("numNameServers: " + numNameServers);
         for (int i = 0; i < numNameServers; i++) {
             Record record = Record.fromBuffer(buffer);
+            records.add(record);
             System.out.println("Name server: " + record);
         }
-        System.out.println("numAdditionalRecords: " + numAdditionalRecords);
         for (int i = 0; i < numAdditionalRecords; i++) {
             Record record = Record.fromBuffer(buffer);
+            records.add(record);
             System.out.println("Additional record: " + record);
         }
     }
@@ -96,5 +98,15 @@ public class Response extends Message {
         numAnswers = readUnsignedShort();
         numNameServers = readUnsignedShort();
         numAdditionalRecords = readUnsignedShort();
+    }
+
+    public InetAddress getInetAddress() {
+        SrvRecord record = (SrvRecord) (records.stream().filter(r -> r instanceof SrvRecord).findFirst().get());
+        return null;
+    }
+
+    public int getPort() {
+        SrvRecord record = (SrvRecord) (records.stream().filter(r -> r instanceof SrvRecord).findFirst().get());
+        return record.getPort();
     }
 }

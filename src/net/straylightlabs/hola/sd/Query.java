@@ -29,11 +29,14 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.MulticastSocket;
 import java.net.SocketTimeoutException;
+import java.util.ArrayList;
+import java.util.List;
 
-public class ServiceQuery {
+public class Query {
     private final Service service;
     private final Domain domain;
     private MulticastSocket socket;
+    private List<Instance> instances;
 
     public static final String MDNS_IP4_ADDRESS = "224.0.0.251";
     public static final int MDNS_PORT = 5353;
@@ -43,21 +46,22 @@ public class ServiceQuery {
      */
     private static final int BROWSING_TIMEOUT = 500;
 
-    public static ServiceQuery createFor(Service service, Domain domain) {
-        return new ServiceQuery(service, domain);
+    public static Query createFor(Service service, Domain domain) {
+        return new Query(service, domain);
     }
 
-    private ServiceQuery(Service service, Domain domain) {
+    private Query(Service service, Domain domain) {
         this.service = service;
         this.domain = domain;
     }
 
-    public void runOnce() throws IOException {
+    public List<Instance> runOnce() throws IOException {
         Question question = new Question(service, domain);
         System.out.println("Service = " + service);
         System.out.println("Domain = " + domain);
         System.out.println("Question = \n" + question.dumpBuffer());
 
+        instances = new ArrayList<>();
         try {
             openSocket();
             question.askOn(socket);
@@ -65,6 +69,7 @@ public class ServiceQuery {
         } finally {
             closeSocket();
         }
+        return instances;
     }
 
     private void openSocket() throws IOException {
@@ -73,7 +78,8 @@ public class ServiceQuery {
         socket.setSoTimeout(BROWSING_TIMEOUT);
     }
 
-    private void collectResponses() throws IOException {
+    private List<Instance> collectResponses() throws IOException {
+
         for (int timeouts = 0; timeouts == 0; ) {
             byte[] responseBuffer = new byte[Message.MAX_LENGTH];
             DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
@@ -81,12 +87,14 @@ public class ServiceQuery {
             try {
                 socket.receive(responsePacket);
                 Response response = Response.createFrom(responsePacket);
+                instances.add(Instance.createFrom(response));
                 System.out.println("Response received: " + response);
                 timeouts = 0;
             } catch (SocketTimeoutException e) {
                 timeouts++;
             }
         }
+        return instances;
     }
 
     private void closeSocket() {

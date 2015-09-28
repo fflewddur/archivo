@@ -21,6 +21,7 @@ package net.straylightlabs.hola.sd;
 
 import org.junit.Test;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 public class ServiceTest {
@@ -51,5 +52,22 @@ public class ServiceTest {
     @Test(expected = IllegalArgumentException.class)
     public void testServiceFromInvalidString() {
         Service.fromName("invalidname._tcp");
+    }
+
+    @Test
+    public void testEquals() {
+        Service a = Service.fromName("_http._tcp.straylightlabs.net");
+        Service b = Service.fromName("_http._tcp.straylightlabs.net");
+        Service c = Service.fromName("_airport._udp");
+        Service d = Service.fromName("_airport._udp");
+
+        assertTrue("a == b", a.equals(b));
+        assertTrue("b == a", b.equals(a));
+        assertTrue("c == d", c.equals(d));
+        assertTrue("d == c", d.equals(c));
+        assertFalse("a != c", a.equals(c));
+        assertFalse("a != d", a.equals(d));
+        assertFalse("b != c", b.equals(c));
+        assertFalse("b != d", b.equals(d));
     }
 }
