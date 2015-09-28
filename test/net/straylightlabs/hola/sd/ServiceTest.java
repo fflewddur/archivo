@@ -70,4 +70,12 @@ public class ServiceTest {
         assertFalse("b != c", b.equals(c));
         assertFalse("b != d", b.equals(d));
     }
+
+    @Test
+    public void testToStringForExceptions() {
+        Service a = Service.fromName("_http._tcp.straylightlabs.net");
+        String string = a.toString();
+        assertTrue("toString() is not null", string != null);
+        assertTrue("toString() is not empty", string.length() > 0);
+    }
 }

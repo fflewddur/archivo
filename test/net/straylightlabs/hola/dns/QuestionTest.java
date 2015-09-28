@@ -51,4 +51,13 @@ public class QuestionTest {
         assertTrue("QType = PTR", question.getQType() == Question.QType.PTR);
         assertTrue("QClass = IN", question.getQClass() == Question.QClass.IN);
     }
+
+    @Test
+    public void testToStringForExceptions() {
+        Service service = Service.fromName("_http._tcp");
+        Question question = new Question(service, Domain.LOCAL);
+        String string = question.toString();
+        assertTrue("toString() is not null", string != null);
+        assertTrue("toString() is not empty", string.length() > 0);
+    }
 }

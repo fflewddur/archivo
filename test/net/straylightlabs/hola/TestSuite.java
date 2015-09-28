@@ -20,17 +20,14 @@
 package net.straylightlabs.hola;
 
 
-import net.straylightlabs.hola.dns.DomainTest;
-import net.straylightlabs.hola.dns.QuestionTest;
-import net.straylightlabs.hola.dns.RecordTest;
-import net.straylightlabs.hola.dns.ResponseTest;
+import net.straylightlabs.hola.dns.*;
 import net.straylightlabs.hola.sd.InstanceTest;
 import net.straylightlabs.hola.sd.ServiceTest;
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
-@Suite.SuiteClasses({DomainTest.class, InstanceTest.class, QuestionTest.class, RecordTest.class,
-        ResponseTest.class, ServiceTest.class})
+@Suite.SuiteClasses({ARecordTest.class, AaaaRecordTest.class, DomainTest.class, InstanceTest.class,
+        QuestionTest.class, RecordTest.class, ResponseTest.class, ServiceTest.class})
 public class TestSuite {
 }

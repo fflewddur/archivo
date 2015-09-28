@@ -29,6 +29,24 @@ import static org.junit.Assert.assertTrue;
 public class ResponseTest {
     @Test
     public void testParser() {
+        Response response = buildResponse();
+
+        assertTrue("User visible name = Zelda: " + response.getUserVisibleName(), response.getUserVisibleName().equals("Zelda"));
+        assertTrue("No questions", response.getNumQuestions() == 0);
+        assertTrue("One answer", response.getNumAnswers() == 1);
+        assertTrue("No name serves", response.getNumNameServers() == 0);
+        assertTrue("No additional records", response.getNumAdditionalRecords() == 0);
+    }
+
+    @Test
+    public void testToStringForExceptions() {
+        Response response = buildResponse();
+        String string = response.toString();
+        assertTrue("toString() is not null", string != null);
+        assertTrue("toString() is not empty", string.length() > 0);
+    }
+
+    private Response buildResponse() {
         ByteBuffer buffer = ByteBuffer.allocate(9000);
         buffer.putShort((short) 0);
         buffer.putShort((short) 0x8400); // Response bit + Authoritative answer
@@ -46,12 +64,6 @@ public class ResponseTest {
         buffer.rewind();
 
         DatagramPacket packet = new DatagramPacket(buffer.array(), buffer.limit());
-        Response response = Response.createFrom(packet);
-
-        assertTrue("User visible name = Zelda: " + response.getUserVisibleName(), response.getUserVisibleName().equals("Zelda"));
-        assertTrue("No questions", response.getNumQuestions() == 0);
-        assertTrue("One answer", response.getNumAnswers() == 1);
-        assertTrue("No name serves", response.getNumNameServers() == 0);
-        assertTrue("No additional records", response.getNumAdditionalRecords() == 0);
+        return Response.createFrom(packet);
     }
 }

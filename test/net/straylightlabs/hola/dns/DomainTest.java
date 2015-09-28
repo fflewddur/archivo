@@ -76,4 +76,12 @@ public class DomainTest {
         assertFalse("b != c", b.equals(c));
         assertFalse("b != d", b.equals(d));
     }
+
+    @Test
+    public void testToStringForExceptions() {
+        Domain a = Domain.fromName("_http._tcp.straylightlabs.net");
+        String string = a.toString();
+        assertTrue("toString() is not null", string != null);
+        assertTrue("toString() is not empty", string.length() > 0);
+    }
 }
