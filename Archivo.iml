@@ -11,7 +11,6 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="json" level="project" />
-    <orderEntry type="library" name="mdnsjava" level="project" />
     <orderEntry type="library" name="httpclient" level="project" />
     <orderEntry type="library" name="tivo-libre" level="project" />
     <orderEntry type="library" name="slf4j-api" level="project" />

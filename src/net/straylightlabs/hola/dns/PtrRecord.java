@@ -22,11 +22,26 @@ package net.straylightlabs.hola.dns;
 import java.nio.ByteBuffer;
 
 class PtrRecord extends Record {
+    private final String userVisibleName;
     private final String ptrName;
 
     public PtrRecord(ByteBuffer buffer, String name, Class recordClass, long ttl) {
         super(name, recordClass, ttl);
         ptrName = readNameFromBuffer(buffer);
+        userVisibleName = buildUserVisibleName();
+    }
+
+    public String getUserVisibleName() {
+        return userVisibleName;
+    }
+
+    private String buildUserVisibleName() {
+        String[] parts = ptrName.split("\\.");
+        if (parts.length > 0) {
+            return parts[0];
+        } else {
+            return "Untitled";
+        }
     }
 
     @Override

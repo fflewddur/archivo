@@ -80,4 +80,15 @@ public class RecordTest {
         }
         return buffer;
     }
+
+    public static void addNameToBuffer(String name, ByteBuffer buffer) {
+        String[] labels = name.split("\\.");
+        for (String label : labels) {
+            byte[] bytes = label.getBytes();
+            buffer.put((byte) bytes.length);
+            buffer.put(bytes);
+        }
+        buffer.mark();
+        buffer.put((byte) 0);
+    }
 }

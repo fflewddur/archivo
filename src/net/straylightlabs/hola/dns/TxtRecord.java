@@ -20,17 +20,18 @@
 package net.straylightlabs.hola.dns;
 
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class TxtRecord extends Record {
-    private Map<String, String> pairs;
+    private Map<String, String> attributes;
 
     public TxtRecord(ByteBuffer buffer, String name, Record.Class recordClass, long ttl, int length) {
         super(name, recordClass, ttl);
         List<String> strings = readStringsFromBuffer(buffer, length);
-        pairs = parseDataStrings(strings);
+        attributes = parseDataStrings(strings);
     }
 
     private Map<String, String> parseDataStrings(List<String> strings) {
@@ -42,8 +43,8 @@ public class TxtRecord extends Record {
         return pairs;
     }
 
-    public String getValueFor(String key) {
-        return pairs.get(key);
+    public Map<String, String> getAttributes() {
+        return Collections.unmodifiableMap(attributes);
     }
 
     @Override
@@ -52,7 +53,7 @@ public class TxtRecord extends Record {
                 "name='" + name + '\'' +
                 ", recordClass=" + recordClass +
                 ", ttl=" + ttl +
-                ", pairs=" + pairs +
+                ", attributes=" + attributes +
                 '}';
     }
 }

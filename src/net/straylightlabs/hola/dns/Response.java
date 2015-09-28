@@ -22,8 +22,8 @@ package net.straylightlabs.hola.dns;
 
 import java.net.DatagramPacket;
 import java.net.InetAddress;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class Response extends Message {
     private final List<Question> questions;
@@ -54,7 +54,6 @@ public class Response extends Message {
         System.arraycopy(packet.getData(), packet.getOffset(), dstBuffer, 0, packet.getLength());
         buffer.limit(packet.getLength());
         buffer.position(0);
-
     }
 
     private void parseRecords() {
@@ -62,22 +61,18 @@ public class Response extends Message {
         for (int i = 0; i < numQuestions; i++) {
             Question question = Question.fromBuffer(buffer);
             questions.add(question);
-            System.out.println("Question: " + question);
         }
         for (int i = 0; i < numAnswers; i++) {
             Record record = Record.fromBuffer(buffer);
             records.add(record);
-            System.out.println("Answer: " + record);
         }
         for (int i = 0; i < numNameServers; i++) {
             Record record = Record.fromBuffer(buffer);
             records.add(record);
-            System.out.println("Name server: " + record);
         }
         for (int i = 0; i < numAdditionalRecords; i++) {
             Record record = Record.fromBuffer(buffer);
             records.add(record);
-            System.out.println("Additional record: " + record);
         }
     }
 
@@ -100,13 +95,55 @@ public class Response extends Message {
         numAdditionalRecords = readUnsignedShort();
     }
 
-    public InetAddress getInetAddress() {
-        SrvRecord record = (SrvRecord) (records.stream().filter(r -> r instanceof SrvRecord).findFirst().get());
-        return null;
+    public String getUserVisibleName() {
+        Optional<PtrRecord> record = records.stream().filter(r -> r instanceof PtrRecord).map(r -> (PtrRecord) r).findAny();
+        if (record.isPresent()) {
+            return record.get().getUserVisibleName();
+        } else {
+            throw new IllegalStateException("Cannot call getName when no PTR record is available");
+        }
+    }
+
+    public List<InetAddress> getInetAddresses() {
+        List<InetAddress> addresses = new ArrayList<>();
+        addresses.addAll(records.stream().filter(r -> r instanceof ARecord).map(r -> ((ARecord) r).getAddress()).collect(Collectors.toList()));
+        addresses.addAll(records.stream().filter(r -> r instanceof AaaaRecord).map(r -> ((AaaaRecord) r).getAddress()).collect(Collectors.toList()));
+        return addresses;
     }
 
     public int getPort() {
-        SrvRecord record = (SrvRecord) (records.stream().filter(r -> r instanceof SrvRecord).findFirst().get());
-        return record.getPort();
+        Optional<SrvRecord> record = records.stream().filter(r -> r instanceof SrvRecord).map(r -> (SrvRecord) r).findAny();
+        if (record.isPresent()) {
+            return record.get().getPort();
+        } else {
+            throw new IllegalStateException("Cannot cal getPort when no SRV record is available");
+        }
+    }
+
+    public Map<String, String> getAttributes() {
+        Optional<TxtRecord> record = records.stream().filter(r -> r instanceof TxtRecord).map(r -> (TxtRecord) r).findAny();
+        if (record.isPresent()) {
+            return record.get().getAttributes();
+        } else {
+            return Collections.emptyMap();
+        }
+    }
+
+    // Package-private methods for unit tests
+
+    int getNumQuestions() {
+        return numQuestions;
+    }
+
+    int getNumAnswers() {
+        return numAnswers;
+    }
+
+    int getNumNameServers() {
+        return numNameServers;
+    }
+
+    int getNumAdditionalRecords() {
+        return numAdditionalRecords;
     }
 }

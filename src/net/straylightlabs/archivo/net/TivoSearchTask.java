@@ -24,12 +24,14 @@ import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Tivo;
-import org.xbill.DNS.Message;
-import org.xbill.mDNS.*;
+import net.straylightlabs.hola.dns.Domain;
+import net.straylightlabs.hola.sd.Instance;
+import net.straylightlabs.hola.sd.Query;
+import net.straylightlabs.hola.sd.Service;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.Map;
+import java.util.List;
 
 /**
  * Use mDNS to identify TiVo devices on the local network.
@@ -55,97 +57,40 @@ public class TivoSearchTask extends Task<Void> {
         return null;
     }
 
-    private void startSearch() throws IOException {
-        MulticastDNSService mDNSService;
-        Browse browse;
-        Querier querier = MulticastDNSLookupBase.getDefaultQuerier();
+    private void startSearch() {
+        Service tivoMindService = Service.fromName(SERVICE_TYPE);
+        Query query = Query.createFor(tivoMindService, Domain.LOCAL);
+        try {
+            List<Instance> instances = query.runOnce();
+            Archivo.logger.info("Found instances: {}", instances);
+            addTivosFromInstances(instances);
+        } catch (IOException e) {
+            Archivo.logger.error("Error searching for TiVo devices: ", e);
+        }
+    }
 
-        if (querier != null) {
-            mDNSService = new MulticastDNSService();
-            browse = new Browse(SERVICE_TYPE);
-            mDNSService.startServiceDiscovery(browse, new DNSSDListener() {
-                @Override
-                public void serviceDiscovered(Object o, ServiceInstance serviceInstance) {
-                    if (checkForCancellation(mDNSService)) {
-                        return;
-                    }
-
-                    Archivo.logger.info("Discovered: {}", serviceInstance);
-
-                    try {
-                        Tivo tivo = buildTivoFromServiceInstance(serviceInstance);
-                        // Add this device to our list, but use the JavaFX thread to do it.
-                        Platform.runLater(() -> {
-                            if (!tivos.contains(tivo)) {
-                                tivos.add(tivo);
-                            }
-                        });
-                    } catch (IllegalArgumentException e) {
-                        Archivo.logger.info("Discovered a device, but it doesn't look like a supported TiVo");
-                    }
-                }
-
-                @Override
-                public void serviceRemoved(Object o, ServiceInstance serviceInstance) {
-                    if (checkForCancellation(mDNSService)) {
-                        return;
-                    }
-
-                    Archivo.logger.info("Removed: {}", serviceInstance);
-
-                    try {
-                        Tivo tivo = buildTivoFromServiceInstance(serviceInstance);
-                        // Add this device to our list, but use the JavaFX thread to do it.
-                        Platform.runLater(() -> tivos.remove(tivo));
-                    } catch (IllegalArgumentException e) {
-                        Archivo.logger.info("Tried to remove a device, but it doesn't look like a supported TiVo");
-                    }
-                }
-
-                @Override
-                public void receiveMessage(Object o, Message message) {
-                    // No need to check the return value; this method currently does nothing.
-                    checkForCancellation(mDNSService);
-                }
-
-                @Override
-                public void handleException(Object o, Exception e) {
-                    Archivo.logger.error("Error while looking for TiVo devices: ", e);
+    private void addTivosFromInstances(List<Instance> instances) {
+        instances.stream().forEach(instance -> {
+            Tivo tivo = buildTivoFromInstance(instance);
+            Archivo.logger.info("New device: {}", tivo);
+            // Add this device to our list, but use the JavaFX thread to do it.
+            Platform.runLater(() -> {
+                if (!tivos.contains(tivo)) {
+                    tivos.add(tivo);
                 }
             });
-        } else {
-            Archivo.logger.error("Cannot start mDNS service because querier is not set up.");
-        }
+        });
     }
 
-    private boolean checkForCancellation(MulticastDNSService service) {
-        if (isCancelled()) {
-            Archivo.logger.info("Cancellation requested, closing mDNS service...");
-            try {
-                service.close();
-            } catch (IOException e) {
-                Archivo.logger.error("Error stopping mDNS service: ", e);
-            }
-            return true;
-        }
-
-        return false;
-    }
-
-    private Tivo buildTivoFromServiceInstance(ServiceInstance instance) throws IllegalArgumentException {
-        @SuppressWarnings("unchecked") Map<String, String> textAttributes = instance.getTextAttributes();
-        if (textAttributes == null) {
+    private Tivo buildTivoFromInstance(Instance instance) {
+        if (!instance.hasAttribute(IDENTIFYING_PROPERTY) || !instance.lookupAttribute(IDENTIFYING_PROPERTY).startsWith(PROPERTY_VALUE_STARTS_WITH)) {
             // Not a supported device
+            Archivo.logger.error("This does not look like a supported TiVo device.");
             throw new IllegalArgumentException("This does not look like a supported TiVo device.");
         }
-        String identifyingProperty = textAttributes.get(IDENTIFYING_PROPERTY);
-        if (!identifyingProperty.startsWith(PROPERTY_VALUE_STARTS_WITH)) {
-            // Not a supported device
-            throw new IllegalArgumentException("This does not look like a supported TiVo device.");
-        }
-        String tsn = textAttributes.get(TSN_PROPERTY);
-        InetAddress[] addresses = instance.getAddresses();
-        String name = instance.getName().getInstance();
+        String tsn = instance.lookupAttribute(TSN_PROPERTY);
+        List<InetAddress> addresses = instance.getAddresses();
+        String name = instance.getName();
         int port = instance.getPort();
         return new Tivo.Builder().name(name).addresses(addresses).tsn(tsn).mak(mak).port(port).build();
     }

@@ -17,20 +17,13 @@
  * along with Archivo.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package net.straylightlabs.hola;
+package net.straylightlabs.hola.sd;
 
+import org.junit.Test;
 
-import net.straylightlabs.hola.dns.DomainTest;
-import net.straylightlabs.hola.dns.QuestionTest;
-import net.straylightlabs.hola.dns.RecordTest;
-import net.straylightlabs.hola.dns.ResponseTest;
-import net.straylightlabs.hola.sd.InstanceTest;
-import net.straylightlabs.hola.sd.ServiceTest;
-import org.junit.runner.RunWith;
-import org.junit.runners.Suite;
+public class InstanceTest {
+    @Test
+    public void testInstanceCreation() {
 
-@RunWith(Suite.class)
-@Suite.SuiteClasses({DomainTest.class, InstanceTest.class, QuestionTest.class, RecordTest.class,
-        ResponseTest.class, ServiceTest.class})
-public class TestSuite {
+    }
 }

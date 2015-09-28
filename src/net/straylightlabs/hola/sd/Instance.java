@@ -22,20 +22,58 @@ package net.straylightlabs.hola.sd;
 import net.straylightlabs.hola.dns.Response;
 
 import java.net.InetAddress;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 
 public class Instance {
-    private final InetAddress address;
+    private final String name;
+    private final List<InetAddress> addresses;
     private final int port;
+    private final Map<String, String> attributes;
 
     public static Instance createFrom(Response response) {
-        InetAddress address = response.getInetAddress();
+        String name = response.getUserVisibleName();
+        List<InetAddress> addresses = response.getInetAddresses();
         int port = response.getPort();
+        Map<String, String> attributes = response.getAttributes();
 
-        return new Instance(address, port);
+        return new Instance(name, addresses, port, attributes);
     }
 
-    private Instance(InetAddress address, int port) {
-        this.address = address;
+    private Instance(String name, List<InetAddress> addresses, int port, Map<String, String> attributes) {
+        this.name = name;
+        this.addresses = addresses;
         this.port = port;
+        this.attributes = attributes;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public List<InetAddress> getAddresses() {
+        return Collections.unmodifiableList(addresses);
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public boolean hasAttribute(String attribute) {
+        return attributes.containsKey(attribute);
+    }
+
+    public String lookupAttribute(String attribute) {
+        return attributes.get(attribute);
+    }
+
+    @Override
+    public String toString() {
+        return "Instance{" +
+                "name='" + name + '\'' +
+                ", addresses=" + addresses +
+                ", port=" + port +
+                '}';
     }
 }

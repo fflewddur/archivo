@@ -17,7 +17,6 @@
       </element>
       <element id="library" level="project" name="httpclient" />
       <element id="library" level="project" name="json" />
-      <element id="library" level="project" name="mdnsjava" />
       <element id="library" level="project" name="tivo-libre" />
       <element id="directory" name="resources">
         <element id="file-copy" path="$PROJECT_DIR$/resources/cdata.p12" />

@@ -33,6 +33,10 @@ public class ARecord extends Record {
         address = InetAddress.getByAddress(addressBytes);
     }
 
+    public InetAddress getAddress() {
+        return address;
+    }
+
     @Override
     public String toString() {
         return "ARecord{" +

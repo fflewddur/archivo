@@ -19,7 +19,6 @@
 
 package net.straylightlabs.hola.sd;
 
-import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.hola.dns.Domain;
 import net.straylightlabs.hola.dns.Message;
 import net.straylightlabs.hola.dns.Question;
@@ -57,10 +56,6 @@ public class Query {
 
     public List<Instance> runOnce() throws IOException {
         Question question = new Question(service, domain);
-        System.out.println("Service = " + service);
-        System.out.println("Domain = " + domain);
-        System.out.println("Question = \n" + question.dumpBuffer());
-
         instances = new ArrayList<>();
         try {
             openSocket();
@@ -83,12 +78,10 @@ public class Query {
         for (int timeouts = 0; timeouts == 0; ) {
             byte[] responseBuffer = new byte[Message.MAX_LENGTH];
             DatagramPacket responsePacket = new DatagramPacket(responseBuffer, responseBuffer.length);
-            Archivo.logger.info("Waiting for response...");
             try {
                 socket.receive(responsePacket);
                 Response response = Response.createFrom(responsePacket);
                 instances.add(Instance.createFrom(response));
-                System.out.println("Response received: " + response);
                 timeouts = 0;
             } catch (SocketTimeoutException e) {
                 timeouts++;
