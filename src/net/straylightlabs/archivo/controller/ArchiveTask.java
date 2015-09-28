@@ -99,8 +99,8 @@ public class ArchiveTask extends Task<Recording> {
             URL url = command.getDownloadUrl();
             Archivo.logger.info("URL: {}", url);
             downloadPath = buildPath(recording.getDestination(), "download.ts");
-            fixedPath = buildPath(recording.getDestination(), "fixed.ts");
-            cutPath = buildPath(recording.getDestination(), "cut.ts");
+            fixedPath = buildPath(recording.getDestination(), "fixed.mpg");
+            cutPath = buildPath(recording.getDestination(), "cut.mpg");
             Archivo.logger.info("Saving file to {}", downloadPath);
             getRecording(recording, url);
             if (shouldDecrypt(recording)) {
@@ -322,7 +322,8 @@ public class ArchiveTask extends Task<Recording> {
         cmd.add("-codec");
         cmd.add("copy");
         cmd.add("-f");
-        cmd.add("mpegts");
+//        cmd.add("mpegts");
+        cmd.add("vob");
         cmd.add(fixedPath.toString());
         Archivo.logger.info("Remux command: {}", cmd);
         Archivo.logger.info("Current directory: {}", System.getProperty("user.dir"));
@@ -357,7 +358,7 @@ public class ArchiveTask extends Task<Recording> {
         cmd.add(comskipIniPath);
         cmd.add("--threads");
         cmd.add(String.valueOf(OSHelper.getProcessorCores()));
-        cmd.add("--ts");
+//        cmd.add("--ts");
         cmd.add(fixedPath.toString());
         cmd.add(fixedPath.getParent().toString());
         Archivo.logger.info("Comskip command: {}", cmd);
@@ -401,7 +402,7 @@ public class ArchiveTask extends Task<Recording> {
             for (EditDecisionList.Segment segment : toKeep) {
                 List<String> cmd = new ArrayList<>(cmdPrototype);
                 cmd.addAll(segment.buildFfmpegCutParamList().stream().collect(Collectors.toList()));
-                Path partPath = buildPath(escapedPath, String.format("part%02d.ts", filePartCounter++));
+                Path partPath = buildPath(escapedPath, String.format("part%02d.mpg", filePartCounter++));
                 writer.println(String.format("file '%s'", partPath.toString().replace("'", "\\'")));
                 partPaths.add(partPath);
                 cmd.add(partPath.toString());
