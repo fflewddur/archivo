@@ -115,9 +115,10 @@ public class ArchiveTask extends Task<Recording> {
                     cleanupFiles(recording.getDestination());
                     Files.move(fixedPath, recording.getDestination());
                 }
-                cleanupFiles(fixedPath);
+                cleanupFiles(fixedPath, downloadPath);
+            } else {
+                Files.move(downloadPath, recording.getDestination());
             }
-            cleanupFiles(downloadPath);
         } catch (IOException e) {
             Archivo.logger.error("Error fetching recording information: ", e);
             throw new ArchiveTaskException("Problem fetching recording information");
