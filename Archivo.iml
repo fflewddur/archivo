@@ -26,5 +26,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="hola" level="project" />
   </component>
 </module>
