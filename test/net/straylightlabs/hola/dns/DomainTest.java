@@ -84,4 +84,29 @@ public class DomainTest {
         assertTrue("toString() is not null", string != null);
         assertTrue("toString() is not empty", string.length() > 0);
     }
+
+    @Test
+    public void testHashCodes() {
+        Domain a = Domain.fromName("_http._tcp.straylightlabs.net");
+        Domain b = Domain.fromName("_http._tcp.straylightlabs.net");
+        Domain c = Domain.fromName("local");
+        Domain d = Domain.fromName("local");
+
+        assertTrue("a == b", a.hashCode() == b.hashCode());
+        assertTrue("b == a", b.hashCode() == a.hashCode());
+        assertTrue("c == d", c.hashCode() == d.hashCode());
+        assertTrue("d == c", d.hashCode() == c.hashCode());
+        assertFalse("a != c", a.hashCode() == c.hashCode());
+        assertFalse("a != d", a.hashCode() == d.hashCode());
+        assertFalse("b != c", b.hashCode() == c.hashCode());
+        assertFalse("b != d", b.hashCode() == d.hashCode());
+    }
+
+    @Test
+    public void testEqualsNull() {
+        Domain a = Domain.fromName("_http._tcp.straylightlabs.net");
+        Domain b = null;
+
+        assertFalse("a != b", a.equals(b));
+    }
 }

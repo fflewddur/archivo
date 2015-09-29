@@ -28,6 +28,7 @@ import org.junit.runners.Suite;
 
 @RunWith(Suite.class)
 @Suite.SuiteClasses({ARecordTest.class, AaaaRecordTest.class, DomainTest.class, InstanceTest.class,
-        QuestionTest.class, RecordTest.class, ResponseTest.class, ServiceTest.class})
+        PtrRecordTest.class, QuestionTest.class, RecordTest.class, ResponseTest.class, ServiceTest.class,
+        SrvRecordTest.class, TxtRecordTest.class})
 public class TestSuite {
 }

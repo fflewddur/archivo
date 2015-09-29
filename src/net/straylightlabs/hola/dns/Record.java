@@ -61,7 +61,7 @@ abstract class Record {
                     throw new IllegalArgumentException("Buffer does not represent a valid AAAA record");
                 }
             case PTR:
-                return new PtrRecord(buffer, name, recordClass, ttl);
+                return new PtrRecord(buffer, name, recordClass, ttl, rdLength);
             case SRV:
                 return new SrvRecord(buffer, name, recordClass, ttl);
             case TXT:

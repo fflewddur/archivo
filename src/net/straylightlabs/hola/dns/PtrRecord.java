@@ -25,9 +25,15 @@ class PtrRecord extends Record {
     private final String userVisibleName;
     private final String ptrName;
 
-    public PtrRecord(ByteBuffer buffer, String name, Class recordClass, long ttl) {
+    public final static String UNTITLED_NAME = "Untitled";
+
+    public PtrRecord(ByteBuffer buffer, String name, Class recordClass, long ttl, int rdLength) {
         super(name, recordClass, ttl);
-        ptrName = readNameFromBuffer(buffer);
+        if (rdLength > 0) {
+            ptrName = readNameFromBuffer(buffer);
+        } else {
+            ptrName = "";
+        }
         userVisibleName = buildUserVisibleName();
     }
 
@@ -37,10 +43,10 @@ class PtrRecord extends Record {
 
     private String buildUserVisibleName() {
         String[] parts = ptrName.split("\\.");
-        if (parts.length > 0) {
+        if (parts[0].length() > 0) {
             return parts[0];
         } else {
-            return "Untitled";
+            return UNTITLED_NAME;
         }
     }
 

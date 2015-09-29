@@ -59,5 +59,8 @@ public class QuestionTest {
         String string = question.toString();
         assertTrue("toString() is not null", string != null);
         assertTrue("toString() is not empty", string.length() > 0);
+        String buffer = question.dumpBuffer();
+        assertTrue("dumpBuffer() is not null", buffer != null);
+        assertTrue("dumpBuffer() is not empty", buffer.length() > 0);
     }
 }
