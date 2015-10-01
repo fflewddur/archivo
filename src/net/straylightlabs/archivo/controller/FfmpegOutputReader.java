@@ -26,14 +26,14 @@ import net.straylightlabs.archivo.model.Recording;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class FfmpegOutputReader extends ProcessOutputReader {
+public class FFmpegOutputReader extends ProcessOutputReader {
     private int duration;
     private final ArchiveStatus.TaskStatus task;
 
     private static final Pattern DURATION = Pattern.compile("Duration: ([\\d]+):([\\d]+):([\\d+])");
     private static final Pattern CURRENT_TIME = Pattern.compile("time=([\\d]+):([\\d]+):([\\d+])");
 
-    public FfmpegOutputReader(Recording recording, ArchiveStatus.TaskStatus task) {
+    public FFmpegOutputReader(Recording recording, ArchiveStatus.TaskStatus task) {
         super(recording);
         this.task = task;
     }

@@ -312,7 +312,7 @@ public class ArchiveTask extends Task<Recording> {
                         ArchiveStatus.createRemuxingStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
-        String ffmpegPath = prefs.getFfmpegPath();
+        String ffmpegPath = prefs.getFFmpegPath();
         cleanupFiles(fixedPath);
         Archivo.logger.info("ffmpeg path = {} outputPath = {}", ffmpegPath, fixedPath);
         List<String> cmd = new ArrayList<>();
@@ -377,14 +377,15 @@ public class ArchiveTask extends Task<Recording> {
                         ArchiveStatus.createRemovingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
+        double audioOffset = findAudioOffset();
+        Archivo.logger.info("Audio offset: {}", audioOffset);
         Path partList = buildPath(fixedPath, "parts");
         cleanupFiles(cutPath, partList);
-        String ffmpegPath = prefs.getFfmpegPath();
+        String ffmpegPath = prefs.getFFmpegPath();
         int filePartCounter = 1;
         List<Path> partPaths = new ArrayList<>();
         try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(partList))) {
-            // FIXME parse offset from ffprobe -show_streams output
-            FFSplitList splitList = FFSplitList.createFromFileWithOffset(ffsplitPath, 0.8);
+            FFSplitList splitList = FFSplitList.createFromFileWithOffset(ffsplitPath, audioOffset);
             Archivo.logger.info("SplitList: {}", splitList);
             List<FFSplitList.Segment> toKeep = splitList.getSegmentsToKeep();
             int curSegment = 1;
@@ -453,6 +454,24 @@ public class ArchiveTask extends Task<Recording> {
             cleanupFiles(partList);
             cleanupFiles(partPaths);
         }
+    }
+
+    private double findAudioOffset() {
+        String ffprobePath = prefs.getFFprobePath();
+        List<String> cmd = new ArrayList<>();
+        cmd.add(ffprobePath);
+        cmd.add("-show_streams");
+        cmd.add(fixedPath.toString());
+        FFprobeOutputReader outputReader = new FFprobeOutputReader(recording);
+        try {
+            if (!runProcess(cmd, outputReader)) {
+                throw new ArchiveTaskException("Error finding audio offset");
+            }
+        } catch (InterruptedException | IOException e) {
+            Archivo.logger.error("Error running ffprobe: ", e);
+            throw new ArchiveTaskException("Error finding audio offset");
+        }
+        return outputReader.getAudioOffset();
     }
 
     private void transcode() {

@@ -35,6 +35,7 @@ import java.util.prefs.Preferences;
 
 public class UserPrefs {
     private Preferences prefs;
+    private Preferences sysPrefs;
     private boolean logVerbose;
 
     public static final String MAK = "mak";
@@ -50,13 +51,15 @@ public class UserPrefs {
     public static final String WINDOW_WIDTH = "windowWidth";
     public static final String COMSKIP_PATH = "comskipPath";
     public static final String FFMPEG_PATH = "ffmpegPath";
+    public static final String FFPROBE_PATH = "ffprobePath";
     public static final String HANDBRAKE_PATH = "handbrakePath";
 
     public UserPrefs() {
         try {
             prefs = Preferences.userNodeForPackage(Archivo.class);
+            sysPrefs = Preferences.systemNodeForPackage(Archivo.class);
         } catch (SecurityException e) {
-            Archivo.logger.error("Error accessing user preferences: ", e);
+            Archivo.logger.error("Error accessing preferences: ", e);
         }
     }
 
@@ -234,15 +237,19 @@ public class UserPrefs {
     }
 
     public synchronized String getComskipPath() {
-        return prefs.get(COMSKIP_PATH, Paths.get("tools", "comskip" + OSHelper.getExeSuffix()).toString());
+        return sysPrefs.get(COMSKIP_PATH, prefs.get(COMSKIP_PATH, Paths.get("tools", "comskip" + OSHelper.getExeSuffix()).toString()));
     }
 
-    public synchronized String getFfmpegPath() {
-        return prefs.get(FFMPEG_PATH, Paths.get("tools", "ffmpeg" + OSHelper.getExeSuffix()).toString());
+    public synchronized String getFFmpegPath() {
+        return sysPrefs.get(FFMPEG_PATH, prefs.get(FFMPEG_PATH, Paths.get("tools", "ffmpeg" + OSHelper.getExeSuffix()).toString()));
+    }
+
+    public synchronized String getFFprobePath() {
+        return sysPrefs.get(FFPROBE_PATH, prefs.get(FFPROBE_PATH, Paths.get("tools", "ffprobe" + OSHelper.getExeSuffix()).toString()));
     }
 
     public synchronized String getHandbrakePath() {
-        return prefs.get(HANDBRAKE_PATH, Paths.get("tools", "handbrake" + OSHelper.getExeSuffix()).toString());
+        return sysPrefs.get(HANDBRAKE_PATH, prefs.get(HANDBRAKE_PATH, Paths.get("tools", "handbrake" + OSHelper.getExeSuffix()).toString()));
     }
 
     /**
