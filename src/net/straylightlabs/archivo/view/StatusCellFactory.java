@@ -20,6 +20,7 @@
 package net.straylightlabs.archivo.view;
 
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeTableCell;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
@@ -51,44 +52,69 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
                 case QUEUED:
                     setText("Queued...");
                     setGraphic(null);
+                    updateTooltip(null);
                     break;
                 case DOWNLOADING:
                     setText(String.format("Downloading... (%s)", formatTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
+                    updateTooltip(String.format("Download speed: %s", formatSpeed(status.getKilobytesPerSecond())));
                     break;
                 case REMUXING:
                     setText(String.format("Repairing video file... (%s)", formatTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
+                    updateTooltip(null);
                     break;
                 case FINDING_COMMERCIALS:
                     setText(String.format("Finding commercials... (%s)", formatTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
+                    updateTooltip(null);
                     break;
                 case REMOVING_COMMERCIALS:
                     setText(String.format("Removing commercials... (%s)", formatTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
+                    updateTooltip(null);
                     break;
                 case TRANSCODING:
                     setText(String.format("Compressing video... (%s)", formatTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
+                    updateTooltip(null);
                     break;
                 case FINISHED:
                     setText("Archived");
                     setProgress(1.0);
+                    updateTooltip(null);
                     break;
                 case ERROR:
                     setText(status.getMessage());
                     setGraphic(null);
+                    updateTooltip(null);
                     break;
                 default:
                     setText(status.getStatus().toString());
                     setGraphic(null);
+                    updateTooltip(null);
                     break;
             }
         } else {
             setText(null);
             setGraphic(null);
+            updateTooltip(null);
             setStyle("");
+        }
+    }
+
+    private void updateTooltip(String tip) {
+        if (tip == null) {
+            setTooltip(null);
+        } else {
+            Tooltip tooltip = getTooltip();
+            if (tooltip == null) {
+                tooltip = new Tooltip();
+                tooltip.setText(tip);
+                setTooltip(tooltip);
+            } else {
+                tooltip.setText(tip);
+            }
         }
     }
 
@@ -115,5 +141,17 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
                 return "more than 1 hour left";
             }
         }
+    }
+
+    private String formatSpeed(double kbs) {
+        String speed;
+        if (kbs >= 1024) {
+            speed = String.format("%,.1f MB/s", kbs / 1024);
+        } else if (kbs < 10) {
+            speed = String.format("%,.1f KB/s", kbs);
+        } else {
+            speed = String.format("%,.0f KB/S", kbs);
+        }
+        return speed;
     }
 }

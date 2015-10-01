@@ -62,7 +62,7 @@ public class ArchiveTask extends Task<Recording> {
     private final UserPrefs prefs;
     private Path downloadPath; // downloaded file
     private Path fixedPath; // re-muxed file
-    private Path edlPath; // EDL file from Comskip
+    private Path ffsplitPath; // FFSkip file from Comskip
     private Path cutPath; // file with commercials removed
 
     private static final int BUFFER_SIZE = 8192; // 8 KB
@@ -99,8 +99,8 @@ public class ArchiveTask extends Task<Recording> {
             URL url = command.getDownloadUrl();
             Archivo.logger.info("URL: {}", url);
             downloadPath = buildPath(recording.getDestination(), "download.ts");
-            fixedPath = buildPath(recording.getDestination(), "fixed.mpg");
-            cutPath = buildPath(recording.getDestination(), "cut.mpg");
+            fixedPath = buildPath(recording.getDestination(), "fixed.ts");
+            cutPath = buildPath(recording.getDestination(), "cut.ts");
             Archivo.logger.info("Saving file to {}", downloadPath);
             getRecording(recording, url);
             if (shouldDecrypt(recording)) {
@@ -290,7 +290,7 @@ public class ArchiveTask extends Task<Recording> {
             Archivo.logger.info(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
                     totalBytesRead, estimatedLength, (int) (percent * 100), elapsedTime, kbs));
             Platform.runLater(() -> recording.setStatus(
-                    ArchiveStatus.createDownloadingStatus(percent, secondsRemaining)
+                    ArchiveStatus.createDownloadingStatus(percent, secondsRemaining, kbs)
             ));
         } catch (ArithmeticException e) {
             Archivo.logger.warn("ArithmeticException: ", e);
@@ -322,13 +322,10 @@ public class ArchiveTask extends Task<Recording> {
         cmd.add("-codec");
         cmd.add("copy");
         cmd.add("-f");
-//        cmd.add("mpegts");
-        cmd.add("vob");
+        cmd.add("mpegts");
         cmd.add(fixedPath.toString());
-        Archivo.logger.info("Remux command: {}", cmd);
-        Archivo.logger.info("Current directory: {}", System.getProperty("user.dir"));
         try {
-            FfmpegOutputReader outputReader = new FfmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMUXING);
+            FFmpegOutputReader outputReader = new FFmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMUXING);
             if (!runProcess(cmd, outputReader)) {
                 throw new ArchiveTaskException("Error repairing video");
             }
@@ -350,18 +347,17 @@ public class ArchiveTask extends Task<Recording> {
         Path logoPath = buildPath(fixedPath, "logo.txt");
         Path logPath = buildPath(fixedPath, "log");
         Path txtPath = buildPath(fixedPath, "txt");
-        edlPath = buildPath(fixedPath, "edl");
-        cleanupFiles(logoPath, edlPath);
+        ffsplitPath = buildPath(fixedPath, "ffsplit");
+        cleanupFiles(logoPath, ffsplitPath);
         List<String> cmd = new ArrayList<>();
         cmd.add(comskipPath);
         cmd.add("--ini");
         cmd.add(comskipIniPath);
         cmd.add("--threads");
         cmd.add(String.valueOf(OSHelper.getProcessorCores()));
-//        cmd.add("--ts");
+        cmd.add("--ts");
         cmd.add(fixedPath.toString());
         cmd.add(fixedPath.getParent().toString());
-        Archivo.logger.info("Comskip command: {}", cmd);
         try {
             ComskipOutputReader outputReader = new ComskipOutputReader(recording);
             outputReader.addExitCode(1); // Means that commercials were found
@@ -387,29 +383,29 @@ public class ArchiveTask extends Task<Recording> {
         int filePartCounter = 1;
         List<Path> partPaths = new ArrayList<>();
         try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(partList))) {
-            EditDecisionList edl = EditDecisionList.createFromFile(edlPath);
-            List<String> cmdPrototype = new ArrayList<>();
-            cmdPrototype.add(ffmpegPath);
-            cmdPrototype.add("-i");
-            cmdPrototype.add(fixedPath.toString());
-            cmdPrototype.add("-codec");
-            cmdPrototype.add("copy");
-
-            Archivo.logger.info("EDL: {}", edl);
-            List<EditDecisionList.Segment> toKeep = edl.getSegmentsToKeep();
+            // FIXME parse offset from ffprobe -show_streams output
+            FFSplitList splitList = FFSplitList.createFromFileWithOffset(ffsplitPath, 0.8);
+            Archivo.logger.info("SplitList: {}", splitList);
+            List<FFSplitList.Segment> toKeep = splitList.getSegmentsToKeep();
             int curSegment = 1;
             Path escapedPath = Paths.get(fixedPath.toString().replace("\'", ""));
-            for (EditDecisionList.Segment segment : toKeep) {
-                List<String> cmd = new ArrayList<>(cmdPrototype);
-                cmd.addAll(segment.buildFfmpegCutParamList().stream().collect(Collectors.toList()));
-                Path partPath = buildPath(escapedPath, String.format("part%02d.mpg", filePartCounter++));
+            for (FFSplitList.Segment segment : toKeep) {
+                List<String> cmd = new ArrayList<>();
+                cmd.add(ffmpegPath);
+                cmd.addAll(segment.buildFFmpegInputParamList().stream().collect(Collectors.toList()));
+                cmd.add("-i");
+                cmd.add(fixedPath.toString());
+                cmd.addAll(segment.buildFFmpegOutputParamList().stream().collect(Collectors.toList()));
+                cmd.add("-codec");
+                cmd.add("copy");
+
+                Path partPath = buildPath(escapedPath, String.format("part%02d.ts", filePartCounter++));
                 writer.println(String.format("file '%s'", partPath.toString().replace("'", "\\'")));
                 partPaths.add(partPath);
                 cmd.add(partPath.toString());
 
-                Archivo.logger.info("ffmpeg command: {}", cmd);
                 try {
-                    FfmpegOutputReader outputReader = new FfmpegOutputReader(recording, ArchiveStatus.TaskStatus.NONE);
+                    FFmpegOutputReader outputReader = new FFmpegOutputReader(recording, ArchiveStatus.TaskStatus.NONE);
                     cleanupFiles(partPath);
                     if (!runProcess(cmd, outputReader)) {
                         throw new ArchiveTaskException("Error removing commercials");
@@ -424,12 +420,12 @@ public class ArchiveTask extends Task<Recording> {
                 }
             }
         } catch (IOException e) {
-            Archivo.logger.error("Error reading EDL file '{}': ", edlPath, e);
+            Archivo.logger.error("Error reading EDL file '{}': ", ffsplitPath, e);
             cleanupFiles(partList);
             cleanupFiles(partPaths);
             return;
         } finally {
-            cleanupFiles(edlPath, fixedPath);
+            cleanupFiles(ffsplitPath, fixedPath);
         }
 
         Platform.runLater(() -> recording.setStatus(
@@ -445,9 +441,8 @@ public class ArchiveTask extends Task<Recording> {
         cmd.add("-codec");
         cmd.add("copy");
         cmd.add(cutPath.toString());
-        Archivo.logger.info("ffmpeg command: {}", cmd);
         try {
-            FfmpegOutputReader outputReader = new FfmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMOVING_COMMERCIALS);
+            FFmpegOutputReader outputReader = new FFmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMOVING_COMMERCIALS);
             if (!runProcess(cmd, outputReader)) {
                 throw new ArchiveTaskException("Error removing commercials");
             }
@@ -490,7 +485,6 @@ public class ArchiveTask extends Task<Recording> {
         }
         handbrakeArgs.put("-Y", String.valueOf(videoLimit.getHeight()));
         cmd.addAll(mapToList(handbrakeArgs));
-        Archivo.logger.info("HandBrake command: {}", cmd);
         try {
             HandbrakeOutputReader outputReader = new HandbrakeOutputReader(recording);
             if (!runProcess(cmd, outputReader)) {
@@ -509,6 +503,7 @@ public class ArchiveTask extends Task<Recording> {
             return false;
         }
 
+        Archivo.logger.info("Running command: {}", command.stream().collect(Collectors.joining(" ")));
         ProcessBuilder builder = new ProcessBuilder().command(command).redirectErrorStream(true);
         Process process = builder.start();
         outputReader.setInputStream(process.getInputStream());

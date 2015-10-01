@@ -62,8 +62,10 @@ public class AboutDialog {
         dialog.setHeaderText(String.format("%s %s", Archivo.APPLICATION_NAME, Archivo.APPLICATION_VERSION));
 
         VBox pane = new VBox();
-        pane.setSpacing(10);
+        pane.setSpacing(25);
 
+        VBox nestedPane = new VBox();
+        nestedPane.setSpacing(3);
         Text text = new Text("\u00a9 2015 Straylight Labs LLC");
         Hyperlink link = new Hyperlink(HOMEPAGE);
         link.setOnAction(event -> {
@@ -73,15 +75,18 @@ public class AboutDialog {
                 Archivo.logger.error("Error opening web browser: ", e);
             }
         });
-        pane.getChildren().addAll(text, link);
+        nestedPane.getChildren().addAll(text, link);
+        pane.getChildren().add(nestedPane);
+
+//        addWrappedLabel(String.format("Running on Java %s from %s", System.getProperty("java.version"),
+//                System.getProperty("java.vendor")), pane);
 
         addWrappedLabel("Archivo is free software: you can redistribute it and/or modify " +
                 "it under the terms of the GNU General Public License as published by " +
                 "the Free Software Foundation, either version 3 of the License, or " +
                 "(at your option) any later version.", pane);
 
-        addWrappedLabel(String.format("Running on Java %s from %s", System.getProperty("java.version"),
-                System.getProperty("java.vendor")), pane);
+        addWrappedLabel("Made with \u2665 in Oregon", pane);
 
         dialog.getDialogPane().setContent(pane);
 

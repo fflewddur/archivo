@@ -26,6 +26,7 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
     private final TaskStatus status;
     private final double progress;
     private final int secondsRemaining;
+    private final double kbs; // KB per sec
     private final String message;
 
     public final static int TIME_UNKNOWN = -1;
@@ -38,6 +39,7 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         this.status = status;
         progress = 0;
         secondsRemaining = 0;
+        kbs = 0;
         message = "";
     }
 
@@ -45,6 +47,15 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         this.status = status;
         this.progress = progress;
         this.secondsRemaining = secondsRemaining;
+        kbs = 0;
+        message = "";
+    }
+
+    private ArchiveStatus(TaskStatus status, double progress, int secondsRemaining, double kbs) {
+        this.status = status;
+        this.progress = progress;
+        this.secondsRemaining = secondsRemaining;
+        this.kbs = kbs;
         message = "";
     }
 
@@ -52,6 +63,7 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         this.status = status;
         progress = 0;
         secondsRemaining = 0;
+        kbs = 0;
         this.message = message;
     }
 
@@ -71,11 +83,15 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         return secondsRemaining;
     }
 
-    public static ArchiveStatus createDownloadingStatus(double progress, int secondsRemaining) {
+    public double getKilobytesPerSecond() {
+        return kbs;
+    }
+
+    public static ArchiveStatus createDownloadingStatus(double progress, int secondsRemaining, double kbs) {
         if (progress >= 1.0) {
             progress = .99;
         }
-        return new ArchiveStatus(TaskStatus.DOWNLOADING, progress, secondsRemaining);
+        return new ArchiveStatus(TaskStatus.DOWNLOADING, progress, secondsRemaining, kbs);
     }
 
     public static ArchiveStatus createRemuxingStatus(double progress, int secondsRemaining) {

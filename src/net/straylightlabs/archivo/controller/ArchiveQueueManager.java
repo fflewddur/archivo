@@ -51,7 +51,7 @@ public class ArchiveQueueManager extends Observable {
             ArchiveTask task = new ArchiveTask(recording, tivo, mak, mainApp.getUserPrefs());
             task.setOnRunning(event -> {
                 mainApp.setStatusText(String.format("Archiving %s...", recording.getFullTitle()));
-                recording.setStatus(ArchiveStatus.createDownloadingStatus(-1, ArchiveStatus.TIME_UNKNOWN));
+                recording.setStatus(ArchiveStatus.createDownloadingStatus(-1, ArchiveStatus.TIME_UNKNOWN, 0));
             });
             task.setOnSucceeded(event -> {
                 Archivo.logger.info("ArchiveTask succeeded for {}", recording.getFullTitle());
