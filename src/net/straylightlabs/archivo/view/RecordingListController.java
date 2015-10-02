@@ -28,6 +28,7 @@ import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
+import javafx.scene.Cursor;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import net.straylightlabs.archivo.Archivo;
@@ -312,6 +313,7 @@ public class RecordingListController implements Initializable, Observer {
      * Disable the TiVo controls and the recording list
      */
     private void disableUI() {
+        mainApp.getPrimaryStage().getScene().setCursor(Cursor.WAIT);
         setUIDisabled(true);
     }
 
@@ -321,6 +323,7 @@ public class RecordingListController implements Initializable, Observer {
     private void enableUI() {
         recordingTreeTable.setPlaceholder(tablePlaceholderMessage);
         setUIDisabled(false);
+        mainApp.getPrimaryStage().getScene().setCursor(Cursor.DEFAULT);
     }
 
     private void setUIDisabled(boolean disabled) {

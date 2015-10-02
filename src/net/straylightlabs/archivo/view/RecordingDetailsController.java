@@ -73,6 +73,8 @@ public class RecordingDetailsController implements Initializable {
     @FXML
     private Label copyProtected;
     @FXML
+    private Label stillRecording;
+    @FXML
     private ImageView poster;
     @FXML
     private Pane posterPane;
@@ -189,6 +191,7 @@ public class RecordingDetailsController implements Initializable {
         setLabelText(duration, "");
         setLabelText(description, "");
         setLabelText(copyProtected, "");
+        setLabelText(stillRecording, "");
         setPosterFromURL(null);
         hideNode(archiveButton);
         hideNode(cancelButton);
@@ -252,6 +255,8 @@ public class RecordingDetailsController implements Initializable {
         }
         if (recording.isCopyProtected()) {
             setLabelText(copyProtected, "Copy-protected");
+        } else if (recording.isInProgress()) {
+            setLabelText(stillRecording, "Still recording");
         }
 
         updateControls();

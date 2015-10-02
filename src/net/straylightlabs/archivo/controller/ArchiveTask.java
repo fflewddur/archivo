@@ -113,7 +113,11 @@ public class ArchiveTask extends Task<Recording> {
                     transcode();
                 } else {
                     cleanupFiles(recording.getDestination());
-                    Files.move(fixedPath, recording.getDestination());
+                    if (prefs.getSkipCommercials()) {
+                        Files.move(cutPath, recording.getDestination());
+                    } else {
+                        Files.move(fixedPath, recording.getDestination());
+                    }
                 }
                 cleanupFiles(fixedPath, downloadPath);
             } else {

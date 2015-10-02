@@ -48,6 +48,8 @@
                 <Button fx:id="playButton" onAction="#play" minWidth="80">Play</Button>
                 <Label fx:id="copyProtected" text="Copy-protected"
                        style="-fx-text-fill: darkred; -fx-font-weight: bold;"/>
+                <Label fx:id="stillRecording" text="Still recording"
+                       style="-fx-text-fill: darkred; -fx-font-weight: bold;"/>
             </VBox>
             <VBox spacing="3">
                 <Label fx:id="date" text="Recorded on"/>

@@ -25,6 +25,7 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
@@ -69,7 +70,7 @@ public class Archivo extends Application {
 
     public static final String APPLICATION_NAME = "Archivo";
     public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
-    public static final String APPLICATION_VERSION = "0.1.0";
+    public static final String APPLICATION_VERSION = "0.1.0 Technology Preview";
     public static final String USER_AGENT = String.format("%s/%s", APPLICATION_NAME, APPLICATION_VERSION);
     public static final int WINDOW_MIN_HEIGHT = 400;
     public static final int WINDOW_MIN_WIDTH = 555;
@@ -331,16 +332,19 @@ public class Archivo extends Application {
         assert (tivo != null);
 
         setStatusText(String.format("Deleting '%s' from %s...", recording.getTitle(), tivo.getName()));
+        primaryStage.getScene().setCursor(Cursor.WAIT);
         MindCommandRecordingUpdate command = new MindCommandRecordingUpdate(recording.getRecordingId(), tivo.getBodyId());
         MindTask task = new MindTask(tivo.getClient(), command);
         task.setOnSucceeded(event -> {
             recordingListController.updateTivoDetails(tivo);
             recordingListController.removeRecording(recording);
+            primaryStage.getScene().setCursor(Cursor.DEFAULT);
         });
         task.setOnFailed(event -> {
             Throwable e = event.getSource().getException();
             Archivo.logger.error("Error fetching recordings from {}: ", tivo.getName(), e);
             clearStatusText();
+            primaryStage.getScene().setCursor(Cursor.DEFAULT);
             showErrorMessage("Problem deleting recording",
                     String.format("Unfortunately we encountered a problem while removing '%s' from %s. " +
                                     "This usually means that either your computer or your TiVo has lost " +
