@@ -19,6 +19,9 @@
 
 package net.straylightlabs.archivo.utilities;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public class OSHelper {
     private static final String osName;
     private static final Runtime runtime;
@@ -46,5 +49,18 @@ public class OSHelper {
 
     public static int getProcessorCores() {
         return runtime.availableProcessors();
+    }
+
+    public static Path getApplicationDirectory() {
+        if (isWindows()) {
+            String programFilesEnv = System.getenv("ProgramFiles");
+            if (programFilesEnv != null) {
+                return Paths.get(programFilesEnv);
+            } else {
+                return Paths.get("C:");
+            }
+        } else {
+            return Paths.get("/");
+        }
     }
 }

@@ -46,6 +46,7 @@ public class UserPrefs {
     public static final String SKIP_COMMERCIALS = "skipCommercials";
     public static final String VIDEO_LIMIT = "maxVideoResolution";
     public static final String AUDIO_LIMIT = "maxAudioChannels";
+    public static final String TOOLCHAIN = "toolchain";
     public static final String WINDOW_MAXIMIZED = "windowMaximized";
     public static final String WINDOW_HEIGHT = "windowHeight";
     public static final String WINDOW_WIDTH = "windowWidth";
@@ -53,6 +54,7 @@ public class UserPrefs {
     public static final String FFMPEG_PATH = "ffmpegPath";
     public static final String FFPROBE_PATH = "ffprobePath";
     public static final String HANDBRAKE_PATH = "handbrakePath";
+    public static final String VIDEO_REDO_PATH = "videoRedoPath";
 
     public UserPrefs() {
         try {
@@ -120,6 +122,14 @@ public class UserPrefs {
 
     public synchronized void setAudioChannels(AudioChannel limit) {
         prefs.put(AUDIO_LIMIT, limit.getChannels());
+    }
+
+    public synchronized Toolchain getToolchain() {
+        return Toolchain.fromValue(prefs.get(TOOLCHAIN, Toolchain.FFMPEG_COMSKIP.getValue()));
+    }
+
+    public synchronized void setToolchain(Toolchain toolchain) {
+        prefs.put(TOOLCHAIN, toolchain.getValue());
     }
 
     /**
@@ -237,19 +247,27 @@ public class UserPrefs {
     }
 
     public synchronized String getComskipPath() {
-        return sysPrefs.get(COMSKIP_PATH, prefs.get(COMSKIP_PATH, Paths.get("tools", "comskip" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(COMSKIP_PATH, sysPrefs.get(COMSKIP_PATH, Paths.get("tools", "comskip" + OSHelper.getExeSuffix()).toString()));
     }
 
     public synchronized String getFFmpegPath() {
-        return sysPrefs.get(FFMPEG_PATH, prefs.get(FFMPEG_PATH, Paths.get("tools", "ffmpeg" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(FFMPEG_PATH, sysPrefs.get(FFMPEG_PATH, Paths.get("tools", "ffmpeg" + OSHelper.getExeSuffix()).toString()));
     }
 
     public synchronized String getFFprobePath() {
-        return sysPrefs.get(FFPROBE_PATH, prefs.get(FFPROBE_PATH, Paths.get("tools", "ffprobe" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(FFPROBE_PATH, sysPrefs.get(FFPROBE_PATH, Paths.get("tools", "ffprobe" + OSHelper.getExeSuffix()).toString()));
     }
 
     public synchronized String getHandbrakePath() {
-        return sysPrefs.get(HANDBRAKE_PATH, prefs.get(HANDBRAKE_PATH, Paths.get("tools", "handbrake" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(HANDBRAKE_PATH, sysPrefs.get(HANDBRAKE_PATH, Paths.get("tools", "handbrake" + OSHelper.getExeSuffix()).toString()));
+    }
+
+    public synchronized void setVideoRedoPath(String path) {
+        prefs.put(VIDEO_REDO_PATH, path);
+    }
+
+    public synchronized String getVideoRedoPath() {
+        return prefs.get(VIDEO_REDO_PATH, sysPrefs.get(VIDEO_REDO_PATH, Paths.get("tools", "handbrake" + OSHelper.getExeSuffix()).toString()));
     }
 
     /**
