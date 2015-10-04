@@ -59,6 +59,7 @@
             <VBox spacing="3">
                 <Label fx:id="episode" text="Episode"/>
                 <Label fx:id="originalAirDate" text="Original air date"/>
+                <Label fx:id="expectedDeletion" text="Expected removal"/>
             </VBox>
         </HBox>
     </VBox>

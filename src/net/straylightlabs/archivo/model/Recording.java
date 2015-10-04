@@ -61,6 +61,7 @@ public class Recording {
     private final RecordingState state;
     private final RecordingReason reason;
     private final boolean isCopyable;
+    private final LocalDateTime expectedDeletion;
 
     // Denotes Recordings that are child nodes in the RecordingListView
     private boolean isChildRecording;
@@ -90,6 +91,7 @@ public class Recording {
         state = builder.state;
         reason = builder.reason;
         isCopyable = builder.isCopyable;
+        expectedDeletion = builder.expectedDeletion;
 
         isChildRecording = builder.isChildRecording;
         numEpisodes = builder.numEpisodes;
@@ -290,6 +292,10 @@ public class Recording {
         destinationType = type;
     }
 
+    public LocalDateTime getExpectedDeletion() {
+        return expectedDeletion;
+    }
+
     public String getFullTitle() {
         return buildSingleRecordingTitle();
     }
@@ -464,6 +470,7 @@ public class Recording {
         private boolean isSeriesHeading;
         private boolean isChildRecording;
         private int numEpisodes;
+        private LocalDateTime expectedDeletion;
 
         public Builder() {
             // Set default values
@@ -567,6 +574,11 @@ public class Recording {
 
         public Builder numEpisodes(int val) {
             numEpisodes = val;
+            return this;
+        }
+
+        public Builder expectedDeletion(LocalDateTime val) {
+            expectedDeletion = val;
             return this;
         }
 

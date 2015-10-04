@@ -94,6 +94,8 @@ class MindCommandRecordingSearch extends MindCommand {
                     builder.reason(parseReason(recordingJSON.getJSONArray("subscriptionIdentifier")));
                 if (recordingJSON.has("drm"))
                     builder.copyable(parseCopyable(recordingJSON.getJSONObject("drm")));
+                if (recordingJSON.has("expectedDeletion"))
+                    builder.expectedDeletion(parseUTCDateTime(recordingJSON.getString("expectedDeletion")));
             }
         }
         return builder.build();
@@ -203,8 +205,8 @@ class MindCommandRecordingSearch extends MindCommand {
         template = new JSONObject();
         template.put(TYPE, RESPONSE_TEMPLATE);
         template.put(FIELD_NAME, Arrays.asList("recordingId", "channel", "originalAirdate", "state", "subtitle",
-                "startTime", "episodeNum", "description", "title", "duration", "seasonNumber",
-                "image", "drm", "subscriptionIdentifier", "bodyId"));
+                "startTime", "requestedEndTime", "episodeNum", "description", "title", "duration", "seasonNumber",
+                "image", "drm", "subscriptionIdentifier", "bodyId", "expectedDeletion"));
         template.put(TYPE_NAME, "recording");
         templates.put(template);
 

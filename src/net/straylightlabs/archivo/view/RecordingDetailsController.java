@@ -44,6 +44,9 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.*;
 import java.util.List;
 
@@ -74,6 +77,8 @@ public class RecordingDetailsController implements Initializable {
     private Label copyProtected;
     @FXML
     private Label stillRecording;
+    @FXML
+    private Label expectedDeletion;
     @FXML
     private ImageView poster;
     @FXML
@@ -192,6 +197,7 @@ public class RecordingDetailsController implements Initializable {
         setLabelText(description, "");
         setLabelText(copyProtected, "");
         setLabelText(stillRecording, "");
+        setLabelText(expectedDeletion, "");
         setPosterFromURL(null);
         hideNode(archiveButton);
         hideNode(cancelButton);
@@ -258,8 +264,22 @@ public class RecordingDetailsController implements Initializable {
         } else if (recording.isInProgress()) {
             setLabelText(stillRecording, "Still recording");
         }
+        updateExpectedDeletion(recording);
 
         updateControls();
+    }
+
+    private void updateExpectedDeletion(Recording recording) {
+        LocalDate today = LocalDate.now();
+        Period timeUntilDeletion = today.until(recording.getExpectedDeletion().toLocalDate());
+        long daysUntilDeletion = timeUntilDeletion.getDays();
+        if (daysUntilDeletion < 1) {
+            setLabelText(expectedDeletion, "Will be removed today");
+        } else if (daysUntilDeletion < 2) {
+            setLabelText(expectedDeletion, "Will be removed tomorrow");
+        } else if (daysUntilDeletion < 7) {
+            setLabelText(expectedDeletion, String.format("Will be removed in %d days", daysUntilDeletion));
+        }
     }
 
     private void setLabelText(Label label, String text) {
