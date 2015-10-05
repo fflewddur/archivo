@@ -47,7 +47,11 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
     protected void updateItem(ArchiveStatus status, boolean isEmpty) {
         super.updateItem(status, isEmpty);
 
-        if (status != null && status.getStatus() != ArchiveStatus.TaskStatus.NONE) {
+        Recording recording = null;
+        if (getTreeTableRow() != null && getTreeTableRow().getTreeItem() != null) {
+            recording = getTreeTableRow().getTreeItem().getValue();
+        }
+        if (status != null && status.getStatus() != ArchiveStatus.TaskStatus.NONE && recording != null && !recording.isSeriesHeading()) {
             switch (status.getStatus()) {
                 case QUEUED:
                     setText("Queued...");

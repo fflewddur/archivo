@@ -52,7 +52,6 @@ public class RecordingListController implements Initializable, Observer {
     private TivoSearchTask tivoSearchTask;
     private boolean alreadyDefaultSorted;
 
-    private ProgressIndicator tablePlaceholderProgressIndicator;
     private Label tablePlaceholderMessage;
 
     @FXML
@@ -81,19 +80,19 @@ public class RecordingListController implements Initializable, Observer {
         this.mainApp = mainApp;
         tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(initialTivos));
         tablePlaceholderMessage = new Label("No recordings are available");
-        tablePlaceholderProgressIndicator = new ProgressIndicator();
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         recordingTreeTable.setShowRoot(false);
         recordingTreeTable.setPlaceholder(tablePlaceholderMessage);
-
+        recordingTreeTable.setOnSort(event ->
+                        updateGroupStatus(recordingTreeTable.getRoot(), recordingTreeTable.getRoot().getChildren())
+        );
         showColumn.setCellValueFactory(data -> data.getValue().getValue().titleProperty());
         dateColumn.setCellValueFactory(data -> data.getValue().getValue().dateRecordedProperty());
         dateColumn.setCellFactory(col -> new RecordedOnCellFactory());
         dateColumn.setSortType(TreeTableColumn.SortType.DESCENDING);
-        dateColumn.setSortable(true);
         statusColumn.setCellValueFactory(data -> data.getValue().getValue().statusProperty());
         statusColumn.setCellFactory(col -> new StatusCellFactory());
 
@@ -158,8 +157,6 @@ public class RecordingListController implements Initializable, Observer {
     private void setupStyles() {
         recordingTreeTable.getStyleClass().add("recording-list");
         tablePlaceholderMessage.getStyleClass().add("placeholder-message");
-        tablePlaceholderProgressIndicator.setMaxWidth(180);
-        tablePlaceholderProgressIndicator.setMaxHeight(180);
     }
 
     public Tivo getSelectedTivo() {
@@ -173,7 +170,6 @@ public class RecordingListController implements Initializable, Observer {
 
     private void fetchRecordingsFrom(Tivo tivo) {
         mainApp.setStatusText("Fetching recordings...");
-        recordingTreeTable.setPlaceholder(tablePlaceholderProgressIndicator);
         recordingTreeTable.getSelectionModel().clearSelection();
         disableUI();
 
@@ -321,7 +317,6 @@ public class RecordingListController implements Initializable, Observer {
      * Enable the TiVo controls and the recording list
      */
     private void enableUI() {
-        recordingTreeTable.setPlaceholder(tablePlaceholderMessage);
         setUIDisabled(false);
         mainApp.getPrimaryStage().getScene().setCursor(Cursor.DEFAULT);
     }
@@ -390,10 +385,31 @@ public class RecordingListController implements Initializable, Observer {
             } else {
                 Recording other = item.getValue();
                 if (other.equals(recording)) {
+                    // FIXME Check if removing this item will leave just one remaining recording in the group;
+                    // if so, make that item a top-level recording
                     i.remove();
                     return;
                 }
             }
+        }
+    }
+
+    private void updateGroupStatus(TreeItem<Recording> group, ObservableList<TreeItem<Recording>> list) {
+        if (!group.isLeaf()) {
+            Iterator<TreeItem<Recording>> i = list.iterator();
+            ArchiveStatus groupStatus = ArchiveStatus.EMPTY;
+            while (i.hasNext()) {
+                TreeItem<Recording> item = i.next();
+                if (!item.isLeaf()) {
+                    updateGroupStatus(item, item.getChildren());
+                } else {
+                    Recording recording = item.getValue();
+                    if (groupStatus.compareTo(recording.getStatus()) > 0) {
+                        groupStatus = recording.getStatus();
+                    }
+                }
+            }
+            group.getValue().setStatus(groupStatus);
         }
     }
 

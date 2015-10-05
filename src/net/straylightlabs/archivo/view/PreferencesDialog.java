@@ -123,13 +123,13 @@ public class PreferencesDialog {
         audioChannel.setValue(userPrefs.getAudioChannels());
         grid.add(audioChannel, 2, 5);
 
-        label = createLabelWithTooltip("Video processing tools", "Select the tools to use for repairing recordings and removing commercials");
-        grid.add(label, 1, 6);
-        ChoiceBox<Toolchain> toolchain = new ChoiceBox<>(toolchains);
-        toolchain.setValue(userPrefs.getToolchain());
-        grid.add(toolchain, 2, 6);
-
-        setupVideoRedoPathControl(grid, toolchain);
+//        label = createLabelWithTooltip("Video processing tools", "Select the tools to use for repairing recordings and removing commercials");
+//        grid.add(label, 1, 6);
+//        ChoiceBox<Toolchain> toolchain = new ChoiceBox<>(toolchains);
+//        toolchain.setValue(userPrefs.getToolchain());
+//        grid.add(toolchain, 2, 6);
+//
+//        setupVideoRedoPathControl(grid, toolchain);
 
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
