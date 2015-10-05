@@ -45,7 +45,6 @@ import java.net.URL;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.*;
 import java.util.List;
@@ -54,7 +53,6 @@ public class RecordingDetailsController implements Initializable {
     private final Archivo mainApp;
     private Map<URL, Image> imageCache;
     private Recording recording;
-
     private ChangeListener<ArchiveStatus> statusChangeListener;
 
     @FXML
@@ -270,15 +268,22 @@ public class RecordingDetailsController implements Initializable {
     }
 
     private void updateExpectedDeletion(Recording recording) {
+        expectedDeletion.getStyleClass().clear();
+
         LocalDate today = LocalDate.now();
         Period timeUntilDeletion = today.until(recording.getExpectedDeletion().toLocalDate());
         long daysUntilDeletion = timeUntilDeletion.getDays();
         if (daysUntilDeletion < 1) {
             setLabelText(expectedDeletion, "Will be removed today");
+            expectedDeletion.getStyleClass().add("removing-today");
         } else if (daysUntilDeletion < 2) {
             setLabelText(expectedDeletion, "Will be removed tomorrow");
+            expectedDeletion.getStyleClass().add("removing-today");
         } else if (daysUntilDeletion < 7) {
             setLabelText(expectedDeletion, String.format("Will be removed in %d days", daysUntilDeletion));
+            expectedDeletion.getStyleClass().add("removing-soon");
+        } else {
+            expectedDeletion.setGraphic(null);
         }
     }
 
