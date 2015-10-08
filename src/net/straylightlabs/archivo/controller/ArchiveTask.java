@@ -321,10 +321,14 @@ public class ArchiveTask extends Task<Recording> {
         Archivo.logger.info("ffmpeg path = {} outputPath = {}", ffmpegPath, fixedPath);
         List<String> cmd = new ArrayList<>();
         cmd.add(ffmpegPath);
+        cmd.add("-fflags");
+        cmd.add("+genpts");
         cmd.add("-i");
         cmd.add(downloadPath.toString());
         cmd.add("-codec");
         cmd.add("copy");
+        cmd.add("-avoid_negative_ts");
+        cmd.add("make_zero");
         cmd.add("-f");
         cmd.add("mpegts");
         cmd.add(fixedPath.toString());
