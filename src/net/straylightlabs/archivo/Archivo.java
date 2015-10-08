@@ -24,6 +24,7 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.concurrent.Task;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
@@ -36,7 +37,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import net.straylightlabs.archivo.controller.ArchiveQueueManager;
+import net.straylightlabs.archivo.controller.UpdateCheckTask;
 import net.straylightlabs.archivo.model.Recording;
+import net.straylightlabs.archivo.model.SoftwareUpdateDetails;
 import net.straylightlabs.archivo.model.Tivo;
 import net.straylightlabs.archivo.model.UserPrefs;
 import net.straylightlabs.archivo.net.MindCommandRecordingUpdate;
@@ -48,8 +51,12 @@ import net.straylightlabs.archivo.view.SetupDialog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.awt.*;
 import java.io.IOException;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -70,7 +77,7 @@ public class Archivo extends Application {
 
     public static final String APPLICATION_NAME = "Archivo";
     public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
-    public static final String APPLICATION_VERSION = "0.1.0 Technology Preview";
+    public static final String APPLICATION_VERSION = "0.1 Technology Preview";
     public static final String USER_AGENT = String.format("%s/%s", APPLICATION_NAME, APPLICATION_VERSION);
     public static final int WINDOW_MIN_HEIGHT = 400;
     public static final int WINDOW_MIN_WIDTH = 555;
@@ -139,6 +146,50 @@ public class Archivo extends Application {
                 cleanShutdown();
             }
         });
+
+        checkForUpdates();
+    }
+
+    private void checkForUpdates() {
+        Task<SoftwareUpdateDetails> updateCheck = new UpdateCheckTask();
+        updateCheck.setOnSucceeded(event -> {
+            SoftwareUpdateDetails update = updateCheck.getValue();
+            if (update.isAvailable()) {
+                logger.info("Update check: A newer version of {} is available!", APPLICATION_NAME);
+                showUpdateDialog(update);
+            } else {
+                logger.info("Update check: This is the latest version of {} ({})", APPLICATION_NAME, APPLICATION_VERSION);
+            }
+        });
+        updateCheck.setOnFailed(event -> logger.error("Error checking for updates: ", event.getSource().getException()));
+        Executors.newSingleThreadExecutor().submit(updateCheck);
+    }
+
+    private void showUpdateDialog(SoftwareUpdateDetails updateDetails) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Update Available");
+        alert.setHeaderText(String.format("A new version of %s is available", Archivo.APPLICATION_NAME));
+        alert.setContentText(String.format("%s %s was released on %s.\n\nNotable changes include %s.\n\n" +
+                        "Would you like to download the update now?",
+                Archivo.APPLICATION_NAME, updateDetails.getVersion(),
+                updateDetails.getReleaseDate().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
+                updateDetails.getSummary()));
+
+        ButtonType deferButtonType = new ButtonType("No, I'll Update Later", ButtonBar.ButtonData.NO);
+        ButtonType updateButtonType = new ButtonType("Yes, Let's Update Now", ButtonBar.ButtonData.YES);
+
+        alert.getButtonTypes().setAll(deferButtonType, updateButtonType);
+        ((Button) alert.getDialogPane().lookupButton(deferButtonType)).setDefaultButton(false);
+        ((Button) alert.getDialogPane().lookupButton(updateButtonType)).setDefaultButton(true);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        if ((result.get() == updateButtonType)) {
+            try {
+                Desktop.getDesktop().browse(updateDetails.getLocation().toURI());
+            } catch (URISyntaxException | IOException e) {
+                Archivo.logger.error("Error opening a web browser to download '{}': ", updateDetails.getLocation(), e);
+            }
+        }
     }
 
     public void cleanShutdown() {
