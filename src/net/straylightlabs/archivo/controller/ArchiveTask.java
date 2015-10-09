@@ -52,6 +52,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+// TODO: rework processing pipeline as follows:
+// 1) Run comskip with EDL output enabled
+// 2) Run ffprobe to identify start time of video
+// 3) Parse EDL output to identify start times and durations (in seconds) of video to keep
+// 4) Add start time of video to EDL start times
+// 5) Run Handbrake to encode each section of video
+// 6) Run ffmpeg to concat video parts together into one file
+// 7) Remux final video with ffmpeg?
+
 /**
  * Handle the tasks of fetching the recording file from a TiVo, decrypting it, and transcoding it.
  */
@@ -322,7 +331,7 @@ public class ArchiveTask extends Task<Recording> {
         List<String> cmd = new ArrayList<>();
         cmd.add(ffmpegPath);
         cmd.add("-fflags");
-        cmd.add("+genpts");
+        cmd.add("+genpts+igndts");
         cmd.add("-i");
         cmd.add(downloadPath.toString());
         cmd.add("-codec");
