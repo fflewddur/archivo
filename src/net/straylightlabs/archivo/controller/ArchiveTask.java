@@ -574,13 +574,13 @@ public class ArchiveTask extends Task<Recording> {
     }
 
     private void cleanupFiles(List<Path> files) {
-//        files.stream().forEach(f -> {
-//            try {
-//                Files.deleteIfExists(f);
-//            } catch (IOException e) {
-//                Archivo.logger.error("Error removing {}: ", f, e);
-//            }
-//        });
+        files.stream().forEach(f -> {
+            try {
+                Files.deleteIfExists(f);
+            } catch (IOException e) {
+                Archivo.logger.error("Error removing {}: ", f, e);
+            }
+        });
     }
 
     private Path buildPath(Path input, String newSuffix) {
