@@ -33,7 +33,6 @@ public class FFprobeOutputReader extends ProcessOutputReader {
     private String streamOutput;
     private double videoStartTime;
     private double audioStartTime;
-    private double audioOffset;
 
     private final static Pattern STREAM_VIDEO = Pattern.compile("\\[STREAM].*?codec_type=video.*?start_time=([\\d\\.]+).*?\\[/STREAM]");
     private final static Pattern STREAM_AUDIO = Pattern.compile("\\[STREAM].*?codec_type=audio.*?start_time=([\\d\\.]+).*?\\[/STREAM]");
@@ -48,32 +47,29 @@ public class FFprobeOutputReader extends ProcessOutputReader {
         lines.add(line);
     }
 
-    /**
-     * Use the information from FFprobe to determine the offset (in seconds) between the first video stream and
-     * the first audio stream.
-     *
-     * @return Number of seconds the audio is ahead of the video, or 0 if the audio is behind the video.
-     */
-    public double getAudioOffset() {
+    public double getAudioStartTime() {
         if (streamOutput == null) {
-            findAudioOffset();
+            findStartTimes();
         }
-        return audioOffset;
+        return audioStartTime;
     }
 
-    private void findAudioOffset() {
+    public double getVideoStartTime() {
+        if (streamOutput == null) {
+            findStartTimes();
+        }
+        return videoStartTime;
+    }
+
+    private void findStartTimes() {
         streamOutput = lines.stream().collect(Collectors.joining(" "));
         Archivo.logger.debug("Stream output: {}", streamOutput);
         if (!parseFirstVideoStartTime()) {
             // No video
             Archivo.logger.debug("No video stream found");
-            audioOffset = 0;
         } else if (!parseFirstAudioStartTime()) {
             // No audio
             Archivo.logger.debug("No audio stream found");
-            audioOffset = 0;
-        } else {
-            audioOffset = Math.max(videoStartTime - audioStartTime, 0);
         }
     }
 

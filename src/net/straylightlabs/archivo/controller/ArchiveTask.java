@@ -385,15 +385,15 @@ public class ArchiveTask extends Task<Recording> {
                         ArchiveStatus.createRemovingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
-        double audioOffset = findAudioOffset();
-        Archivo.logger.info("Audio offset: {}", audioOffset);
+        double videoStartTime = findVideoStartTime();
+        Archivo.logger.info("Video start time: {}", videoStartTime);
         Path partList = buildPath(fixedPath, "parts");
         cleanupFiles(cutPath, partList);
         String ffmpegPath = prefs.getFFmpegPath();
         int filePartCounter = 1;
         List<Path> partPaths = new ArrayList<>();
         try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(partList))) {
-            FFSplitList splitList = FFSplitList.createFromFileWithOffset(ffsplitPath, audioOffset);
+            FFSplitList splitList = FFSplitList.createFromFileWithOffset(ffsplitPath, videoStartTime);
             Archivo.logger.info("SplitList: {}", splitList);
             List<FFSplitList.Segment> toKeep = splitList.getSegmentsToKeep();
             int curSegment = 1;
@@ -402,6 +402,10 @@ public class ArchiveTask extends Task<Recording> {
                 List<String> cmd = new ArrayList<>();
                 cmd.add(ffmpegPath);
                 cmd.addAll(segment.buildFFmpegInputParamList().stream().collect(Collectors.toList()));
+                cmd.add("-seek2any");
+                cmd.add("1");
+                cmd.add("-seek_timestamp");
+                cmd.add("1");
                 cmd.add("-i");
                 cmd.add(fixedPath.toString());
                 cmd.addAll(segment.buildFFmpegOutputParamList().stream().collect(Collectors.toList()));
@@ -445,6 +449,8 @@ public class ArchiveTask extends Task<Recording> {
         cmd.add(ffmpegPath);
         cmd.add("-f");
         cmd.add("concat");
+        cmd.add("-fflags");
+        cmd.add("+genpts");
         cmd.add("-i");
         cmd.add(partList.toString());
         cmd.add("-codec");
@@ -464,7 +470,7 @@ public class ArchiveTask extends Task<Recording> {
         }
     }
 
-    private double findAudioOffset() {
+    private double findVideoStartTime() {
         String ffprobePath = prefs.getFFprobePath();
         List<String> cmd = new ArrayList<>();
         cmd.add(ffprobePath);
@@ -473,13 +479,13 @@ public class ArchiveTask extends Task<Recording> {
         FFprobeOutputReader outputReader = new FFprobeOutputReader(recording);
         try {
             if (!runProcess(cmd, outputReader)) {
-                throw new ArchiveTaskException("Error finding audio offset");
+                throw new ArchiveTaskException("Error finding video stream start time");
             }
         } catch (InterruptedException | IOException e) {
             Archivo.logger.error("Error running ffprobe: ", e);
-            throw new ArchiveTaskException("Error finding audio offset");
+            throw new ArchiveTaskException("Error finding video stream start time");
         }
-        return outputReader.getAudioOffset();
+        return outputReader.getVideoStartTime();
     }
 
     private void transcode() {
@@ -568,13 +574,13 @@ public class ArchiveTask extends Task<Recording> {
     }
 
     private void cleanupFiles(List<Path> files) {
-        files.stream().forEach(f -> {
-            try {
-                Files.deleteIfExists(f);
-            } catch (IOException e) {
-                Archivo.logger.error("Error removing {}: ", f, e);
-            }
-        });
+//        files.stream().forEach(f -> {
+//            try {
+//                Files.deleteIfExists(f);
+//            } catch (IOException e) {
+//                Archivo.logger.error("Error removing {}: ", f, e);
+//            }
+//        });
     }
 
     private Path buildPath(Path input, String newSuffix) {
