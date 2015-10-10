@@ -54,6 +54,7 @@ import org.slf4j.LoggerFactory;
 import java.awt.*;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.file.Path;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -273,7 +274,10 @@ public class Archivo extends Application {
             rootController.disableMenuItems();
 
             Scene scene = new Scene(rootLayout);
-            scene.getStylesheets().add(getClass().getClassLoader().getResource("resources/style.css").toExternalForm());
+            URL styleUrl = getClass().getClassLoader().getResource("resources/style.css");
+            if (styleUrl != null) {
+                scene.getStylesheets().add(styleUrl.toExternalForm());
+            }
             primaryStage.setScene(scene);
 
             primaryStage.getIcons().addAll(
