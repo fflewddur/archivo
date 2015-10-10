@@ -29,9 +29,6 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.KeyStoreException;
@@ -57,17 +54,13 @@ public class MindRPC {
     private final int sessionId;
     private int requestId;
 
-    private static final Pattern RESPONSE_HEAD;
-
     public static final int SCHEMA_VER = 9;
     public static final String LINE_ENDING = "\r\n";
+    private static final String KEY_PATH = "resources/cdata.p12";
+    private static final Pattern RESPONSE_HEAD = Pattern.compile("MRPC/2\\s+(\\d+)\\s+(\\d+)");
     private static final String KEY_PASSWORD = "LwrbLEFYvG";
     private static final int MAX_SESSION_ID_VAL = 0x27dc20;
     private static final String ENCODING = "UTF-8";
-
-    static {
-        RESPONSE_HEAD = Pattern.compile("MRPC/2\\s+(\\d+)\\s+(\\d+)");
-    }
 
     public MindRPC(InetAddress address, int port, String mak) {
         this.address = address;
@@ -128,8 +121,8 @@ public class MindRPC {
 
     private KeyStore createKeyStore() throws KeyStoreException, NoSuchAlgorithmException, CertificateException {
         KeyStore store = KeyStore.getInstance("PKCS12");
-        Path keyPath = Paths.get(System.getProperty("user.dir"), "resources", "cdata.p12");
-        try (InputStream key = Files.newInputStream(keyPath)) {
+        try (InputStream key = Archivo.class.getClassLoader().getResourceAsStream(KEY_PATH)) {
+            assert (key != null);
             store.load(key, KEY_PASSWORD.toCharArray());
         } catch (IOException e) {
             Archivo.logger.error("Error accessing key file: ", e);

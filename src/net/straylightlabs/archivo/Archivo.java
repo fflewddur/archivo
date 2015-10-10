@@ -170,7 +170,7 @@ public class Archivo extends Application {
         alert.setTitle("Update Available");
         alert.setHeaderText(String.format("A new version of %s is available", Archivo.APPLICATION_NAME));
         alert.setContentText(String.format("%s %s was released on %s.\n\nNotable changes include %s.\n\n" +
-                        "Would you like to download the update now?",
+                        "Would you like to download the update now?\n\n",
                 Archivo.APPLICATION_NAME, updateDetails.getVersion(),
                 updateDetails.getReleaseDate().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
                 updateDetails.getSummary()));
@@ -254,6 +254,9 @@ public class Archivo extends Application {
     }
 
     private void restoreWindowDimensions() {
+        Archivo.logger.debug("Restoring window width of {}", getUserPrefs().getWindowWidth());
+        Archivo.logger.debug("Restoring window height of {}", getUserPrefs().getWindowHeight());
+        Archivo.logger.debug("Restoring window maximized: {}", getUserPrefs().isWindowMaximized());
         primaryStage.setWidth(getUserPrefs().getWindowWidth());
         primaryStage.setHeight(getUserPrefs().getWindowHeight());
         primaryStage.setMaximized(getUserPrefs().isWindowMaximized());
@@ -270,16 +273,16 @@ public class Archivo extends Application {
             rootController.disableMenuItems();
 
             Scene scene = new Scene(rootLayout);
-            scene.getStylesheets().add("style.css");
+            scene.getStylesheets().add(getClass().getClassLoader().getResource("resources/style.css").toExternalForm());
             primaryStage.setScene(scene);
 
             primaryStage.getIcons().addAll(
-                    new Image("archivo-16.png"),
-                    new Image("archivo-32.png"),
-                    new Image("archivo-64.png"),
-                    new Image("archivo-96.png"),
-                    new Image("archivo-128.png"),
-                    new Image("archivo-48.png")
+                    new Image(getClass().getClassLoader().getResourceAsStream("resources/archivo-16.png")),
+                    new Image(getClass().getClassLoader().getResourceAsStream("resources/archivo-32.png")),
+                    new Image(getClass().getClassLoader().getResourceAsStream("resources/archivo-64.png")),
+                    new Image(getClass().getClassLoader().getResourceAsStream("resources/archivo-96.png")),
+                    new Image(getClass().getClassLoader().getResourceAsStream("resources/archivo-128.png")),
+                    new Image(getClass().getClassLoader().getResourceAsStream("resources/archivo-48.png"))
             );
             primaryStage.show();
         } catch (IOException e) {

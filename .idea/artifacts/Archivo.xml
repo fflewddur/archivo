@@ -4,6 +4,7 @@
     <properties id="javafx-properties">
       <options>
         <option name="appClass" value="net.straylightlabs.archivo.Archivo" />
+        <option name="convertCss2Bin" value="true" />
         <option name="description" value="" />
         <option name="htmlParamFile" value="" />
         <option name="paramFile" value="" />
@@ -24,6 +25,7 @@
       </element>
       <element id="library" level="project" name="logback" />
       <element id="library" level="project" name="slf4j-api" />
+      <element id="library" level="project" name="hola" />
     </root>
   </artifact>
 </component>
