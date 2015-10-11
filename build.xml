@@ -285,14 +285,14 @@
     <taskdef name="bundleapp" classname="com.oracle.appbundler.AppBundlerTask" classpath="lib/appbundler-1.0.jar"/>
 
     <target name="archivo.dmg" depends="artifact.archivo">
-        <property name="app.dir" value="${artifact.output.archivo}}/Archivo.app"/>
+        <property name="app.dir" value="${artifact.output.archivo}/Archivo.app"/>
         <delete dir="${app.dir}" failonerror="false"/>
 
         <bundleapp outputdirectory="${artifact.output.archivo}"
                    name="Archivo" displayname="Archivo"
                    identifier="net.straylightlabs.archivo.Archivo"
                    shortversion="0.1"
-                   icon="package/macosx/Archivo"
+                   icon="package/macosx/archivo.icns"
                    mainclassname="net.straylightlabs.archivo.Archivo">
             <classpath dir="${artifact.temp.output.Archivo}" includes="*.jar"/>
             <argument value="-tooldir"/>
