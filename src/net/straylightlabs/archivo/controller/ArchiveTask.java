@@ -21,6 +21,7 @@ package net.straylightlabs.archivo.controller;
 
 import javafx.application.Platform;
 import javafx.concurrent.Task;
+import javafx.scene.control.Alert;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.MindCommandIdSearch;
@@ -347,6 +348,13 @@ public class ArchiveTask extends Task<Recording> {
                 throw new ArchiveTaskException("Error repairing video");
             }
         } catch (InterruptedException | IOException e) {
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setContentText(String.format("Error running '%s': %s\n\nWorking directory: '%s'",
+                        cmd.stream().collect(Collectors.joining(" ")), e.getLocalizedMessage(),
+                        System.getProperty("user.dir")));
+                alert.showAndWait();
+            });
             Archivo.logger.error("Error running ffmpeg to remux download: ", e);
             throw new ArchiveTaskException("Error repairing video");
         } finally {

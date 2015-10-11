@@ -57,7 +57,7 @@ public class UserPrefs {
     public static final String HANDBRAKE_PATH = "handbrakePath";
     public static final String VIDEO_REDO_PATH = "videoRedoPath";
 
-    private static final String DEFAULT_TOOLDIR = "";
+    private static final String DEFAULT_TOOLDIR = ".";
 
     public UserPrefs() {
         tooldir = DEFAULT_TOOLDIR;
