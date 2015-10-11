@@ -61,6 +61,13 @@ public class FFprobeOutputReader extends ProcessOutputReader {
         return videoStartTime;
     }
 
+    public double getAudioOffset() {
+        if (streamOutput == null) {
+            findStartTimes();
+        }
+        return Math.max(videoStartTime - audioStartTime, 0);
+    }
+
     private void findStartTimes() {
         streamOutput = lines.stream().collect(Collectors.joining(" "));
         Archivo.logger.debug("Stream output: {}", streamOutput);

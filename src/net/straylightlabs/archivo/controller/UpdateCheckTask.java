@@ -139,13 +139,14 @@ public class UpdateCheckTask extends Task<SoftwareUpdateDetails> {
         for (SoftwareUpdateDetails release : releaseList) {
             if (release.getVersion().equals(latestReleaseVersion)) {
                 latestRelease = release;
-            } else if (release.getVersion().equals(Archivo.APPLICATION_VERSION)) {
+            }
+            if (release.getVersion().equals(Archivo.APPLICATION_VERSION)) {
                 usersRelease = release;
             }
         }
 
         Archivo.logger.debug("latestRelease = {}, usersRelease = {}", latestRelease, usersRelease);
-        if (latestRelease == usersRelease) {
+        if (latestRelease == SoftwareUpdateDetails.UNAVAILABLE || latestRelease == usersRelease) {
             return SoftwareUpdateDetails.UNAVAILABLE;
         } else if (usersRelease != SoftwareUpdateDetails.UNAVAILABLE) {
             // Build a summary of all changes occurring between the user's release and the latest release

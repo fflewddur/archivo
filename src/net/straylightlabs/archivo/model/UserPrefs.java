@@ -37,6 +37,7 @@ public class UserPrefs {
     private Preferences prefs;
     private Preferences sysPrefs;
     private boolean logVerbose;
+    private String tooldir;
 
     public static final String MAK = "mak";
     public static final String DEVICE_LIST = "knownTivos";
@@ -56,7 +57,11 @@ public class UserPrefs {
     public static final String HANDBRAKE_PATH = "handbrakePath";
     public static final String VIDEO_REDO_PATH = "videoRedoPath";
 
+    private static final String DEFAULT_TOOLDIR = "";
+
     public UserPrefs() {
+        tooldir = DEFAULT_TOOLDIR;
+
         try {
             prefs = Preferences.userNodeForPackage(Archivo.class);
             sysPrefs = Preferences.systemNodeForPackage(Archivo.class);
@@ -73,11 +78,17 @@ public class UserPrefs {
      */
     public boolean parseParameters(Application.Parameters parameters) {
         boolean allParsed = true;
-        for (String parameter : parameters.getUnnamed()) {
-            if (parameter.equalsIgnoreCase("-verbose")) {
+        List<String> params = parameters.getUnnamed();
+        for (int i = 0; i < params.size(); i++) {
+            String param = params.get(i);
+            if (param.equalsIgnoreCase("-verbose")) {
                 logVerbose = true;
+                Archivo.logger.info("Enabling verbose logging");
+            } else if (param.equalsIgnoreCase("-tooldir")) {
+                tooldir = params.get(++i);
+                Archivo.logger.info("Tools in '{}'", tooldir);
             } else {
-                Archivo.logger.error("Unrecognized parameter: {}", parameter);
+                Archivo.logger.error("Unrecognized parameter: {}", param);
                 allParsed = false;
             }
         }
@@ -247,19 +258,19 @@ public class UserPrefs {
     }
 
     public synchronized String getComskipPath() {
-        return prefs.get(COMSKIP_PATH, sysPrefs.get(COMSKIP_PATH, Paths.get("tools", "comskip" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(COMSKIP_PATH, sysPrefs.get(COMSKIP_PATH, Paths.get(tooldir, "comskip" + OSHelper.getExeSuffix()).toString()));
     }
 
     public synchronized String getFFmpegPath() {
-        return prefs.get(FFMPEG_PATH, sysPrefs.get(FFMPEG_PATH, Paths.get("tools", "ffmpeg" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(FFMPEG_PATH, sysPrefs.get(FFMPEG_PATH, Paths.get(tooldir, "ffmpeg" + OSHelper.getExeSuffix()).toString()));
     }
 
     public synchronized String getFFprobePath() {
-        return prefs.get(FFPROBE_PATH, sysPrefs.get(FFPROBE_PATH, Paths.get("tools", "ffprobe" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(FFPROBE_PATH, sysPrefs.get(FFPROBE_PATH, Paths.get(tooldir, "ffprobe" + OSHelper.getExeSuffix()).toString()));
     }
 
     public synchronized String getHandbrakePath() {
-        return prefs.get(HANDBRAKE_PATH, sysPrefs.get(HANDBRAKE_PATH, Paths.get("tools", "handbrake" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(HANDBRAKE_PATH, sysPrefs.get(HANDBRAKE_PATH, Paths.get(tooldir, "handbrake" + OSHelper.getExeSuffix()).toString()));
     }
 
     public synchronized void setVideoRedoPath(String path) {
@@ -267,7 +278,7 @@ public class UserPrefs {
     }
 
     public synchronized String getVideoRedoPath() {
-        return prefs.get(VIDEO_REDO_PATH, sysPrefs.get(VIDEO_REDO_PATH, Paths.get("tools", "handbrake" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(VIDEO_REDO_PATH, sysPrefs.get(VIDEO_REDO_PATH, Paths.get(tooldir, "videoredo" + OSHelper.getExeSuffix()).toString()));
     }
 
     /**

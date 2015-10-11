@@ -53,13 +53,13 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 // TODO: rework processing pipeline as follows:
-// 1) Run comskip with EDL output enabled
-// 2) Run ffprobe to identify start time of video
-// 3) Parse EDL output to identify start times and durations (in seconds) of video to keep
-// 4) Add start time of video to EDL start times
-// 5) Run Handbrake to encode each section of video
+// 1) Run comskip with FFsplit output enabled
+// 2) Run ffprobe to identify video start time
+// 3) Parse FFsplit output to identify start times and durations (in seconds) of video to keep
+// 4) Add start time of video to FFsplit start times
+// 5) Run ffmpeg to encode each section of video
 // 6) Run ffmpeg to concat video parts together into one file
-// 7) Remux final video with ffmpeg?
+// 7) Run HandBrake to encode video
 
 /**
  * Handle the tasks of fetching the recording file from a TiVo, decrypting it, and transcoding it.
@@ -363,7 +363,6 @@ public class ArchiveTask extends Task<Recording> {
         String comskipIniPath = Paths.get(Paths.get(comskipPath).getParent().toString(), "comskip.ini").toString();
         Path logoPath = buildPath(fixedPath, "logo.txt");
         Path logPath = buildPath(fixedPath, "log");
-        Path txtPath = buildPath(fixedPath, "txt");
         ffsplitPath = buildPath(fixedPath, "ffsplit");
         cleanupFiles(logoPath, ffsplitPath);
         List<String> cmd = new ArrayList<>();
@@ -385,7 +384,7 @@ public class ArchiveTask extends Task<Recording> {
             Archivo.logger.error("Error running comskip: ", e);
             throw new ArchiveTaskException("Error finding commercials");
         } finally {
-            cleanupFiles(logoPath, logPath, txtPath);
+            cleanupFiles(logoPath, logPath);
         }
     }
 
@@ -394,30 +393,33 @@ public class ArchiveTask extends Task<Recording> {
                         ArchiveStatus.createRemovingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
+//        double audioOffset = findAudioOffset();
         double videoStartTime = findVideoStartTime();
         Archivo.logger.info("Video start time: {}", videoStartTime);
         Path partList = buildPath(fixedPath, "parts");
         cleanupFiles(cutPath, partList);
         String ffmpegPath = prefs.getFFmpegPath();
+//        String handbrakePath = prefs.getHandbrakePath();
         int filePartCounter = 1;
         List<Path> partPaths = new ArrayList<>();
         try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(partList))) {
             FFSplitList splitList = FFSplitList.createFromFileWithOffset(ffsplitPath, videoStartTime);
-            Archivo.logger.info("SplitList: {}", splitList);
+//            EditDecisionList editDecisionList = EditDecisionList.createFromFileWithOffset(edlPath, audioOffset);
+            Archivo.logger.info("splitList: {}", splitList);
             List<FFSplitList.Segment> toKeep = splitList.getSegmentsToKeep();
             int curSegment = 1;
             Path escapedPath = Paths.get(fixedPath.toString().replace("\'", ""));
             for (FFSplitList.Segment segment : toKeep) {
                 List<String> cmd = new ArrayList<>();
                 cmd.add(ffmpegPath);
-                cmd.addAll(segment.buildFFmpegInputParamList().stream().collect(Collectors.toList()));
+                cmd.addAll(segment.buildFFmpegInputParamList());
                 cmd.add("-seek2any");
                 cmd.add("1");
                 cmd.add("-seek_timestamp");
                 cmd.add("1");
                 cmd.add("-i");
                 cmd.add(fixedPath.toString());
-                cmd.addAll(segment.buildFFmpegOutputParamList().stream().collect(Collectors.toList()));
+                cmd.addAll(segment.buildFFmpegOutputParamList());
                 cmd.add("-codec");
                 cmd.add("copy");
 
@@ -428,6 +430,7 @@ public class ArchiveTask extends Task<Recording> {
 
                 try {
                     FFmpegOutputReader outputReader = new FFmpegOutputReader(recording, ArchiveStatus.TaskStatus.NONE);
+//                    HandbrakeOutputReader outputReader = new HandbrakeOutputReader(recording);
                     cleanupFiles(partPath);
                     if (!runProcess(cmd, outputReader)) {
                         throw new ArchiveTaskException("Error removing commercials");
@@ -442,12 +445,12 @@ public class ArchiveTask extends Task<Recording> {
                 }
             }
         } catch (IOException e) {
-            Archivo.logger.error("Error reading EDL file '{}': ", ffsplitPath, e);
+            Archivo.logger.error("Error reading ffsplit file '{}': ", ffsplitPath, e);
             cleanupFiles(partList);
             cleanupFiles(partPaths);
             return;
         } finally {
-            cleanupFiles(ffsplitPath, fixedPath);
+            cleanupFiles(fixedPath);
         }
 
         Platform.runLater(() -> recording.setStatus(
@@ -459,7 +462,7 @@ public class ArchiveTask extends Task<Recording> {
         cmd.add("-f");
         cmd.add("concat");
         cmd.add("-fflags");
-        cmd.add("+genpts");
+        cmd.add("+genpts+igndts");
         cmd.add("-i");
         cmd.add(partList.toString());
         cmd.add("-codec");

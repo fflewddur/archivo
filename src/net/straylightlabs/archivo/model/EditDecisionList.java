@@ -42,12 +42,12 @@ public class EditDecisionList {
     /**
      * Create a new EditDecisionList from a standard EDL file.
      */
-    public static EditDecisionList createFromFile(Path input) throws IOException {
-        List<Segment> toCut = parseEDLFile(input);
-        return new EditDecisionList(toCut);
+    public static EditDecisionList createFromFileWithOffset(Path input, double offset) throws IOException {
+        List<Segment> toCut = parseEDLFile(input, offset);
+        return new EditDecisionList(toCut, offset);
     }
 
-    private static List<Segment> parseEDLFile(Path file) throws IOException {
+    private static List<Segment> parseEDLFile(Path file, double offset) throws IOException {
         if (!Files.isReadable(file)) {
             throw new IOException("File is not readable");
         } else if (Files.isDirectory(file)) {
@@ -58,7 +58,7 @@ public class EditDecisionList {
         try (BufferedReader reader = Files.newBufferedReader(file)) {
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                 try {
-                    Segment segment = Segment.fromString(line);
+                    Segment segment = Segment.fromString(line, offset);
                     segments.add(segment);
                 } catch (IllegalArgumentException e) {
                     Archivo.logger.error("Error parsing EDL line '{}': invalid format", line);
@@ -68,23 +68,23 @@ public class EditDecisionList {
         return segments;
     }
 
-    private EditDecisionList(List<Segment> toCut) {
+    private EditDecisionList(List<Segment> toCut, double offset) {
         segmentsToKeep = new ArrayList<>();
         segmentsToCut = toCut;
-        buildKeepList();
+        buildKeepList(offset);
     }
 
-    private void buildKeepList() {
+    private void buildKeepList(double offset) {
         double curTime = 0.0;
         for (Segment cutSegment : segmentsToCut) {
             double length = cutSegment.startTime - curTime;
             if (Double.compare(length, 0) > 0) {
                 // Length is larger than 0
-                segmentsToKeep.add(new Segment(curTime, cutSegment.startTime));
+                segmentsToKeep.add(new Segment(curTime, cutSegment.startTime, offset));
             }
             curTime = cutSegment.endTime;
         }
-        segmentsToKeep.add(new Segment(curTime, Double.POSITIVE_INFINITY));
+        segmentsToKeep.add(new Segment(curTime, Double.POSITIVE_INFINITY, offset));
     }
 
     /**
@@ -105,29 +105,50 @@ public class EditDecisionList {
     public static class Segment {
         private final double startTime;
         private final double endTime;
+        private final double offset;
 
         private static final Pattern EDL_LINE_PATTERN = Pattern.compile("^([\\d\\.]+)\\s+([\\d\\.]+)");
 
         /**
          * Parse a line from an EDL file.
          */
-        public static Segment fromString(String line) {
+        public static Segment fromString(String line, double offset) {
             Matcher matcher = EDL_LINE_PATTERN.matcher(line);
             if (matcher.find()) {
                 double start = Double.parseDouble(matcher.group(1));
                 double end = Double.parseDouble(matcher.group(2));
-                return new Segment(start, end);
+                return new Segment(start, end, offset);
             } else {
                 throw new IllegalArgumentException("Input does not look like an EDL line");
             }
         }
 
-        public Segment(double start, double end) {
+        public Segment(double start, double end, double offset) {
             if (Double.compare(start, end) > 0) {
                 throw new IllegalArgumentException("Start time cannot be later than end time");
             }
-            startTime = start;
-            endTime = end;
+            this.startTime = start;
+            this.endTime = end;
+            this.offset = offset;
+        }
+
+        /**
+         * Create a list representing the arguments HandBrake will need to trim a video to these segments.
+         */
+        public List<String> buildHandbrakeCutParamList() {
+            double startAt = Math.max(startTime - offset, 0);
+//            double startAt = startTime;
+            List<String> params = new ArrayList<>();
+            params.add("--start-at");
+            params.add(String.format("duration:%1.2f", startAt));
+
+            double stopAt = endTime - startTime + offset;
+            if (Double.isFinite(stopAt)) {
+                params.add("--stop-at");
+                params.add(String.format("duration:%1.2f", stopAt));
+            }
+
+            return params;
         }
 
         /**
