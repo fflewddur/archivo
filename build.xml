@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="archivo" default="all">
 
-    <property file="archivo.properties"/>
+    <property file="build.properties"/>
     <!-- Uncomment the following property if no tests compilation is needed -->
     <!--
     <property name="skip.tests" value="true"/>
@@ -236,7 +236,7 @@
         <mkdir dir="${artifacts.temp.dir}"/>
         <property name="artifact.temp.output.Archivo" value="${artifacts.temp.dir}/Archivo.jar"/>
         <taskdef resource="com/sun/javafx/tools/ant/antlib.xml" uri="javafx:com.sun.javafx.tools.ant"
-                 classpath=".:${java.home}/../lib/ant-javafx.jar"/>
+                 classpath=".:${jdk.home}/lib/ant-javafx.jar"/>
     </target>
 
     <target name="clean.artifact.archivo" description="clean Archivo artifact output">
