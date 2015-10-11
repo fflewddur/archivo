@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="archivo" default="all">
+    <property name="title" value="Archivo"/>
+    <property name="version" value="0.1 Technology Preview"/>
 
     <property file="build.properties"/>
     <!-- Uncomment the following property if no tests compilation is needed -->
-    <!--
     <property name="skip.tests" value="true"/>
-     -->
 
     <!-- Compiler options -->
 
@@ -87,7 +87,6 @@
     </path>
 
     <!-- Modules -->
-
 
     <!-- Module Archivo -->
 
@@ -247,34 +246,20 @@
             description="Build &#39;Archivo&#39; artifact" xmlns:fx="javafx:com.sun.javafx.tools.ant">
         <mkdir dir="${artifact.output.archivo}"/>
         <copy todir="${artifact.temp.output.Archivo}">
-            <fileset dir="${archivo.output.dir}"/>
+            <fileset dir="${basedir}/lib" includes="**/*.jar"/>
         </copy>
-        <copy file="${basedir}/lib/httpclient-4.5.jar" tofile="${artifact.temp.output.Archivo}/httpclient-4.5.jar"/>
-        <copy file="${basedir}/lib/commons-logging-1.2.jar"
-              tofile="${artifact.temp.output.Archivo}/commons-logging-1.2.jar"/>
-        <copy file="${basedir}/lib/commons-codec-1.9.jar"
-              tofile="${artifact.temp.output.Archivo}/commons-codec-1.9.jar"/>
-        <copy file="${basedir}/lib/httpcore-4.4.3.jar" tofile="${artifact.temp.output.Archivo}/httpcore-4.4.3.jar"/>
-        <copy file="${basedir}/lib/json-snapshot-20150723.jar"
-              tofile="${artifact.temp.output.Archivo}/json-snapshot-20150723.jar"/>
-        <copy file="${basedir}/lib/tivo-libre-0.7.0.jar" tofile="${artifact.temp.output.Archivo}/tivo-libre-0.7.0.jar"/>
-        <mkdir dir="${artifact.temp.output.Archivo}/resources"/>
-        <!-- <copy file="${basedir}/resources/cdata.p12" tofile="${artifact.temp.output.Archivo}/resources/cdata.p12"/> -->
-        <!-- <copy file="${basedir}/resources/style.css" tofile="${artifact.temp.output.Archivo}/resources/style.css"/> -->
         <copy todir="${artifact.temp.output.Archivo}/resources/">
             <fileset dir="${basedir}/resources/"/>
         </copy>
-        <copy file="${basedir}/lib/logback-classic-1.1.3.jar"
-              tofile="${artifact.temp.output.Archivo}/logback-classic-1.1.3.jar"/>
-        <copy file="${basedir}/lib/logback-core-1.1.3.jar"
-              tofile="${artifact.temp.output.Archivo}/logback-core-1.1.3.jar"/>
-        <copy file="${basedir}/lib/slf4j-api-1.7.12.jar" tofile="${artifact.temp.output.Archivo}/slf4j-api-1.7.12.jar"/>
-        <copy file="${basedir}/lib/hola-0.1.1.jar" tofile="${artifact.temp.output.Archivo}/hola-0.1.1.jar"/>
-        <fx:fileset id="all_but_Archivo" dir="${artifact.temp.output.Archivo}" includes="**/*.jar">
+        <copy todir="${artifact.temp.output.Archivo}/">
+            <fileset dir="${archivo.output.dir}" includes="**/*.class"/>
+            <fileset dir="${archivo.output.dir}" includes="**/*.fxml"/>
+        </copy>
+
+        <fx:fileset id="archivo_libs" dir="${artifact.temp.output.Archivo}" includes="**/*.jar">
             <exclude name="Archivo.jar"/>
         </fx:fileset>
-        <fx:fileset id="all_Archivo" dir="${artifact.temp.output.Archivo}" includes="**/*.jar"/>
-        <fx:fileset id="tools_macosx" dir="${artifact.temp.output.Archivo}" includes="tools/*"/>
+
         <fx:application id="Archivo_id" name="Archivo" mainClass="net.straylightlabs.archivo.Archivo"
                         version="0.1 Technology Preview"/>
         <fx:csstobin outdir="${artifact.temp.output.Archivo}">
@@ -282,66 +267,60 @@
         </fx:csstobin>
         <fx:jar destfile="${artifact.temp.output.Archivo}/Archivo.jar">
             <fx:application refid="Archivo_id"/>
-            <fileset dir="${artifact.temp.output.Archivo}" excludes="**/*.jar"/>
+            <fx:platform javafx="8.0"/>
             <fx:resources>
-                <fx:fileset refid="all_but_Archivo"/>
+                <fx:fileset dir="${artifact.temp.output.Archivo}" includes="*.jar"/>
             </fx:resources>
+            <fileset dir="${artifact.temp.output.Archivo}" excludes="**/*.jar"/>
             <manifest/>
         </fx:jar>
-    </target>
-
-    <target name="archivo.dmg" depends="artifact.archivo" xmlns:fx="javafx:com.sun.javafx.tools.ant">
-        <mkdir dir="${artifact.output.archivo}/tools"/>
-        <copy todir="${artifact.output.archivo}/tools">
-            <fileset dir="${basedir}/tools"/>
-        </copy>
-
-        <fx:deploy width="600" height="400" updatemode="background" outdir="${artifact.temp.output.Archivo}/deploy"
-                   outfile="Archivo" nativeBundles="dmg" verbose="true">
-            <fx:application refid="Archivo_id"/>
-            <fx:info title="Archivo" vendor="Straylight Labs LLC"/>
-            <fx:resources>
-                <fx:fileset refid="all_Archivo"/>
-                <fx:fileset dir="${artifact.output.archivo}" includes="tools"/>
-            </fx:resources>
-        </fx:deploy>
-
-        <copy todir="${artifact.output.archivo}">
-            <fileset dir="${artifact.temp.output.Archivo}/deploy"/>
-        </copy>
-        <!-- <delete includeemptydirs="true"> -->
-        <!-- <fileset dir="${artifact.temp.output.Archivo}"/> -->
-        <!-- </delete> -->
-    </target>
-
-    <target name="archivo.exe" depends="artifact.archivo" xmlns:fx="javafx:com.sun.javafx.tools.ant">
-        <mkdir dir="${artifact.output.archivo}/tools"/>
-        <copy todir="${artifact.output.archivo}/tools">
-            <fileset dir="${basedir}/tools"/>
-        </copy>
-
-        <fx:deploy width="600" height="400" updatemode="background" outdir="${artifact.temp.output.Archivo}/deploy"
-                   outfile="Archivo" nativeBundles="exe" verbose="true">
-            <fx:application refid="Archivo_id"/>
-            <fx:info title="Archivo" vendor="Straylight Labs LLC"/>
-            <fx:resources>
-                <fx:fileset refid="all_Archivo"/>
-                <fx:fileset dir="${artifact.output.archivo}" includes="tools"/>
-            </fx:resources>
-        </fx:deploy>
-
-        <copy todir="${artifact.output.archivo}">
-            <fileset dir="${artifact.temp.output.Archivo}/deploy"/>
-        </copy>
-        <!-- <delete includeemptydirs="true"> -->
-        <!-- <fileset dir="${artifact.temp.output.Archivo}"/> -->
-        <!-- </delete> -->
     </target>
 
     <target name="build.all.artifacts" depends="artifact.archivo" description="Build all artifacts">
 
         <!-- Delete temporary files -->
-        <!-- <delete dir="${artifacts.temp.dir}"/> -->
+        <delete dir="${artifacts.temp.dir}"/>
+    </target>
+
+    <taskdef name="bundleapp" classname="com.oracle.appbundler.AppBundlerTask" classpath="lib/appbundler-1.0.jar"/>
+
+    <target name="archivo.dmg" depends="artifact.archivo">
+        <bundleapp outputdirectory="${artifact.output.archivo}"
+                   name="Archivo" displayname="Archivo"
+                   identifier="net.straylightlabs.archivo.Archivo"
+                   shortversion="0.1"
+                   icon="package/macosx/Archivo"
+                   mainclassname="net.straylightlabs.archivo.Archivo">
+            <classpath dir="${artifact.temp.output.Archivo}" includes="*.jar"/>
+            <argument value="-tooldir"/>
+            <argument value="$APP_ROOT/Contents/MacOS"/>
+        </bundleapp>
+
+        <!-- Include our platform-specific tools -->
+        <copy todir="${artifact.output.archivo}/Archivo.app/Contents/MacOS/">
+            <fileset dir="${basedir}/tools/"/>
+        </copy>
+        <chmod perm="755">
+            <fileset dir="${artifact.output.archivo}/Archivo.app/Contents/MacOS/" excludes="comskip.*"/>
+        </chmod>
+
+        <!-- Delete temporary files -->
+        <delete dir="${artifacts.temp.dir}"/>
+
+        <property name="dmg.name" value="${title} ${version}"/>
+        <property name="dmg.path" value="${artifact.output.archivo}/${dmg.name}.dmg"/>
+        <delete file="${dmg.path}" quiet="yes" failonerror="false"/>
+        <exec executable="/usr/bin/hdiutil" os="Mac OS X" failonerror="true">
+            <arg value="create"/>
+            <arg value="-srcfolder"/>
+            <arg value="${artifact.output.archivo}/Archivo.app"/>
+            <arg value="-volname"/>
+            <arg value="${dmg.name}"/>
+            <arg value="-ov"/>
+            <arg value="${dmg.path}"/>
+            <arg value="-format"/>
+            <arg value="UDZO"/>
+        </exec>
     </target>
 
     <target name="all" depends="build.modules, build.all.artifacts" description="build all"/>
