@@ -285,6 +285,9 @@
     <taskdef name="bundleapp" classname="com.oracle.appbundler.AppBundlerTask" classpath="lib/appbundler-1.0.jar"/>
 
     <target name="archivo.dmg" depends="artifact.archivo">
+        <property name="app.dir" value="${artifact.output.archivo}}/Archivo.app"/>
+        <delete dir="${app.dir}" failonerror="false"/>
+
         <bundleapp outputdirectory="${artifact.output.archivo}"
                    name="Archivo" displayname="Archivo"
                    identifier="net.straylightlabs.archivo.Archivo"
@@ -297,11 +300,12 @@
         </bundleapp>
 
         <!-- Include our platform-specific tools -->
-        <copy todir="${artifact.output.archivo}/Archivo.app/Contents/MacOS/">
-            <fileset dir="${basedir}/tools/"/>
+        <copy todir="${app.dir}/Contents/MacOS/">
+            <fileset dir="${basedir}/package/macosx/"/>
+            <fileset dir="${basedir}/package/all/"/>
         </copy>
         <chmod perm="755">
-            <fileset dir="${artifact.output.archivo}/Archivo.app/Contents/MacOS/" excludes="comskip.*"/>
+            <fileset dir="${app.dir}/Contents/MacOS/" excludes="comskip.*"/>
         </chmod>
 
         <!-- Delete temporary files -->
@@ -313,7 +317,7 @@
         <exec executable="/usr/bin/hdiutil" os="Mac OS X" failonerror="true">
             <arg value="create"/>
             <arg value="-srcfolder"/>
-            <arg value="${artifact.output.archivo}/Archivo.app"/>
+            <arg value="${app.dir}"/>
             <arg value="-volname"/>
             <arg value="${dmg.name}"/>
             <arg value="-ov"/>
@@ -321,6 +325,35 @@
             <arg value="-format"/>
             <arg value="UDZO"/>
         </exec>
+    </target>
+
+    <target name="archivo.exe" depends="artifact.archivo">
+        <property name="inno.dir" value="${artifact.output.archivo}/InnoSetup"/>
+
+        <delete dir="${inno.dir}" failonerror="false"/>
+        <mkdir dir="${inno.dir}"/>
+
+        <copy todir="${inno.dir}">
+            <fileset dir="${artifact.temp.output.Archivo}" includes="*.jar"/>
+        </copy>
+
+        <!-- Include our platform-specific tools -->
+        <copy todir="${inno.dir}">
+            <fileset dir="${basedir}/package/win32/tools"/>
+            <fileset dir="${basedir}/package/all/"/>
+            <file file="${basedir}/package/win32/archivo.ico"/>
+        </copy>
+
+        <exec executable="${inno.compiler}">
+            <arg value='/O"${artifact.output.archivo}"'/>
+            <arg value='"/dSrcDir=${inno.dir}"'/>
+            <arg value='"/dMyAppName=${title}"'/>
+            <arg value='"/dMyAppVersion=${version}"'/>
+            <arg value="${basedir}/package/win32/installer.iss" />
+        </exec>
+
+        <!-- Delete temporary files -->
+        <delete dir="${artifacts.temp.dir}"/>
     </target>
 
     <target name="all" depends="build.modules, build.all.artifacts" description="build all"/>

@@ -9,7 +9,7 @@
       <excludeFolder url="file://$MODULE_DIR$/resources-src" />
       <excludeFolder url="file://$MODULE_DIR$/tools" />
     </content>
-    <orderEntry type="inheritedJdk" />
+    <orderEntry type="jdk" jdkName="1.8" jdkType="JavaSDK" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="json" level="project" />
     <orderEntry type="library" name="httpclient" level="project" />
