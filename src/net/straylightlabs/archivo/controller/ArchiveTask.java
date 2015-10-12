@@ -392,7 +392,7 @@ public class ArchiveTask extends Task<Recording> {
             Archivo.logger.error("Error running comskip: ", e);
             throw new ArchiveTaskException("Error finding commercials");
         } finally {
-            cleanupFiles(logoPath, logPath, ffsplitPath);
+            cleanupFiles(logoPath, logPath);
         }
     }
 
@@ -458,7 +458,7 @@ public class ArchiveTask extends Task<Recording> {
             cleanupFiles(partPaths);
             return;
         } finally {
-            cleanupFiles(fixedPath);
+            cleanupFiles(fixedPath, ffsplitPath);
         }
 
         Platform.runLater(() -> recording.setStatus(
@@ -544,6 +544,13 @@ public class ArchiveTask extends Task<Recording> {
                 throw new ArchiveTaskException("Error compressing video");
             }
         } catch (InterruptedException | IOException e) {
+            Platform.runLater(() -> {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setContentText(String.format("Error running '%s': %s\n\nWorking directory: '%s'",
+                        cmd.stream().collect(Collectors.joining(" ")), e.getLocalizedMessage(),
+                        System.getProperty("user.dir")));
+                alert.showAndWait();
+            });
             Archivo.logger.error("Error running HandBrake: ", e);
             throw new ArchiveTaskException("Error compressing video");
         } finally {
