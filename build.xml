@@ -296,7 +296,7 @@
                    mainclassname="net.straylightlabs.archivo.Archivo">
             <classpath dir="${artifact.temp.output.Archivo}" includes="*.jar"/>
             <argument value="-tooldir"/>
-            <argument value="$APP_ROOT/Contents/MacOS"/>
+            <argument value="$APP_ROOT/Contents/MacOS/tools"/>
         </bundleapp>
 
         <!-- Include our platform-specific tools -->

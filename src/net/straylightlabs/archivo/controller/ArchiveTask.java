@@ -392,7 +392,7 @@ public class ArchiveTask extends Task<Recording> {
             Archivo.logger.error("Error running comskip: ", e);
             throw new ArchiveTaskException("Error finding commercials");
         } finally {
-            cleanupFiles(logoPath, logPath);
+            cleanupFiles(logoPath, logPath, ffsplitPath);
         }
     }
 
