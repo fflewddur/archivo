@@ -434,7 +434,6 @@ public class RecordingListController implements Initializable, Observer {
                     // If a new Tivo was found, and we don't currently have a selected Tivo, select the new device
                     if (tivoList.getValue() == null) {
                         tivoList.getSelectionModel().selectFirst();
-                        enableUI();
                     }
                 }
             }
