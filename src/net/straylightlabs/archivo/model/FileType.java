@@ -91,7 +91,7 @@ public enum FileType {
         Map<FileType, Map<String, String>> map = new HashMap<>();
 
         // Android
-        String args = String.format("-e x264 -q 22.0 -r 30 --pfr -a 1 -E %s -B 128 -6 dpl2 -R Auto -D 0.0 " +
+        String args = String.format("-e x264 -q 22.0 -r 30 --pfr -a 1 -E %s -B 128 -6 dpl2 -R Auto -D 1.0 " +
                         "--audio-copy-mask aac,ac3,dtshd,dts,mp3 --audio-fallback ffac3 -f mp4 -X 720 -Y 576 " +
                         "--decomb=fast" +
                         "--loose-anamorphic --modulus 2 --x264-preset medium --h264-profile main --h264-level 3.0",
@@ -99,7 +99,7 @@ public enum FileType {
         map.put(ANDROID_PHONE, parseArgs(args));
 
         // Android tablet
-        args = String.format("-e x264 -q 22.0 -r 30 --pfr -a 1 -E %s -B 128 -6 dpl2 -R Auto -D 0.0 " +
+        args = String.format("-e x264 -q 22.0 -r 30 --pfr -a 1 -E %s -B 128 -6 dpl2 -R Auto -D 1.0 " +
                         "--audio-copy-mask aac,ac3,dtshd,dts,mp3 --audio-fallback ffac3 -f mp4 -X 1280 -Y 720 " +
                         "--decomb=fast" +
                         "--loose-anamorphic --modulus 2 --x264-preset medium --h264-profile main --h264-level 3.1",
@@ -107,7 +107,7 @@ public enum FileType {
         map.put(ANDROID_TABLET, parseArgs(args));
 
         // AppleTV 3
-        args = String.format("-e x264 -q 20.0 -r 30 --pfr -X 1920 -Y 1080 --audio-copy-mask aac,ac3,dtshd,dts,mp3 -a 1,1 " +
+        args = String.format("-e x264 -q 22.0 -r 30 --pfr -X 1920 -Y 1080 --audio-copy-mask aac,ac3,dtshd,dts,mp3 -a 1,1 " +
                         "-E %s,copy:ac3 -B 160,none -6 dpl2,none -R Auto,Auto -D 1.0,0.0 --audio-fallback  ffac3 -f m4v -4 " +
                         "--decomb=fast " +
                         "--loose-anamorphic --modulus 2 -m --x264-preset medium --h264-profile high --h264-level 4.0 -v",
@@ -115,7 +115,7 @@ public enum FileType {
         map.put(APPLE_TV3, parseArgs(args));
 
         // iPad
-        args = String.format("-e x264 -q 20.0 -r 30 --pfr -a 1 -E %s -B 160 -6 dpl2 -R Auto -D 0.0 " +
+        args = String.format("-e x264 -q 22.0 -r 30 --pfr -a 1 -E %s -B 160 -6 dpl2 -R Auto -D 1.0 " +
                         "--audio-copy-mask aac,ac3,dtshd,dts,mp3 --audio-fallback ffac3 -f mp4 -4 -X 1280 -Y 720 " +
                         "--decomb=fast" +
                         "--loose-anamorphic --modulus 2 -m --x264-preset medium --h264-profile high --h264-level 3.1",
@@ -123,7 +123,7 @@ public enum FileType {
         map.put(IPAD, parseArgs(args));
 
         // iPhone & iPod Touch
-        args = String.format("-e x264 -q 22.0 -r 30 --pfr -a 1 -E %s -B 160 -6 dpl2 -R Auto -D 0.0 " + "" +
+        args = String.format("-e x264 -q 22.0 -r 30 --pfr -a 1 -E %s -B 160 -6 dpl2 -R Auto -D 1.0 " + "" +
                         "--audio-copy-mask aac,ac3,dtshd,dts,mp3 --audio-fallback ffac3 -f mp4 -4 -X 960 -Y 640 " +
                         "--decomb=fast" +
                         "--loose-anamorphic --modulus 2 -m --x264-preset medium --h264-profile high --h264-level 3.1",
@@ -138,14 +138,14 @@ public enum FileType {
         map.put(WINDOWS_PHONE, parseArgs(args));
 
         // Normal
-        args = String.format("-e x264 -q 20.0 -a 1 -E %s -B 160 -6 dpl2 -R Auto -D 1.0 --audio-copy-mask aac,ac3,dtshd,dts,mp3 " +
+        args = String.format("-e x264 -q 22.0 -a 1 -E %s -B 160 -6 dpl2 -R Auto -D 1.0 --audio-copy-mask aac,ac3,dtshd,dts,mp3 " +
                 "--audio-fallback ffac3 -f mp4 --loose-anamorphic --modulus 2 -m --x264-preset medium --h264-profile main " +
                 "--decomb=fast" +
                 "--h264-level 4.0", getPlatformAudioEncoder());
         map.put(H264_NORMAL, parseArgs(args));
 
         // High Profile
-        args = String.format("-e x264  -q 20.0 -a 1,1 -E %s,copy:ac3 -B 160,160 -6 dpl2,none -R Auto,Auto -D 1.0,0.0 " +
+        args = String.format("-e x264  -q 22.0 -a 1,1 -E %s,copy:ac3 -B 160,160 -6 dpl2,none -R Auto,Auto -D 1.0,0.0 " +
                 "--audio-copy-mask aac,ac3,dtshd,dts,mp3 --audio-fallback ffac3 -f mp4 -4 -5 --loose-anamorphic " +
                 "--modulus 2 -m --x264-preset medium --h264-profile high --h264-level 4.1", getPlatformAudioEncoder());
         map.put(H264_HIGH, parseArgs(args));
