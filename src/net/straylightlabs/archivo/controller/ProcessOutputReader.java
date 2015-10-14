@@ -29,6 +29,8 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.ArrayDeque;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -36,15 +38,18 @@ public abstract class ProcessOutputReader implements Runnable {
     protected final Recording recording;
     protected final Set<Integer> exitCodes;
     private final LocalDateTime startTime;
+    private final Deque<Integer> recentEndTimeEstimates;
     private InputStream inputStream;
 
-    private final static double MIN_PROGRESS_FOR_ETA = 0.03;
+    private final static int MIN_END_TIME_ESTIMATES = 5;
+    private final static int MAX_END_TIME_ESTIMATES = 10;
 
     public ProcessOutputReader(Recording recording) {
         this.recording = recording;
         exitCodes = new HashSet<>();
         exitCodes.add(0);
         startTime = LocalDateTime.now();
+        recentEndTimeEstimates = new ArrayDeque<>();
     }
 
     public void setInputStream(InputStream inputStream) {
@@ -76,18 +81,45 @@ public abstract class ProcessOutputReader implements Runnable {
 
     public abstract void processLine(String line);
 
-    // TODO add a queue of the N most recent ETAs; result of this method should be average of those
     protected int getSecondsRemaining(double progress) {
-        if (progress > MIN_PROGRESS_FOR_ETA) {
+        int secondsRemaining = calcSecondsRemainingFromProgress(progress);
+        updateEstimates(secondsRemaining);
+        if (recentEndTimeEstimates.size() < MIN_END_TIME_ESTIMATES) {
+            return ArchiveStatus.TIME_UNKNOWN;
+        } else {
+            return estimateSecondsRemaining();
+        }
+    }
+
+    private int calcSecondsRemainingFromProgress(double progress) {
+        if (progress > 0) {
             if (progress > 1) {
                 progress = .99;
             }
             long elapsedSeconds = Duration.between(startTime, LocalDateTime.now()).getSeconds();
             double progressPerSecond = progress / elapsedSeconds;
-//            Archivo.logger.info("Elapsed seconds = {}, progressPerSecond = {}, secondsRemaining", elapsedSeconds, progressPerSecond);
             return (int) ((1.0 - progress) / progressPerSecond);
+//            Archivo.logger.info("Elapsed seconds = {}, progressPerSecond = {}, secondsRemaining", elapsedSeconds, progressPerSecond);
         } else {
+            Archivo.logger.warn("Progress <= 0");
             return ArchiveStatus.TIME_UNKNOWN;
         }
+    }
+
+    private void updateEstimates(int secondsRemaining) {
+//        Archivo.logger.debug("Adding {} to estimates", secondsRemaining);
+        recentEndTimeEstimates.addLast(secondsRemaining);
+        if (recentEndTimeEstimates.size() > MAX_END_TIME_ESTIMATES) {
+            recentEndTimeEstimates.removeFirst();
+        }
+    }
+
+    /**
+     * Average the time estimates in our queue.
+     */
+    private int estimateSecondsRemaining() {
+        int sum = recentEndTimeEstimates.stream().mapToInt(i -> i).sum();
+//        Archivo.logger.debug("Sum = {}, size = {}", sum, recentEndTimeEstimates.size());
+        return sum / recentEndTimeEstimates.size();
     }
 }
