@@ -39,6 +39,7 @@ public abstract class ProcessOutputReader implements Runnable {
     protected final Set<Integer> exitCodes;
     private final LocalDateTime startTime;
     private final Deque<Integer> recentEndTimeEstimates;
+    private double priorProgress;
     private InputStream inputStream;
 
     private final static int MIN_END_TIME_ESTIMATES = 5;
@@ -50,6 +51,7 @@ public abstract class ProcessOutputReader implements Runnable {
         exitCodes.add(0);
         startTime = LocalDateTime.now();
         recentEndTimeEstimates = new ArrayDeque<>();
+        priorProgress = -1;
     }
 
     public void setInputStream(InputStream inputStream) {
@@ -82,6 +84,9 @@ public abstract class ProcessOutputReader implements Runnable {
     public abstract void processLine(String line);
 
     protected int getSecondsRemaining(double progress) {
+        if (progressRegressed(progress)) {
+            clearEstimates();
+        }
         int secondsRemaining = calcSecondsRemainingFromProgress(progress);
         updateEstimates(secondsRemaining);
         if (recentEndTimeEstimates.size() < MIN_END_TIME_ESTIMATES) {
@@ -89,6 +94,19 @@ public abstract class ProcessOutputReader implements Runnable {
         } else {
             return estimateSecondsRemaining();
         }
+    }
+
+    private boolean progressRegressed(double progress) {
+        boolean progressRegressed = false;
+        if (progress < priorProgress) {
+            progressRegressed = true;
+        }
+        priorProgress = progress;
+        return progressRegressed;
+    }
+
+    private void clearEstimates() {
+        recentEndTimeEstimates.clear();
     }
 
     private int calcSecondsRemainingFromProgress(double progress) {

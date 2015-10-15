@@ -537,6 +537,7 @@ public class ArchiveTask extends Task<Recording> {
             handbrakeArgs.put("-6", "dpl2");
         }
         handbrakeArgs.put("-Y", String.valueOf(videoLimit.getHeight()));
+        handbrakeArgs.put("-X", String.valueOf(videoLimit.getWidth()));
         cmd.addAll(mapToList(handbrakeArgs));
         try {
             HandbrakeOutputReader outputReader = new HandbrakeOutputReader(recording);
