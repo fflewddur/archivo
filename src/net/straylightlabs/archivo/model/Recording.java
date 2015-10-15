@@ -407,6 +407,7 @@ public class Recording {
         return isSeriesHeading.get();
     }
 
+    @SuppressWarnings("unused")
     public BooleanProperty seriesHeadingProperty() {
         return isSeriesHeading;
     }
