@@ -259,7 +259,7 @@ public class Recording {
         assert (dateRecorded != null);
         assert (dateRecorded.getValue() != null);
 
-        return  originalAirDate == null || (originalAirDate.getYear() == dateRecorded.getValue().getYear() &&
+        return originalAirDate == null || (originalAirDate.getYear() == dateRecorded.getValue().getYear() &&
                 originalAirDate.getDayOfYear() == dateRecorded.getValue().getDayOfYear());
     }
 
@@ -354,7 +354,7 @@ public class Recording {
         boolean prevCharIsSpace = false;
         for (Character c : filename.toCharArray()) {
             int type = Character.getType(c);
-            if (Character.isLetterOrDigit(c) || c == '\'' || c == '.' || c == '&' || c == ',' ||
+            if (Character.isLetterOrDigit(c) || c == '\'' || c == '.' || c == '&' || c == ',' || c == '!' ||
                     type == Character.DASH_PUNCTUATION) {
                 sb.append(c);
                 prevCharIsSpace = false;
