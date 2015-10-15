@@ -17,6 +17,9 @@ Archivo is still in development and may have some rough edges. It currently supp
 * For best performance, your computer should have at least a dual-core processor and 1 GB of memory
 * Plenty of disk space: archiving a one-hour HD recording may temporarily use up to 10 GB of disk space
 
+## Downloads
+The latest release of Archivo can be found at https://github.com/fflewddur/archivo/releases. We provide packages for Windows and Mac OS X. Archivo also runs on Linux, but we do not currently provide pre-compiled Linux packages.
+
 ## Known Issues
 If you find a problem with Archivo, please help us fix it by reporting it at https://github.com/fflewddur/archivo/issues.
 
