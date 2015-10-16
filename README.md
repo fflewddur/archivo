@@ -16,6 +16,10 @@ Archivo is still in development and may have some rough edges. It currently supp
 * A TiVo Bolt, Roamio, or Premiere
 * For best performance, your computer should have at least a dual-core processor and 1 GB of memory
 * Plenty of disk space: archiving a one-hour HD recording may temporarily use up to 10 GB of disk space
+* Minimum operating system versions:
+  * Mac OS X 10.7.3
+  * Windows Vista
+  * Any Linux system with Java 8, FFmpeg 2.8 or newer, HandBrake 0.10.2 or newer, and Comskip 0.81.89 or newer
 
 ## Downloads
 The latest release of Archivo can be found at https://github.com/fflewddur/archivo/releases. We provide packages for Windows and Mac OS X. Archivo also runs on Linux, but we do not currently provide pre-compiled Linux packages.
