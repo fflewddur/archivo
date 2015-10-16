@@ -2,6 +2,7 @@
 <project name="archivo" default="all">
     <property name="title" value="Archivo"/>
     <property name="version" value="0.1 Technology Preview"/>
+    <property name="copyright" value="2015 Straylight Labs LLC"/>
 
     <property file="build.properties"/>
     <!-- Uncomment the following property if no tests compilation is needed -->
@@ -59,7 +60,7 @@
     <!-- Project Libraries -->
 
     <path id="library.hola.classpath">
-        <pathelement location="${basedir}/lib/hola-0.1.1.jar"/>
+        <pathelement location="${basedir}/lib/hola-0.1.2.jar"/>
     </path>
 
     <path id="library.httpclient.classpath">
@@ -282,19 +283,25 @@
         <delete dir="${artifacts.temp.dir}"/>
     </target>
 
-    <taskdef name="bundleapp" classname="com.oracle.appbundler.AppBundlerTask" classpath="lib/appbundler-1.0.jar"/>
+    <taskdef name="bundleapp" classname="com.oracle.appbundler.AppBundlerTask" classpath="lib/appbundler-1.0ea.jar"/>
 
     <target name="archivo.dmg" depends="artifact.archivo">
         <property name="app.dir" value="${artifact.output.archivo}/Archivo.app"/>
         <delete dir="${app.dir}" failonerror="false"/>
 
-        <bundleapp outputdirectory="${artifact.output.archivo}"
-                   name="Archivo" displayname="Archivo"
-                   identifier="net.straylightlabs.archivo.Archivo"
-                   shortversion="0.1"
-                   icon="package/macosx/archivo.icns"
-                   mainclassname="net.straylightlabs.archivo.Archivo">
+        <bundleapp
+                jvmrequired="1.8"
+                outputdirectory="${artifact.output.archivo}"
+                name="${title}" displayname="${title}"
+                identifier="net.straylightlabs.archivo"
+                executableName="${title}"
+                shortversion="${version}"
+                icon="package/macosx/archivo.icns"
+                copyright="${copyright}"
+                applicationCategory="public.app-category.entertainment"
+                mainclassname="net.straylightlabs.archivo.Archivo">
             <classpath dir="${artifact.temp.output.Archivo}" includes="*.jar"/>
+            <arch name="x86_64"/>
             <argument value="-tooldir"/>
             <argument value="$APP_ROOT/Contents/MacOS"/>
         </bundleapp>
@@ -349,7 +356,7 @@
             <arg value='"/dSrcDir=${inno.dir}"'/>
             <arg value='"/dMyAppName=${title}"'/>
             <arg value='"/dMyAppVersion=${version}"'/>
-            <arg value="${basedir}/package/win32/installer.iss" />
+            <arg value="${basedir}/package/win32/installer.iss"/>
         </exec>
 
         <!-- Delete temporary files -->
