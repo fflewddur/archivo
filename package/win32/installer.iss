@@ -23,6 +23,7 @@ OutputBaseFilename={#MyAppName} {#MyAppVersion}
 Compression=lzma
 SolidCompression=yes
 SourceDir={#SrcDir}
+MinVersion=0,6.0
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -40,8 +41,47 @@ Source: "archivo.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\archivo.ico"
-Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
+Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\archivo.ico"; Tasks: desktopicon
 
 [Run]
-Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: shellexec postinstall skipifsilent
+Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: shellexec postinstall skipifsilent; Check: IsJREInstalled
 
+[Code]
+#define MinJRE "1.8"
+#define WebJRE "https://java.com/en/download/"
+
+function IsJREInstalled: Boolean;
+var
+  JREVersion: string;
+begin
+  // read JRE version
+  Result := RegQueryStringValue(HKLM32, 'Software\JavaSoft\Java Runtime Environment',
+    'CurrentVersion', JREVersion);
+  // if the previous reading failed and we're on 64-bit Windows, try to read
+  // the JRE version from WOW node
+  if not Result and IsWin64 then
+    Result := RegQueryStringValue(HKLM64, 'Software\JavaSoft\Java Runtime Environment',
+      'CurrentVersion', JREVersion);
+  // if the JRE version was read, check if it's at least the minimum one
+  if Result then
+    Result := CompareStr(JREVersion, '{#MinJRE}') >= 0;
+end;
+
+function InitializeSetup: Boolean;
+var
+  ErrorCode: Integer;
+begin
+  Result := True;
+  // check if JRE is installed; if not, then...
+  if not IsJREInstalled then
+  begin
+    // show a message box and let user to choose if they want to download JRE;
+    // if so, go to its download site and exit setup; continue otherwise
+    if MsgBox('Archivo requires Java 8 or newer. Do you want to download it now?',
+      mbConfirmation, MB_YESNO) = IDYES then
+    begin
+      Result := False;
+      ShellExec('', '{#WebJRE}', '', '', SW_SHOWNORMAL, ewNoWait, ErrorCode);
+    end;
+  end;
+end;
