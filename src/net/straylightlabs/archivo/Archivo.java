@@ -112,6 +112,7 @@ public class Archivo extends Application {
         setLogLevel();
 
         logger.info("Starting up...");
+        logVMInfo();
 
         this.primaryStage = primaryStage;
         this.primaryStage.setTitle(APPLICATION_NAME);
@@ -149,6 +150,12 @@ public class Archivo extends Application {
         });
 
         checkForUpdates();
+    }
+
+    private void logVMInfo() {
+        logger.info("Running on Java {} from {}", System.getProperty("java.version"), System.getProperty("java.vendor"));
+        logger.info("System is {} {} ({})", System.getProperty("os.name"), System.getProperty("os.version"),
+                System.getProperty("os.arch"));
     }
 
     private void checkForUpdates() {

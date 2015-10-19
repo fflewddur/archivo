@@ -101,7 +101,6 @@ public class UserPrefs {
 
     public synchronized String getMAK() {
         String mak = prefs.get(MAK, null);
-        Archivo.logger.info("MAK = {}", mak);
         return mak;
     }
 
