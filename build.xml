@@ -316,6 +316,23 @@
             <fileset dir="${app.dir}/Contents/MacOS/" excludes="comskip.*"/>
         </chmod>
 
+        <!-- Sign the executables -->
+        <apply executable="codesign">
+            <arg line="-f -s 'Developer ID Application: Todd Kulesza'"/>
+            <fileset dir="${app.dir}/Contents/MacOS/" excludes="Archivo"/>
+        </apply>
+        <exec executable="codesign">
+            <arg line="-f -s 'Developer ID Application: Todd Kulesza' ${app.dir}"/>
+        </exec>
+
+        <!-- Verify codesigning and gatekeeper -->
+        <exec executable="codesign" failonerror="true">
+            <arg line="-vv ${app.dir}"/>
+        </exec>
+        <exec executable="spctl" failonerror="true">
+            <arg line="-vv --assess --type execute ${app.dir}"/>
+        </exec>
+
         <!-- Delete temporary files -->
         <delete dir="${artifacts.temp.dir}"/>
 
