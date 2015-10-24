@@ -36,7 +36,6 @@ import java.util.prefs.Preferences;
 public class UserPrefs {
     private Preferences prefs;
     private Preferences sysPrefs;
-    private boolean logVerbose;
     private String tooldir;
 
     public static final String MAK = "mak";
@@ -81,10 +80,7 @@ public class UserPrefs {
         List<String> params = parameters.getUnnamed();
         for (int i = 0; i < params.size(); i++) {
             String param = params.get(i);
-            if (param.equalsIgnoreCase("-verbose")) {
-                logVerbose = true;
-                Archivo.logger.info("Enabling verbose logging");
-            } else if (param.equalsIgnoreCase("-tooldir")) {
+            if (param.equalsIgnoreCase("-tooldir")) {
                 tooldir = params.get(++i);
                 Archivo.logger.info("Tools in '{}'", tooldir);
             } else {
@@ -95,13 +91,8 @@ public class UserPrefs {
         return allParsed;
     }
 
-    public boolean isLogVerbose() {
-        return logVerbose;
-    }
-
     public synchronized String getMAK() {
-        String mak = prefs.get(MAK, null);
-        return mak;
+        return prefs.get(MAK, null);
     }
 
     public synchronized void setMAK(String val) {

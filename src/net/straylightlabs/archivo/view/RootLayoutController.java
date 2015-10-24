@@ -32,8 +32,13 @@ import javafx.scene.layout.GridPane;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
+import net.straylightlabs.archivo.utilities.OSHelper;
 
+import java.awt.*;
+import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.ResourceBundle;
@@ -118,6 +123,16 @@ public class RootLayoutController implements Initializable, Observer {
     public void showAboutDialog(ActionEvent event) {
         AboutDialog about = new AboutDialog(mainApp.getPrimaryStage());
         about.show();
+    }
+
+    @FXML
+    public void openLog(ActionEvent event) {
+        Path logPath = Paths.get(OSHelper.getDataDirectory().toString(), "log.txt");
+        try {
+            Desktop.getDesktop().open(logPath.toFile());
+        } catch (IOException e) {
+            Archivo.logger.error("Could not open log file '{}': ", logPath, e);
+        }
     }
 
     public void setMainApp(Archivo app) {

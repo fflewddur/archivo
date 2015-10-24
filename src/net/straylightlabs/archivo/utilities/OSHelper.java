@@ -63,4 +63,18 @@ public class OSHelper {
             return Paths.get("/");
         }
     }
+
+    public static Path getDataDirectory() {
+        Path dataDir;
+
+        if (isWindows()) {
+            dataDir = Paths.get(System.getenv("%APPDATA%"), "Archivo");
+        } else if (isMacOS()) {
+            dataDir = Paths.get(System.getProperty("user.home"), "Library", "Application Support", "Archivo");
+        } else {
+            dataDir = Paths.get(System.getProperty("user.home"), ".archivo");
+        }
+
+        return dataDir;
+    }
 }

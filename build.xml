@@ -252,6 +252,7 @@
         <copy todir="${artifact.temp.output.Archivo}/resources/">
             <fileset dir="${basedir}/resources/"/>
         </copy>
+        <copy tofile="${artifact.temp.output.Archivo}/logback.xml" file="${basedir}/log/logback-production.xml"/>
         <copy todir="${artifact.temp.output.Archivo}/">
             <fileset dir="${archivo.output.dir}" includes="**/*.class"/>
             <fileset dir="${archivo.output.dir}" includes="**/*.fxml"/>

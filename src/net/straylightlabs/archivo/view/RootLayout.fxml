@@ -40,12 +40,10 @@
            <Menu text="Edit">
                <MenuItem text="Preferences" onAction="#showPreferencesDialog"/>
            </Menu>
-           <!--<Menu mnemonicParsing="false" text="View">-->
-           <!--<CheckMenuItem mnemonicParsing="false" text="TiVo Suggestions" selected="true"/>-->
-           <!--<CheckMenuItem mnemonicParsing="false" text="Copy-Protected Recordings" selected="true"/>-->
-           <!--</Menu>-->
            <Menu text="Help">
-               <MenuItem mnemonicParsing="false" text="About" onAction="#showAboutDialog"/>
+               <MenuItem text="View Log" onAction="#openLog"/>
+               <SeparatorMenuItem/>
+               <MenuItem text="About" onAction="#showAboutDialog"/>
            </Menu>
        </MenuBar>
    </top>

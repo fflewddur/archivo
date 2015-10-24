@@ -19,7 +19,6 @@
 
 package net.straylightlabs.archivo;
 
-import ch.qos.logback.classic.Level;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -74,7 +73,7 @@ public class Archivo extends Application {
     private RecordingDetailsController recordingDetailsController;
     private final ArchiveQueueManager archiveQueueManager;
 
-    public final static Logger logger;
+    public final static Logger logger = LoggerFactory.getLogger(Archivo.class);
 
     public static final String APPLICATION_NAME = "Archivo";
     public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
@@ -82,10 +81,6 @@ public class Archivo extends Application {
     public static final String USER_AGENT = String.format("%s/%s", APPLICATION_NAME, APPLICATION_VERSION);
     public static final int WINDOW_MIN_HEIGHT = 400;
     public static final int WINDOW_MIN_WIDTH = 555;
-
-    static {
-        logger = LoggerFactory.getLogger(Archivo.class.toString());
-    }
 
     public Archivo() {
         super();
@@ -95,21 +90,11 @@ public class Archivo extends Application {
         archiveQueueManager = new ArchiveQueueManager(this);
     }
 
-    private void setLogLevel() {
-        ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME);
-        if (prefs.isLogVerbose()) {
-            root.setLevel(Level.DEBUG);
-        } else {
-            root.setLevel(Level.ERROR);
-        }
-    }
-
     @Override
     public void start(Stage primaryStage) throws Exception {
         if (!prefs.parseParameters(getParameters())) {
             cleanShutdown();
         }
-        setLogLevel();
 
         logger.info("Starting up...");
         logVMInfo();
