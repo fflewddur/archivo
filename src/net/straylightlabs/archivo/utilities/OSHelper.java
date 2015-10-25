@@ -68,7 +68,7 @@ public class OSHelper {
         Path dataDir;
 
         if (isWindows()) {
-            dataDir = Paths.get(System.getenv("%APPDATA%"), "Archivo");
+            dataDir = Paths.get(System.getenv("APPDATA"), "Archivo");
         } else if (isMacOS()) {
             dataDir = Paths.get(System.getProperty("user.home"), "Library", "Application Support", "Archivo");
         } else {

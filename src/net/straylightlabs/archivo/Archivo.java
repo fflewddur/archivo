@@ -139,8 +139,8 @@ public class Archivo extends Application {
 
     private void logVMInfo() {
         logger.info("Running on Java {} from {}", System.getProperty("java.version"), System.getProperty("java.vendor"));
-        logger.info("System is {} {} ({})", System.getProperty("os.name"), System.getProperty("os.version"),
-                System.getProperty("os.arch"));
+        logger.info("System is {} (version = {}, arch = {})", System.getProperty("os.name"),
+                System.getProperty("os.version"), System.getProperty("os.arch"));
     }
 
     private void checkForUpdates() {
