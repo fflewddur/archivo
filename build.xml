@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="archivo" default="all">
     <property name="title" value="Archivo"/>
-    <property name="version" value="0.1 Technology Preview"/>
+    <property name="version" value="0.2 Technology Preview"/>
     <property name="copyright" value="2015 Straylight Labs LLC"/>
 
     <property file="build.properties"/>
@@ -263,7 +263,7 @@
         </fx:fileset>
 
         <fx:application id="Archivo_id" name="Archivo" mainClass="net.straylightlabs.archivo.Archivo"
-                        version="0.1 Technology Preview"/>
+                        version="${version}"/>
         <fx:csstobin outdir="${artifact.temp.output.Archivo}">
             <fileset dir="${artifact.temp.output.Archivo}" includes="**/*.css"/>
         </fx:csstobin>
