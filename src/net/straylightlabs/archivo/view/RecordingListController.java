@@ -376,22 +376,54 @@ public class RecordingListController implements Initializable, Observer {
     /**
      * Recursively search our tree's data model for the recording to delete.
      */
-    private void removeRecordingFromList(Recording recording, ObservableList<TreeItem<Recording>> list) {
+    private boolean removeRecordingFromList(Recording recording, ObservableList<TreeItem<Recording>> list) {
         Iterator<TreeItem<Recording>> i = list.iterator();
+
         while (i.hasNext()) {
             TreeItem<Recording> item = i.next();
             if (!item.isLeaf()) {
-                removeRecordingFromList(recording, item.getChildren());
+                if (removeRecordingFromList(recording, item.getChildren())) {
+                    return true;
+                }
             } else {
                 Recording other = item.getValue();
                 if (other.equals(recording)) {
-                    // FIXME Check if removing this item will leave just one remaining recording in the group;
-                    // if so, make that item a top-level recording
+                    promoteSingleElementGroup(item);
                     i.remove();
-                    return;
+                    return true;
                 }
             }
         }
+
+        return false;
+    }
+
+    private void promoteSingleElementGroup(TreeItem<Recording> itemToRemove) {
+        TreeItem<Recording> parent = itemToRemove.getParent();
+        int siblings = parent.getChildren().size() - 1;
+        Archivo.logger.debug("Removed a recording, leaving {} sibling(s)", siblings);
+        if (siblings == 1) {
+            // Find the remaining sibling
+            TreeItem<Recording> sibling = itemToRemove.nextSibling();
+            if (sibling == null) {
+                sibling = itemToRemove.previousSibling();
+            }
+
+            // Update the title to include series and episode information
+            sibling.getValue().isChildRecording(false);
+
+            // Replace the series group with the one remaining episode
+            int parentIndex = findItemIndex(parent);
+            TreeItem<Recording> grandParent = parent.getParent();
+            grandParent.getChildren().remove(parent);
+            grandParent.getChildren().add(parentIndex, sibling);
+            recordingTreeTable.getSelectionModel().select(sibling);
+        }
+    }
+
+    private int findItemIndex(TreeItem<Recording> item) {
+        ObservableList<TreeItem<Recording>> siblings = item.getParent().getChildren();
+        return siblings.indexOf(item);
     }
 
     private void updateGroupStatus(TreeItem<Recording> group, ObservableList<TreeItem<Recording>> list) {

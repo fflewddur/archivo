@@ -53,15 +53,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-// TODO: rework processing pipeline as follows:
-// 1) Run comskip with FFsplit output enabled
-// 2) Run ffprobe to identify video start time
-// 3) Parse FFsplit output to identify start times and durations (in seconds) of video to keep
-// 4) Add start time of video to FFsplit start times
-// 5) Run ffmpeg to encode each section of video
-// 6) Run ffmpeg to concat video parts together into one file
-// 7) Run HandBrake to encode video
-
 /**
  * Handle the tasks of fetching the recording file from a TiVo, decrypting it, and transcoding it.
  */
