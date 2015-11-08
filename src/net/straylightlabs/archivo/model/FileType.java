@@ -30,17 +30,19 @@ public enum FileType {
     ANDROID_TABLET("Android Tablet Files", "*.mp4"),
     //    APPLE_TV("AppleTV 1 & 2 Files", "*.m4v"),
     APPLE_TV3("AppleTV 3 Files", "*.m4v"),
-    H264_HIGH("Standard H.264 (High Profile) Files ", "*.mp4"),
-    H264_NORMAL("Standard H.264 Files", "*.mp4"),
+    TS("Decrypted TiVo Files", "*.ts", false, false),
+    TIVO("Encrypted TiVo Files", "*.TiVo", false, false),
     IPAD("iPad Files", "*.mp4"),
     IPHONE("iPhone & iPod Touch Files", "*.mp4"),
-    TIVO("Encrypted TiVo Files", "*.TiVo", false),
-    TS("MPEG-TS Files", "*.ts", false),
+    PYTIVO("PyTivo Files", "*.ts", false, true),
+    H264_NORMAL("Standard H.264 Files", "*.mp4"),
+    H264_HIGH("Standard H.264 (High Profile) Files ", "*.mp4"),
     WINDOWS_PHONE("Windows Phone Files", "*.mp4");
 
     private final String description;
     private final String extension;
     private final boolean needsTranscoding;
+    private final boolean includeMetadata;
 
     private static final Map<FileType, Map<String, String>> handbrakeArgs;
 
@@ -49,13 +51,14 @@ public enum FileType {
     }
 
     FileType(String description, String extension) {
-        this(description, extension, true);
+        this(description, extension, true, false);
     }
 
-    FileType(String description, String extension, boolean needsTranscoding) {
+    FileType(String description, String extension, boolean needsTranscoding, boolean includeMetadata) {
         this.description = description;
         this.extension = extension;
         this.needsTranscoding = needsTranscoding;
+        this.includeMetadata = includeMetadata;
     }
 
     public static FileType fromDescription(String description) {
@@ -81,6 +84,10 @@ public enum FileType {
 
     public boolean needsTranscoding() {
         return needsTranscoding;
+    }
+
+    public boolean includeMetadata() {
+        return includeMetadata;
     }
 
     public Map<String, String> getHandbrakeArgs() {

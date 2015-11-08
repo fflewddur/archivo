@@ -65,6 +65,7 @@ public class ArchiveTask extends Task<Recording> {
     private Path fixedPath; // re-muxed file
     private Path ffsplitPath; // FFSkip file from Comskip
     private Path cutPath; // file with commercials removed
+    private Path metadataPath; // PyTivo metadata file
 
     private static final int BUFFER_SIZE = 8192; // 8 KB
     private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 16; // 16 MB
@@ -102,6 +103,7 @@ public class ArchiveTask extends Task<Recording> {
             downloadPath = buildPath(recording.getDestination(), "download.ts");
             fixedPath = buildPath(recording.getDestination(), "fixed.ts");
             cutPath = buildPath(recording.getDestination(), "cut.ts");
+            metadataPath = buildPath(recording.getDestination(), "ts.txt");
             Archivo.logger.info("Saving file to {}", downloadPath);
             getRecording(recording, url);
             if (shouldDecrypt(recording)) {
@@ -205,6 +207,10 @@ public class ArchiveTask extends Task<Recording> {
                     if (!decoder.decode()) {
                         Archivo.logger.error("Failed to decode file");
                         throw new ArchiveTaskException("Problem decoding recording");
+                    }
+                    if (recording.getDestinationType().includeMetadata()) {
+                        Archivo.logger.info("Saving metadata to '{}'", metadataPath);
+                        decoder.saveMetadata(metadataPath);
                     }
                 });
                 thread.start();
