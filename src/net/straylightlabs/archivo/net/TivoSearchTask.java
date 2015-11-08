@@ -22,12 +22,13 @@ package net.straylightlabs.archivo.net;
 import javafx.application.Platform;
 import javafx.collections.ObservableList;
 import javafx.concurrent.Task;
-import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Tivo;
 import net.straylightlabs.hola.dns.Domain;
 import net.straylightlabs.hola.sd.Instance;
 import net.straylightlabs.hola.sd.Query;
 import net.straylightlabs.hola.sd.Service;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
@@ -46,6 +47,8 @@ public class TivoSearchTask extends Task<Void> {
     private static final String PROPERTY_VALUE_STARTS_WITH = "tcd/";
     private static final String TSN_PROPERTY = "TSN";
 
+    private final static Logger logger = LoggerFactory.getLogger(TivoSearchTask.class);
+
     public TivoSearchTask(ObservableList<Tivo> tivos, String mak) {
         this.tivos = tivos;
         this.mak = mak;
@@ -58,25 +61,31 @@ public class TivoSearchTask extends Task<Void> {
     }
 
     private void startSearch() {
+        logger.info("Starting search for TiVo devices...");
         Service tivoMindService = Service.fromName(SERVICE_TYPE);
         Query query = Query.createFor(tivoMindService, Domain.LOCAL);
         try {
             List<Instance> instances = query.runOnce();
-            Archivo.logger.info("Found instances: {}", instances);
+            logger.info("Found instances: {}", instances);
             addTivosFromInstances(instances);
         } catch (IOException e) {
-            Archivo.logger.error("Error searching for TiVo devices: ", e);
+            logger.error("Error searching for TiVo devices: ", e);
         }
     }
 
     private void addTivosFromInstances(List<Instance> instances) {
         instances.stream().forEach(instance -> {
             Tivo tivo = buildTivoFromInstance(instance);
-            Archivo.logger.info("New device: {}", tivo);
+            logger.info("New device: {}", tivo);
             // Add this device to our list, but use the JavaFX thread to do it.
             Platform.runLater(() -> {
                 if (!tivos.contains(tivo)) {
                     tivos.add(tivo);
+                } else {
+                    logger.debug("Updating addresses for {}", tivo);
+                    int index = tivos.indexOf(tivo);
+                    Tivo existingTivo = tivos.get(index);
+                    existingTivo.updateAddresses(tivo.getAddresses());
                 }
             });
         });
@@ -85,7 +94,7 @@ public class TivoSearchTask extends Task<Void> {
     private Tivo buildTivoFromInstance(Instance instance) {
         if (!instance.hasAttribute(IDENTIFYING_PROPERTY) || !instance.lookupAttribute(IDENTIFYING_PROPERTY).startsWith(PROPERTY_VALUE_STARTS_WITH)) {
             // Not a supported device
-            Archivo.logger.error("This does not look like a supported TiVo device.");
+            logger.error("This does not look like a supported TiVo device.");
             throw new IllegalArgumentException("This does not look like a supported TiVo device.");
         }
         String tsn = instance.lookupAttribute(TSN_PROPERTY);

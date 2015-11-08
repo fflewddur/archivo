@@ -40,6 +40,8 @@ import net.straylightlabs.archivo.net.MindCommandBodyConfigSearch;
 import net.straylightlabs.archivo.net.MindCommandRecordingFolderItemSearch;
 import net.straylightlabs.archivo.net.MindTask;
 import net.straylightlabs.archivo.net.TivoSearchTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.time.LocalDateTime;
@@ -51,6 +53,7 @@ public class RecordingListController implements Initializable, Observer {
 
     private TivoSearchTask tivoSearchTask;
     private boolean alreadyDefaultSorted;
+    private boolean uiDisabled;
 
     private Label tablePlaceholderMessage;
 
@@ -75,6 +78,8 @@ public class RecordingListController implements Initializable, Observer {
 
     private Archivo mainApp;
 
+    private final static Logger logger = LoggerFactory.getLogger(RecordingListController.class);
+
     public RecordingListController(Archivo mainApp, List<Tivo> initialTivos) {
         alreadyDefaultSorted = false;
         this.mainApp = mainApp;
@@ -87,7 +92,7 @@ public class RecordingListController implements Initializable, Observer {
         recordingTreeTable.setShowRoot(false);
         recordingTreeTable.setPlaceholder(tablePlaceholderMessage);
         recordingTreeTable.setOnSort(event ->
-                        updateGroupStatus(recordingTreeTable.getRoot(), recordingTreeTable.getRoot().getChildren())
+                updateGroupStatus(recordingTreeTable.getRoot(), recordingTreeTable.getRoot().getChildren())
         );
         showColumn.setCellValueFactory(data -> data.getValue().getValue().titleProperty());
         dateColumn.setCellValueFactory(data -> data.getValue().getValue().dateRecordedProperty());
@@ -99,6 +104,8 @@ public class RecordingListController implements Initializable, Observer {
         setupContextMenuRowFactory();
 
         tivoList.setConverter(new Tivo.StringConverter());
+        tivoList.setItems(tivos);
+
         tivoList.getSelectionModel().selectedItemProperty().addListener(
                 (tivoList, oldTivo, curTivo) -> {
                     if (curTivo != null) {
@@ -107,15 +114,9 @@ public class RecordingListController implements Initializable, Observer {
                     }
                 }
         );
-        tivoList.setItems(tivos);
 
         // When the list of TiVos is first populated, automatically select one
         tivos.addListener(new TivoListChangeListener());
-
-        Tivo lastDevice = mainApp.getLastDevice();
-        if (lastDevice != null && tivos.contains(lastDevice)) {
-            tivoList.setValue(lastDevice);
-        }
 
         setupStyles();
     }
@@ -169,6 +170,7 @@ public class RecordingListController implements Initializable, Observer {
     }
 
     private void fetchRecordingsFrom(Tivo tivo) {
+        logger.debug("Fetching recordings from {}", tivo);
         mainApp.setStatusText("Fetching recordings...");
         recordingTreeTable.getSelectionModel().clearSelection();
         disableUI();
@@ -181,7 +183,7 @@ public class RecordingListController implements Initializable, Observer {
         });
         task.setOnFailed(event -> {
             Throwable e = event.getSource().getException();
-            Archivo.logger.error("Error fetching recordings from {}: ", tivo.getName(), e);
+            logger.error("Error fetching recordings from {}: ", tivo.getName(), e);
             mainApp.clearStatusText();
             mainApp.showErrorMessage("Problem fetching list of recordings",
                     String.format("Unfortunately we encountered a problem while fetching the list of available " +
@@ -257,7 +259,7 @@ public class RecordingListController implements Initializable, Observer {
         });
         bodyConfigTask.setOnFailed(event -> {
             Throwable e = event.getSource().getException();
-            Archivo.logger.error("Error fetching details of {}: ", tivo.getName(), e);
+            logger.error("Error fetching details of {}: ", tivo.getName(), e);
             mainApp.clearStatusText();
             enableUI();
         });
@@ -283,12 +285,16 @@ public class RecordingListController implements Initializable, Observer {
 
         if (tivoSearchTask == null) {
             tivoSearchTask = new TivoSearchTask(tivos, mainApp.getMak());
+            tivoSearchTask.setOnSucceeded(e -> {
+                Tivo lastDevice = mainApp.getLastDevice();
+                if (lastDevice != null && tivos.contains(lastDevice)) {
+                    tivoList.setValue(lastDevice);
+                }
+            });
         }
 
-        if (tivos.size() == 0) {
-            mainApp.setStatusText("Looking for TiVos...");
-            disableUI();
-        }
+        mainApp.setStatusText("Looking for TiVos...");
+        disableUI();
 
         mainApp.getRpcExecutor().submit(tivoSearchTask);
     }
@@ -309,16 +315,24 @@ public class RecordingListController implements Initializable, Observer {
      * Disable the TiVo controls and the recording list
      */
     private void disableUI() {
-        mainApp.getPrimaryStage().getScene().setCursor(Cursor.WAIT);
-        setUIDisabled(true);
+        if (!uiDisabled) {
+            logger.debug("Disabling UI");
+            mainApp.getPrimaryStage().getScene().setCursor(Cursor.WAIT);
+            setUIDisabled(true);
+            uiDisabled = true;
+        }
     }
 
     /**
      * Enable the TiVo controls and the recording list
      */
     private void enableUI() {
-        setUIDisabled(false);
-        mainApp.getPrimaryStage().getScene().setCursor(Cursor.DEFAULT);
+        if (uiDisabled) {
+            logger.debug("Enabling UI");
+            setUIDisabled(false);
+            mainApp.getPrimaryStage().getScene().setCursor(Cursor.DEFAULT);
+            uiDisabled = false;
+        }
     }
 
     private void setUIDisabled(boolean disabled) {
@@ -401,7 +415,7 @@ public class RecordingListController implements Initializable, Observer {
     private void promoteSingleElementGroup(TreeItem<Recording> itemToRemove) {
         TreeItem<Recording> parent = itemToRemove.getParent();
         int siblings = parent.getChildren().size() - 1;
-        Archivo.logger.debug("Removed a recording, leaving {} sibling(s)", siblings);
+        logger.debug("Removed a recording, leaving {} sibling(s)", siblings);
         if (siblings == 1) {
             // Find the remaining sibling
             TreeItem<Recording> sibling = itemToRemove.nextSibling();

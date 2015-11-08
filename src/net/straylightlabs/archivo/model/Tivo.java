@@ -27,6 +27,7 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.List;
 
 public class Tivo {
@@ -59,8 +60,17 @@ public class Tivo {
         client = null;
     }
 
+    public void updateAddresses(List<InetAddress> addresses) {
+        this.addresses.clear();
+        this.addresses.addAll(addresses);
+    }
+
     public String getName() {
         return name;
+    }
+
+    public List<InetAddress> getAddresses() {
+        return Collections.unmodifiableList(addresses);
     }
 
     public String getBodyId() {
