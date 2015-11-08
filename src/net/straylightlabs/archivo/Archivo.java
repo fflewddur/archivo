@@ -96,7 +96,7 @@ public class Archivo extends Application {
             cleanShutdown();
         }
 
-        logger.info("Starting up...");
+        logger.info("Starting up {} {}...", APPLICATION_NAME, APPLICATION_VERSION);
         logVMInfo();
 
         this.primaryStage = primaryStage;
