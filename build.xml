@@ -64,10 +64,10 @@
     </path>
 
     <path id="library.httpclient.classpath">
-        <pathelement location="${basedir}/lib/commons-codec-1.9.jar"/>
+        <pathelement location="${basedir}/lib/commons-codec-1.10.jar"/>
         <pathelement location="${basedir}/lib/commons-logging-1.2.jar"/>
-        <pathelement location="${basedir}/lib/httpclient-4.5.jar"/>
-        <pathelement location="${basedir}/lib/httpcore-4.4.3.jar"/>
+        <pathelement location="${basedir}/lib/httpclient-4.5.1.jar"/>
+        <pathelement location="${basedir}/lib/httpcore-4.4.4.jar"/>
     </path>
 
     <path id="library.json.classpath">
@@ -84,7 +84,7 @@
     </path>
 
     <path id="library.tivo-libre.classpath">
-        <pathelement location="${basedir}/lib/tivo-libre-0.7.0.jar"/>
+        <pathelement location="${basedir}/lib/tivo-libre-0.7.1.jar"/>
     </path>
 
     <!-- Modules -->
