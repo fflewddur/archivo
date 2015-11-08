@@ -69,6 +69,8 @@ class MindCommandRecordingSearch extends MindCommand {
                     builder.bodyId(recordingJSON.getString(BODY_ID));
                 if (recordingJSON.has("title"))
                     builder.seriesTitle(recordingJSON.getString("title"));
+                if (recordingJSON.has("collectionType"))
+                    builder.collectionType(recordingJSON.getString("collectionType"));
                 if (recordingJSON.has("subtitle"))
                     builder.episodeTitle(recordingJSON.getString("subtitle"));
                 if (recordingJSON.has("seasonNumber"))

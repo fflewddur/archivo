@@ -62,6 +62,7 @@ public class Recording {
     private final RecordingReason reason;
     private final boolean isCopyable;
     private final LocalDateTime expectedDeletion;
+    private final Type collectionType;
 
     // Denotes Recordings that are child nodes in the RecordingListView
     private boolean isChildRecording;
@@ -92,6 +93,7 @@ public class Recording {
         reason = builder.reason;
         isCopyable = builder.isCopyable;
         expectedDeletion = builder.expectedDeletion;
+        collectionType = builder.collectionType;
 
         isChildRecording = builder.isChildRecording;
         numEpisodes = builder.numEpisodes;
@@ -324,8 +326,9 @@ public class Recording {
             numComponents++;
         }
 
-        // If we only have a title, add the original air date. If that doesn't exist, use the recording date.
-        if (numComponents == 1) {
+        // If we only have a title and this isn't a movie, add the original air date.
+        // If that doesn't exist, use the recording date.
+        if (numComponents == 1 && collectionType != Type.MOVIE) {
             if (originalAirDate != null) {
                 components.add(originalAirDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
             } else {
@@ -449,6 +452,20 @@ public class Recording {
         }
     }
 
+    public enum Type {
+        SERIES,
+        MOVIE;
+
+        public static Type from(String val) {
+            switch (val) {
+                case "movie":
+                    return MOVIE;
+                default:
+                    return SERIES;
+            }
+        }
+    }
+
     public static class Builder {
         private String recordingId;
         private String bodyId;
@@ -469,6 +486,7 @@ public class Recording {
         private boolean isChildRecording;
         private int numEpisodes;
         private LocalDateTime expectedDeletion;
+        private Type collectionType;
 
         public Builder() {
             // Set default values
@@ -577,6 +595,11 @@ public class Recording {
 
         public Builder expectedDeletion(LocalDateTime val) {
             expectedDeletion = val;
+            return this;
+        }
+
+        public Builder collectionType(String val) {
+            collectionType = Type.from(val);
             return this;
         }
 
