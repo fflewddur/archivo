@@ -22,6 +22,8 @@ package net.straylightlabs.archivo.model;
 import javafx.application.Application;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.utilities.OSHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -37,6 +39,8 @@ public class UserPrefs {
     private Preferences prefs;
     private Preferences sysPrefs;
     private String tooldir;
+
+    private final static Logger logger = LoggerFactory.getLogger(UserPrefs.class);
 
     public static final String MAK = "mak";
     public static final String DEVICE_LIST = "knownTivos";
@@ -65,7 +69,7 @@ public class UserPrefs {
             prefs = Preferences.userNodeForPackage(Archivo.class);
             sysPrefs = Preferences.systemNodeForPackage(Archivo.class);
         } catch (SecurityException e) {
-            Archivo.logger.error("Error accessing preferences: ", e);
+            logger.error("Error accessing preferences: ", e);
         }
     }
 
@@ -82,9 +86,9 @@ public class UserPrefs {
             String param = params.get(i);
             if (param.equalsIgnoreCase("-tooldir")) {
                 tooldir = params.get(++i);
-                Archivo.logger.info("Tools in '{}'", tooldir);
+                logger.info("Tools in '{}'", tooldir);
             } else {
-                Archivo.logger.error("Unrecognized parameter: {}", param);
+                logger.error("Unrecognized parameter: {}", param);
                 allParsed = false;
             }
         }
@@ -149,16 +153,16 @@ public class UserPrefs {
             for (String key : deviceNode.keys()) {
                 String json = deviceNode.get(key, null);
                 try {
-                    Archivo.logger.info("Known device = {}", json);
+                    logger.info("Known device = {}", json);
                     tivos.add(Tivo.fromJSON(json, mak));
                 } catch (IllegalArgumentException e) {
-                    Archivo.logger.error("Error building Tivo object from JSON: ", e);
+                    logger.error("Error building Tivo object from JSON: ", e);
                 }
             }
             return tivos;
 
         } catch (BackingStoreException e) {
-            Archivo.logger.error("Error accessing user preferences: ", e);
+            logger.error("Error accessing user preferences: ", e);
         }
 
         return Collections.emptyList();
@@ -183,7 +187,7 @@ public class UserPrefs {
                 deviceNode.put(key, tivo.toJSON().toString());
             }
         } catch (BackingStoreException e) {
-            Archivo.logger.error("Error accessing user preferences: ", e);
+            logger.error("Error accessing user preferences: ", e);
         }
     }
 
@@ -192,10 +196,10 @@ public class UserPrefs {
         String json = prefs.get(MOST_RECENT_DEVICE, null);
         if (json != null) {
             try {
-                Archivo.logger.info("Last device = {}", json);
+                logger.info("Last device = {}", json);
                 lastDevice = Tivo.fromJSON(json, mak);
             } catch (IllegalArgumentException e) {
-                Archivo.logger.error("Error parsing most recent device: ", e);
+                logger.error("Error parsing most recent device: ", e);
             }
         }
         return lastDevice;
@@ -207,7 +211,11 @@ public class UserPrefs {
 
     public Path getLastFolder() {
         Path lastFolder = Paths.get(prefs.get(MOST_RECENT_FOLDER, getPlatformVideoFolder()));
-        Archivo.logger.info("Last folder = {}", lastFolder);
+        if (!Files.isDirectory(lastFolder)) {
+            logger.error("Last folder was '{}', but this folder no longer exists", lastFolder);
+            lastFolder = Paths.get(getPlatformVideoFolder());
+        }
+        logger.info("Last folder = {}", lastFolder);
         return lastFolder;
     }
 
