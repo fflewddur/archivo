@@ -39,6 +39,8 @@ import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.net.URL;
@@ -67,6 +69,8 @@ public class ArchiveTask extends Task<Recording> {
     private Path cutPath; // file with commercials removed
     private Path metadataPath; // PyTivo metadata file
 
+    private final static Logger logger = LoggerFactory.getLogger(ArchiveTask.class);
+    
     private static final int BUFFER_SIZE = 8192; // 8 KB
     private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 16; // 16 MB
     private static final int MIN_PROGRESS_INCREMENT = 10 * 1024 * 1024; // 10 MB, number of bytes that must transfer before we update our progress
@@ -89,22 +93,22 @@ public class ArchiveTask extends Task<Recording> {
 
     private void archive() throws ArchiveTaskException {
         if (isCancelled()) {
-            Archivo.logger.info("ArchiveTask canceled by user.");
+            logger.info("ArchiveTask canceled by user.");
             return;
         }
 
-        Archivo.logger.info("Starting archive task for {}", recording.getTitle());
+        logger.info("Starting archive task for {}", recording.getTitle());
         try {
             MindCommandIdSearch command = new MindCommandIdSearch(recording, tivo);
 //            command.setCompatibilityMode(true); // Download a PS file instead of a TS file
             command.executeOn(tivo.getClient());
             URL url = command.getDownloadUrl();
-            Archivo.logger.info("URL: {}", url);
+            logger.info("URL: {}", url);
             downloadPath = buildPath(recording.getDestination(), "download.ts");
             fixedPath = buildPath(recording.getDestination(), "fixed.ts");
             cutPath = buildPath(recording.getDestination(), "cut.ts");
             metadataPath = buildPath(recording.getDestination(), "ts.txt");
-            Archivo.logger.info("Saving file to {}", downloadPath);
+            logger.info("Saving file to {}", downloadPath);
             getRecording(recording, url);
             if (shouldDecrypt(recording)) {
                 remux();
@@ -127,14 +131,14 @@ public class ArchiveTask extends Task<Recording> {
                 Files.move(downloadPath, recording.getDestination());
             }
         } catch (IOException e) {
-            Archivo.logger.error("Error fetching recording information: ", e);
+            logger.error("Error fetching recording information: ", e);
             throw new ArchiveTaskException("Problem fetching recording information");
         }
     }
 
     private void getRecording(Recording recording, URL url) throws ArchiveTaskException {
         if (isCancelled()) {
-            Archivo.logger.info("ArchiveTask canceled by user.");
+            logger.info("ArchiveTask canceled by user.");
             return;
         }
 
@@ -151,25 +155,25 @@ public class ArchiveTask extends Task<Recording> {
             while (!responseOk && retries > 0) {
                 try (CloseableHttpResponse response = client.execute(get)) {
                     if (response.getStatusLine().getStatusCode() != 200) {
-                        Archivo.logger.error("Error downloading recording: {}", response.getStatusLine());
-                        Archivo.logger.info("Sleeping for {} ms", retryDelay);
+                        logger.error("Error downloading recording: {}", response.getStatusLine());
+                        logger.info("Sleeping for {} ms", retryDelay);
                         Thread.sleep(retryDelay);
                         retryDelay += RETRY_DELAY;
                         retries--;
                     } else {
-                        Archivo.logger.info("Status line: {}", response.getStatusLine());
+                        logger.info("Status line: {}", response.getStatusLine());
                         responseOk = true;
                         handleResponse(response, recording);
                     }
                 } catch (InterruptedException e) {
-                    Archivo.logger.error("Thread interrupted: ", e);
+                    logger.error("Thread interrupted: ", e);
                 }
             }
             if (!responseOk) {
                 throw new ArchiveTaskException("Problem downloading recording");
             }
         } catch (IOException e) {
-            Archivo.logger.error("Error downloading recording: ", e);
+            logger.error("Error downloading recording: ", e);
             throw new ArchiveTaskException("Problem downloading recording");
         }
     }
@@ -198,18 +202,18 @@ public class ArchiveTask extends Task<Recording> {
              PipedInputStream pipedInputStream = new PipedInputStream(PIPE_BUFFER_SIZE);
              PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream)
         ) {
-            Archivo.logger.info("Starting download...");
+            logger.info("Starting download...");
             // Pipe the network stream to our TiVo decoder, then pipe the output of that to the output file stream
             Thread thread = null;
             if (decrypt) {
                 thread = new Thread(() -> {
                     TivoDecoder decoder = new TivoDecoder.Builder().input(pipedInputStream).output(outputStream).mak(mak).build();
                     if (!decoder.decode()) {
-                        Archivo.logger.error("Failed to decode file");
+                        logger.error("Failed to decode file");
                         throw new ArchiveTaskException("Problem decoding recording");
                     }
                     if (recording.getDestinationType().includeMetadata()) {
-                        Archivo.logger.info("Saving metadata to '{}'", metadataPath);
+                        logger.info("Saving metadata to '{}'", metadataPath);
                         decoder.saveMetadata(metadataPath);
                     }
                 });
@@ -224,17 +228,17 @@ public class ArchiveTask extends Task<Recording> {
                  bytesRead >= 0;
                  bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE)) {
                 if (decrypt && !thread.isAlive()) {
-                    Archivo.logger.error("Decoding thread died prematurely");
+                    logger.error("Decoding thread died prematurely");
                     response.close();
                     throw new ArchiveTaskException("Problem decoding recording");
                 }
                 if (isCancelled()) {
-                    Archivo.logger.info("ArchiveTask cancelled by user.");
+                    logger.info("ArchiveTask cancelled by user.");
                     response.close(); // Stop the network transaction
                     return;
                 }
                 totalBytesRead += bytesRead;
-                Archivo.logger.trace("Bytes read: {}", bytesRead);
+                logger.trace("Bytes read: {}", bytesRead);
 
                 if (decrypt) {
                     pipedOutputStream.write(buffer, 0, bytesRead);
@@ -246,10 +250,10 @@ public class ArchiveTask extends Task<Recording> {
                     double percent = totalBytesRead / (double) estimatedLength;
                     updateProgress(recording, percent, startTime, totalBytesRead, estimatedLength);
                     priorBytesRead = totalBytesRead;
-                    Archivo.logger.info("Total bytes read from network: {}", totalBytesRead);
+                    logger.info("Total bytes read from network: {}", totalBytesRead);
                 }
             }
-            Archivo.logger.info("Download finished.");
+            logger.info("Download finished.");
 
             if (decrypt) {
                 // Close the pipe to ensure the decoding thread finishes
@@ -257,15 +261,15 @@ public class ArchiveTask extends Task<Recording> {
                 pipedOutputStream.close();
                 // Wait for the decoding thread to finish
                 thread.join();
-                Archivo.logger.info("Decoding finished.");
+                logger.info("Decoding finished.");
             }
 
             verifyDownloadSize(totalBytesRead, estimatedLength);
         } catch (IOException e) {
-            Archivo.logger.error("IOException while downloading recording: ", e);
+            logger.error("IOException while downloading recording: ", e);
             throw new ArchiveTaskException("Problem downloading recording");
         } catch (InterruptedException e) {
-            Archivo.logger.error("Decoding thread interrupted: ", e);
+            logger.error("Decoding thread interrupted: ", e);
         }
     }
 
@@ -274,7 +278,7 @@ public class ArchiveTask extends Task<Recording> {
      */
     private boolean shouldDecrypt(Recording recording) {
         boolean decrypt = !recording.getDestination().toString().endsWith(".TiVo");
-        Archivo.logger.info("decrypt = {}", decrypt);
+        logger.info("decrypt = {}", decrypt);
         return decrypt;
     }
 
@@ -285,7 +289,7 @@ public class ArchiveTask extends Task<Recording> {
                 try {
                     length = Long.parseLong(header.getValue());
                 } catch (NumberFormatException e) {
-                    Archivo.logger.error("Error parsing estimated length ({}): ", header.getValue(), e);
+                    logger.error("Error parsing estimated length ({}): ", header.getValue(), e);
                 }
             }
         }
@@ -298,19 +302,19 @@ public class ArchiveTask extends Task<Recording> {
             double kbs = (totalBytesRead / 1024) / elapsedTime.getSeconds();
             long kbRemaining = (estimatedLength - totalBytesRead) / 1024;
             int secondsRemaining = (int) (kbRemaining / kbs);
-            Archivo.logger.info(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
+            logger.info(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
                     totalBytesRead, estimatedLength, (int) (percent * 100), elapsedTime, kbs));
             Platform.runLater(() -> recording.setStatus(
                     ArchiveStatus.createDownloadingStatus(percent, secondsRemaining, kbs)
             ));
         } catch (ArithmeticException e) {
-            Archivo.logger.warn("ArithmeticException: ", e);
+            logger.warn("ArithmeticException: ", e);
         }
     }
 
     private void verifyDownloadSize(long bytesRead, long bytesExpected) {
         if (bytesRead / (double) bytesExpected < ESTIMATED_SIZE_THRESHOLD) {
-            Archivo.logger.error("Failed to download file ({} bytes read, {} bytes expected)", bytesRead, bytesExpected);
+            logger.error("Failed to download file ({} bytes read, {} bytes expected)", bytesRead, bytesExpected);
             throw new ArchiveTaskException("Failed to download recording");
         }
     }
@@ -325,7 +329,7 @@ public class ArchiveTask extends Task<Recording> {
 
         String ffmpegPath = prefs.getFFmpegPath();
         cleanupFiles(fixedPath);
-        Archivo.logger.info("ffmpeg path = {} outputPath = {}", ffmpegPath, fixedPath);
+        logger.info("ffmpeg path = {} outputPath = {}", ffmpegPath, fixedPath);
         List<String> cmd = new ArrayList<>();
         cmd.add(ffmpegPath);
         cmd.add("-fflags");
@@ -352,7 +356,7 @@ public class ArchiveTask extends Task<Recording> {
                         System.getProperty("user.dir")));
                 alert.showAndWait();
             });
-            Archivo.logger.error("Error running ffmpeg to remux download: ", e);
+            logger.error("Error running ffmpeg to remux download: ", e);
             throw new ArchiveTaskException("Error repairing video");
         } finally {
             cleanupFiles(downloadPath);
@@ -386,7 +390,7 @@ public class ArchiveTask extends Task<Recording> {
                 throw new ArchiveTaskException("Error finding commercials");
             }
         } catch (InterruptedException | IOException e) {
-            Archivo.logger.error("Error running comskip: ", e);
+            logger.error("Error running comskip: ", e);
             throw new ArchiveTaskException("Error finding commercials");
         } finally {
             cleanupFiles(logoPath, logPath);
@@ -400,7 +404,7 @@ public class ArchiveTask extends Task<Recording> {
 
 //        double audioOffset = findAudioOffset();
         double videoStartTime = findVideoStartTime();
-        Archivo.logger.info("Video start time: {}", videoStartTime);
+        logger.info("Video start time: {}", videoStartTime);
         Path partList = buildPath(fixedPath, "parts");
         cleanupFiles(cutPath, partList);
         String ffmpegPath = prefs.getFFmpegPath();
@@ -410,7 +414,7 @@ public class ArchiveTask extends Task<Recording> {
         try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(partList))) {
             FFSplitList splitList = FFSplitList.createFromFileWithOffset(ffsplitPath, videoStartTime);
 //            EditDecisionList editDecisionList = EditDecisionList.createFromFileWithOffset(edlPath, audioOffset);
-            Archivo.logger.info("splitList: {}", splitList);
+            logger.info("splitList: {}", splitList);
             List<FFSplitList.Segment> toKeep = splitList.getSegmentsToKeep();
             int curSegment = 1;
             Path escapedPath = Paths.get(fixedPath.toString().replace("\'", ""));
@@ -445,12 +449,12 @@ public class ArchiveTask extends Task<Recording> {
                                     ArchiveStatus.createRemovingCommercialsStatus(progress, ArchiveStatus.TIME_UNKNOWN))
                     );
                 } catch (InterruptedException | IOException e) {
-                    Archivo.logger.error("Error running ffmpeg to cut commercials: ", e);
+                    logger.error("Error running ffmpeg to cut commercials: ", e);
                     throw new ArchiveTaskException("Error removing commercials");
                 }
             }
         } catch (IOException e) {
-            Archivo.logger.error("Error reading ffsplit file '{}': ", ffsplitPath, e);
+            logger.error("Error reading ffsplit file '{}': ", ffsplitPath, e);
             cleanupFiles(partList);
             cleanupFiles(partPaths);
             return;
@@ -479,7 +483,7 @@ public class ArchiveTask extends Task<Recording> {
                 throw new ArchiveTaskException("Error removing commercials");
             }
         } catch (InterruptedException | IOException e) {
-            Archivo.logger.error("Error running ffmpeg to join files: ", e);
+            logger.error("Error running ffmpeg to join files: ", e);
             throw new ArchiveTaskException("Error removing commercials");
         } finally {
             cleanupFiles(partList);
@@ -499,7 +503,7 @@ public class ArchiveTask extends Task<Recording> {
                 throw new ArchiveTaskException("Error finding video stream start time");
             }
         } catch (InterruptedException | IOException e) {
-            Archivo.logger.error("Error running ffprobe: ", e);
+            logger.error("Error running ffprobe: ", e);
             throw new ArchiveTaskException("Error finding video stream start time");
         }
         return outputReader.getVideoStartTime();
@@ -527,7 +531,7 @@ public class ArchiveTask extends Task<Recording> {
         FileType fileType = recording.getDestinationType();
         Map<String, String> handbrakeArgs = fileType.getHandbrakeArgs();
         if (audioLimit == AudioChannel.STEREO) {
-            Archivo.logger.info("Audio limit == STEREO");
+            logger.info("Audio limit == STEREO");
             // Overwrite the existing list of audio encoders with just one
             handbrakeArgs.put("-E", FileType.getPlatformAudioEncoder());
             handbrakeArgs.put("-a", "1");
@@ -549,7 +553,7 @@ public class ArchiveTask extends Task<Recording> {
                         System.getProperty("user.dir")));
                 alert.showAndWait();
             });
-            Archivo.logger.error("Error running HandBrake: ", e);
+            logger.error("Error running HandBrake: ", e);
             throw new ArchiveTaskException("Error compressing video");
         } finally {
             cleanupFiles(cutPath);
@@ -561,7 +565,7 @@ public class ArchiveTask extends Task<Recording> {
             return false;
         }
 
-        Archivo.logger.info("Running command: {}", command.stream().collect(Collectors.joining(" ")));
+        logger.info("Running command: {}", command.stream().collect(Collectors.joining(" ")));
         ProcessBuilder builder = new ProcessBuilder().command(command).redirectErrorStream(true);
         Process process = builder.start();
         outputReader.setInputStream(process.getInputStream());
@@ -569,12 +573,12 @@ public class ArchiveTask extends Task<Recording> {
         readerThread.start();
         while (process.isAlive()) {
             if (isCancelled()) {
-                Archivo.logger.info("Process cancelled, waiting for it to exit");
+                logger.info("Process cancelled, waiting for it to exit");
                 readerThread.interrupt();
                 process.destroyForcibly();
                 process.waitFor();
                 readerThread.join();
-                Archivo.logger.info("Process has exited");
+                logger.info("Process has exited");
                 return false;
             } else {
                 try {
@@ -589,7 +593,7 @@ public class ArchiveTask extends Task<Recording> {
         if (outputReader.isValidExitCode(exitCode)) {
             return true;
         } else {
-            Archivo.logger.error("Error running command {}: exit code = {}", command, exitCode);
+            logger.error("Error running command {}: exit code = {}", command, exitCode);
             return false;
         }
     }
@@ -603,7 +607,7 @@ public class ArchiveTask extends Task<Recording> {
             try {
                 Files.deleteIfExists(f);
             } catch (IOException e) {
-                Archivo.logger.error("Error removing {}: ", f, e);
+                logger.error("Error removing {}: ", f, e);
             }
         });
     }
