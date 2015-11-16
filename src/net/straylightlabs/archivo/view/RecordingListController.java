@@ -50,6 +50,7 @@ import java.util.stream.Collectors;
 
 public class RecordingListController implements Initializable, Observer {
     private final ObservableList<Tivo> tivos;
+    private TreeItem<Recording> suggestions;
 
     private TivoSearchTask tivoSearchTask;
     private boolean alreadyDefaultSorted;
@@ -199,7 +200,7 @@ public class RecordingListController implements Initializable, Observer {
     private void fillTreeTableView(List<Series> series) {
         List<TreeTableColumn<Recording, ?>> oldSortOrder = recordingTreeTable.getSortOrder().stream().collect(Collectors.toList());
         TreeItem<Recording> root = new TreeItem<>(new Recording.Builder().seriesTitle("root").build());
-        TreeItem<Recording> suggestions = new TreeItem<>(new Recording.Builder().seriesTitle("TiVo Suggestions")
+        suggestions = new TreeItem<>(new Recording.Builder().seriesTitle("TiVo Suggestions")
                 .isSeriesHeading(true).build());
         suggestions.expandedProperty().addListener(new HeaderExpandedHandler(suggestions));
 
@@ -457,6 +458,32 @@ public class RecordingListController implements Initializable, Observer {
             }
             group.getValue().setStatus(groupStatus);
         }
+    }
+
+    public void expandShows() {
+        expandTreeItemAndChildren(recordingTreeTable.getRoot());
+    }
+
+    public void collapseShows() {
+        collapseTreeItemAndChildren(recordingTreeTable.getRoot());
+    }
+
+    private void expandTreeItemAndChildren(TreeItem<Recording> item) {
+        item.getChildren().stream().filter(child -> !child.isLeaf()).forEach(child -> {
+            if (child != suggestions) {
+                child.setExpanded(true);
+            }
+            expandTreeItemAndChildren(child);
+        });
+    }
+
+    private void collapseTreeItemAndChildren(TreeItem<Recording> item) {
+        item.getChildren().stream().filter(child -> !child.isLeaf()).forEach(child -> {
+            if (child != suggestions) {
+                child.setExpanded(false);
+            }
+            expandTreeItemAndChildren(child);
+        });
     }
 
     @Override

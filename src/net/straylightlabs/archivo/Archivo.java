@@ -405,6 +405,14 @@ public class Archivo extends Application {
         rpcExecutor.submit(task);
     }
 
+    public void expandShows() {
+        recordingListController.expandShows();
+    }
+
+    public void collapseShows() {
+        recordingListController.collapseShows();
+    }
+
     public Stage getPrimaryStage() {
         return primaryStage;
     }

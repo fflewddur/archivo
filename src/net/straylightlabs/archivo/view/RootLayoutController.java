@@ -28,11 +28,16 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressIndicator;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.GridPane;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.utilities.OSHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.io.IOException;
@@ -62,12 +67,18 @@ public class RootLayoutController implements Initializable, Observer {
     @FXML
     private MenuItem cancelAllMenuItem;
     @FXML
+    private MenuItem expandMenuItem;
+    @FXML
+    private MenuItem collapseMenuItem;
+    @FXML
     private GridPane mainGrid;
     @FXML
     private ProgressIndicator statusIndicator;
     @FXML
     private Label statusMessage;
 
+
+    private final static Logger logger = LoggerFactory.getLogger(RootLayoutController.class);
 
     public RootLayoutController() {
         statusChangeListener = (observable, oldStatus, newStatus) -> {
@@ -81,6 +92,18 @@ public class RootLayoutController implements Initializable, Observer {
     public void initialize(URL location, ResourceBundle resources) {
         menubar.setUseSystemMenuBar(true);
         statusIndicator.setVisible(false);
+        setShortcutKeys();
+    }
+
+    private void setShortcutKeys() {
+        archiveMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN));
+        if (OSHelper.isMacOS()) {
+            deleteMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.BACK_SPACE, KeyCombination.SHORTCUT_DOWN));
+        } else {
+            deleteMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.DELETE, KeyCombination.SHORTCUT_DOWN));
+        }
+        expandMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.RIGHT, KeyCombination.SHORTCUT_DOWN));
+        collapseMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.LEFT, KeyCombination.SHORTCUT_DOWN));
     }
 
     @FXML
@@ -111,6 +134,18 @@ public class RootLayoutController implements Initializable, Observer {
     @FXML
     public void quit(ActionEvent event) {
         mainApp.cleanShutdown();
+    }
+
+    @FXML
+    public void expandShows(ActionEvent event) {
+        mainApp.expandShows();
+        logger.info("expand");
+    }
+
+    @FXML
+    public void collapseShows(ActionEvent event) {
+        mainApp.collapseShows();
+        logger.info("collapse");
     }
 
     @FXML

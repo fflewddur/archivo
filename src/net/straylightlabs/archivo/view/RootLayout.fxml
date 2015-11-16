@@ -40,6 +40,10 @@
            <Menu text="Edit">
                <MenuItem text="Preferences" onAction="#showPreferencesDialog"/>
            </Menu>
+           <Menu text="View">
+               <MenuItem text="Expand all Shows" fx:id="expandMenuItem" onAction="#expandShows"/>
+               <MenuItem text="Collapse all Shows" fx:id="collapseMenuItem" onAction="#collapseShows"/>
+           </Menu>
            <Menu text="Help">
                <MenuItem text="View Log" onAction="#openLog"/>
                <SeparatorMenuItem/>
