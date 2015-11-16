@@ -449,9 +449,17 @@ public class Archivo extends Application {
     }
 
     public void updateMAK(String newMak) {
-        this.mak = newMak;
-        prefs.setMAK(newMak);
-        recordingListController.updateMak(newMak);
+        if (newMak == null) {
+            logger.error("MAK cannot be empty");
+            return;
+        } else if (newMak.equals(this.mak)) {
+            logger.debug("MAK has not changed");
+            return;
+        } else {
+            this.mak = newMak;
+            prefs.setMAK(newMak);
+            recordingListController.updateMak(newMak);
+        }
     }
 
     public RecordingDetailsController getRecordingDetailsController() {

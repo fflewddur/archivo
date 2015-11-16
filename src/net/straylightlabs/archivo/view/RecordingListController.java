@@ -282,20 +282,32 @@ public class RecordingListController implements Initializable, Observer {
     }
 
     public void startTivoSearch() {
+        logger.debug("startTivoSearch()");
         assert (mainApp != null);
 
         if (tivoSearchTask == null) {
             tivoSearchTask = new TivoSearchTask(tivos, mainApp.getMak());
             tivoSearchTask.setOnSucceeded(e -> {
+                logger.debug("Tivo search task succeeded");
                 Tivo lastDevice = mainApp.getLastDevice();
                 if (lastDevice != null && tivos.contains(lastDevice)) {
                     tivoList.setValue(lastDevice);
                 }
+                tivoSearchTask = null;
+            });
+            tivoSearchTask.setOnFailed(e -> {
+                logger.error("Tivo search task failed: ", e.getSource().getException());
+                tivoSearchTask = null;
+            });
+            tivoSearchTask.setOnCancelled(e -> {
+                logger.info("Tivo search task canceled");
+                tivoSearchTask = null;
             });
         }
 
         mainApp.setStatusText("Looking for TiVos...");
         disableUI();
+        tivos.clear();
 
         mainApp.getRpcExecutor().submit(tivoSearchTask);
     }
@@ -306,9 +318,9 @@ public class RecordingListController implements Initializable, Observer {
     }
 
     public void restartTivoSearch() {
-        assert (tivoSearchTask != null);
-
-        tivoSearchTask.cancel();
+        if (tivoSearchTask != null) {
+            tivoSearchTask.cancel();
+        }
         startTivoSearch();
     }
 
