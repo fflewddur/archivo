@@ -484,7 +484,10 @@ public class RecordingListController implements Initializable, Observer {
     }
 
     public void expandShows() {
+        TreeItem<Recording> selectedItem = recordingTreeTable.getSelectionModel().getSelectedItem();
         expandTreeItemAndChildren(recordingTreeTable.getRoot());
+        int selectedIndex = recordingTreeTable.getRow(selectedItem);
+        recordingTreeTable.scrollTo(selectedIndex);
     }
 
     public void collapseShows() {
