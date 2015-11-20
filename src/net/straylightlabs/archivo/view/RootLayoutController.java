@@ -140,13 +140,11 @@ public class RootLayoutController implements Initializable, Observer {
     @FXML
     public void expandShows(ActionEvent event) {
         mainApp.expandShows();
-        logger.info("expand");
     }
 
     @FXML
     public void collapseShows(ActionEvent event) {
         mainApp.collapseShows();
-        logger.info("collapse");
     }
 
     @FXML
