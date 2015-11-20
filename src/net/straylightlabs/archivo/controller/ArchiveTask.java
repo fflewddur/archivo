@@ -131,6 +131,7 @@ public class ArchiveTask extends Task<Recording> {
                 }
                 cleanupFiles(fixedPath, downloadPath);
             } else {
+                cleanupFiles(recording.getDestination());
                 Files.move(downloadPath, recording.getDestination());
             }
         } catch (IOException e) {
@@ -200,6 +201,7 @@ public class ArchiveTask extends Task<Recording> {
     private void handleResponse(CloseableHttpResponse response, Recording recording) throws ArchiveTaskException {
         long estimatedLength = getEstimatedLengthFromHeaders(response);
         boolean decrypt = shouldDecrypt(recording);
+        cleanupFiles(downloadPath);
         try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(downloadPath));
              BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent(), BUFFER_SIZE);
              PipedInputStream pipedInputStream = new PipedInputStream(PIPE_BUFFER_SIZE);

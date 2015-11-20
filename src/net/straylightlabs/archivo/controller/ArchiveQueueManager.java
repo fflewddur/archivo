@@ -21,6 +21,7 @@ package net.straylightlabs.archivo.controller;
 
 import javafx.concurrent.Task;
 import net.straylightlabs.archivo.Archivo;
+import net.straylightlabs.archivo.model.ArchiveHistory;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
@@ -55,6 +56,7 @@ public class ArchiveQueueManager extends Observable {
             });
             task.setOnSucceeded(event -> {
                 Archivo.logger.info("ArchiveTask succeeded for {}", recording.getFullTitle());
+                updateArchiveHistory(recording);
                 removeTask(recording);
                 recording.setStatus(ArchiveStatus.FINISHED);
             });
@@ -91,6 +93,12 @@ public class ArchiveQueueManager extends Observable {
             notifyObservers(false);
         }
         mainApp.clearStatusText();
+    }
+
+    private void updateArchiveHistory(Recording recording) {
+        ArchiveHistory archiveHistory = mainApp.getArchiveHistory();
+        archiveHistory.add(recording);
+        archiveHistory.save();
     }
 
     public void cancelArchiveTask(Recording recording) {

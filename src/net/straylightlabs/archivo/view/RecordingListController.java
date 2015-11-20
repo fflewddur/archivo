@@ -32,10 +32,7 @@ import javafx.scene.Cursor;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import net.straylightlabs.archivo.Archivo;
-import net.straylightlabs.archivo.model.ArchiveStatus;
-import net.straylightlabs.archivo.model.Recording;
-import net.straylightlabs.archivo.model.Series;
-import net.straylightlabs.archivo.model.Tivo;
+import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.MindCommandBodyConfigSearch;
 import net.straylightlabs.archivo.net.MindCommandRecordingFolderItemSearch;
 import net.straylightlabs.archivo.net.MindTask;
@@ -206,6 +203,7 @@ public class RecordingListController implements Initializable, Observer {
 
         for (Series s : series) {
             List<Recording> recordings = s.getEpisodes();
+            markArchivedRecordings(recordings);
             TreeItem<Recording> item;
             boolean allAreSuggestions = true;
             if (recordings.size() > 1) {
@@ -247,6 +245,19 @@ public class RecordingListController implements Initializable, Observer {
             }
             recordingTreeTable.getSelectionModel().selectFirst();
             recordingTreeTable.requestFocus();
+        });
+    }
+
+    /**
+     * Check each recording to see if it's in our archive history; if so, mark it as previously
+     * archived and update its file location.
+     */
+    private void markArchivedRecordings(List<Recording> recordings) {
+        ArchiveHistory archiveHistory = mainApp.getArchiveHistory();
+        recordings.stream().filter(archiveHistory::contains).forEach(recording -> {
+            ArchiveHistory.ArchiveHistoryItem historyItem = archiveHistory.get(recording);
+            recording.setStatus(ArchiveStatus.FINISHED);
+            recording.setDestination(historyItem.getLocation());
         });
     }
 

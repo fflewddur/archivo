@@ -37,12 +37,10 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import net.straylightlabs.archivo.controller.ArchiveQueueManager;
 import net.straylightlabs.archivo.controller.UpdateCheckTask;
-import net.straylightlabs.archivo.model.Recording;
-import net.straylightlabs.archivo.model.SoftwareUpdateDetails;
-import net.straylightlabs.archivo.model.Tivo;
-import net.straylightlabs.archivo.model.UserPrefs;
+import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.MindCommandRecordingUpdate;
 import net.straylightlabs.archivo.net.MindTask;
+import net.straylightlabs.archivo.utilities.OSHelper;
 import net.straylightlabs.archivo.view.RecordingDetailsController;
 import net.straylightlabs.archivo.view.RecordingListController;
 import net.straylightlabs.archivo.view.RootLayoutController;
@@ -55,6 +53,7 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.List;
@@ -72,6 +71,7 @@ public class Archivo extends Application {
     private RecordingListController recordingListController;
     private RecordingDetailsController recordingDetailsController;
     private final ArchiveQueueManager archiveQueueManager;
+    private ArchiveHistory archiveHistory;
 
     public final static Logger logger = LoggerFactory.getLogger(Archivo.class);
 
@@ -81,6 +81,7 @@ public class Archivo extends Application {
     public static final String USER_AGENT = String.format("%s/%s", APPLICATION_NAME, APPLICATION_VERSION);
     public static final int WINDOW_MIN_HEIGHT = 400;
     public static final int WINDOW_MIN_WIDTH = 555;
+    private static final Path ARCHIVE_HISTORY_PATH = Paths.get(OSHelper.getDataDirectory().toString(), "history.xml");
 
     public Archivo() {
         super();
@@ -98,6 +99,8 @@ public class Archivo extends Application {
 
         logger.info("Starting up {} {}...", APPLICATION_NAME, APPLICATION_VERSION);
         logVMInfo();
+
+        archiveHistory = ArchiveHistory.loadFrom(ARCHIVE_HISTORY_PATH);
 
         this.primaryStage = primaryStage;
         this.primaryStage.setTitle(APPLICATION_NAME);
@@ -190,6 +193,7 @@ public class Archivo extends Application {
             return;
         }
 
+        archiveHistory.save();
         saveWindowDimensions();
 
         int waitTimeMS = 100;
@@ -464,6 +468,10 @@ public class Archivo extends Application {
 
     public RecordingDetailsController getRecordingDetailsController() {
         return recordingDetailsController;
+    }
+
+    public ArchiveHistory getArchiveHistory() {
+        return archiveHistory;
     }
 
     public UserPrefs getUserPrefs() {
