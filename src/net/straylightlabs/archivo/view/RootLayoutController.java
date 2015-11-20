@@ -102,6 +102,7 @@ public class RootLayoutController implements Initializable, Observer {
         } else {
             deleteMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.DELETE, KeyCombination.SHORTCUT_DOWN));
         }
+        cancelMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.ESCAPE));
         expandMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.CLOSE_BRACKET, KeyCombination.SHORTCUT_DOWN));
         collapseMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.OPEN_BRACKET, KeyCombination.SHORTCUT_DOWN));
     }
