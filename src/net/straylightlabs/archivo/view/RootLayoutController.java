@@ -20,6 +20,7 @@
 package net.straylightlabs.archivo.view;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -52,7 +53,8 @@ import java.util.ResourceBundle;
 public class RootLayoutController implements Initializable, Observer {
     private Archivo mainApp;
     private Recording selectedRecording;
-    private ChangeListener<ArchiveStatus> statusChangeListener;
+    private final ChangeListener<ArchiveStatus> statusChangeListener;
+    private final SimpleBooleanProperty trueProperty;
 
     @FXML
     private MenuBar menubar;
@@ -77,7 +79,7 @@ public class RootLayoutController implements Initializable, Observer {
     @FXML
     private Label statusMessage;
 
-
+    @SuppressWarnings("unused")
     private final static Logger logger = LoggerFactory.getLogger(RootLayoutController.class);
 
     public RootLayoutController() {
@@ -86,6 +88,8 @@ public class RootLayoutController implements Initializable, Observer {
                 updateMenuItems(selectedRecording);
             }
         };
+        trueProperty = new SimpleBooleanProperty();
+        trueProperty.setValue(true);
     }
 
     @Override
@@ -211,10 +215,10 @@ public class RootLayoutController implements Initializable, Observer {
 
     private void updateMenuItems(Recording recording) {
         if (recording == null) {
-            archiveMenuItem.setDisable(true);
-            cancelMenuItem.setDisable(true);
-            playMenuItem.setDisable(true);
-            deleteMenuItem.setDisable(true);
+            archiveMenuItem.disableProperty().bind(trueProperty);
+            cancelMenuItem.disableProperty().bind(trueProperty);
+            playMenuItem.disableProperty().bind(trueProperty);
+            deleteMenuItem.disableProperty().bind(trueProperty);
         } else {
             archiveMenuItem.disableProperty().bind(Bindings.or(recording.isArchivableProperty().not(), recording.isCancellableProperty()));
             cancelMenuItem.disableProperty().bind(recording.isCancellableProperty().not());

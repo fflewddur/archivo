@@ -456,6 +456,11 @@ public class RecordingListController implements Initializable, Observer {
             grandParent.getChildren().remove(parent);
             grandParent.getChildren().add(parentIndex, sibling);
             recordingTreeTable.getSelectionModel().select(sibling);
+            Platform.runLater(() -> {
+                TreeItem<Recording> selectedItem = recordingTreeTable.getSelectionModel().getSelectedItem();
+                int selectedIndex = recordingTreeTable.getRow(selectedItem);
+                recordingTreeTable.getFocusModel().focus(selectedIndex);
+            });
         }
     }
 
@@ -486,12 +491,23 @@ public class RecordingListController implements Initializable, Observer {
     public void expandShows() {
         TreeItem<Recording> selectedItem = recordingTreeTable.getSelectionModel().getSelectedItem();
         expandTreeItemAndChildren(recordingTreeTable.getRoot());
-        int selectedIndex = recordingTreeTable.getRow(selectedItem);
-        recordingTreeTable.scrollTo(selectedIndex);
+        Platform.runLater(() -> {
+            int selectedIndex = recordingTreeTable.getRow(selectedItem);
+            recordingTreeTable.scrollTo(selectedIndex);
+            recordingTreeTable.getSelectionModel().select(selectedIndex);
+            recordingTreeTable.getFocusModel().focus(selectedIndex);
+        });
     }
 
     public void collapseShows() {
         collapseTreeItemAndChildren(recordingTreeTable.getRoot());
+        Platform.runLater(() -> {
+            TreeItem<Recording> selectedItem = recordingTreeTable.getSelectionModel().getSelectedItem();
+            int selectedIndex = recordingTreeTable.getRow(selectedItem);
+            recordingTreeTable.scrollTo(selectedIndex);
+            recordingTreeTable.getSelectionModel().select(selectedIndex);
+            recordingTreeTable.getFocusModel().focus(selectedIndex);
+        });
     }
 
     private void expandTreeItemAndChildren(TreeItem<Recording> item) {
@@ -508,7 +524,7 @@ public class RecordingListController implements Initializable, Observer {
             if (child != suggestions) {
                 child.setExpanded(false);
             }
-            expandTreeItemAndChildren(child);
+            collapseTreeItemAndChildren(child);
         });
     }
 
