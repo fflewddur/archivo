@@ -19,7 +19,7 @@ Archivo is still in development and may have some rough edges. It currently supp
 * Supported operating systems:
   * Mac OS X 10.7.3 and higher
   * Windows Vista and higher
-  * Any Linux system with Java 8, FFmpeg 2.8 or higher, HandBrake 0.10.2 or higher, and Comskip 0.81.89 or higher. The FFmpeg, HandBrake, and Comskip executables must all be in the same directory (e.g., /usr/local/bin), and Archivo needs to be run with the `-tooldir` parameter specifying this directory (e.g., `java -jar /path/to/archivo.jar -tooldir /usr/local/bin`).
+  * Any Linux system with Java 8, FFmpeg 2.8 or higher, HandBrake CLI (command-line interface) 0.10.2 or higher, and Comskip 0.81.89 or higher. The FFmpeg, HandBrake CLI, and Comskip executables must all be in the same directory (e.g., /usr/local/bin) with the names "ffmpeg", "handbrake", and "comskip", and Archivo needs to be run with the `-tooldir` parameter specifying this directory (e.g., `java -jar /path/to/archivo.jar -tooldir /usr/local/bin`).
 
 ## Downloads
 The latest release of Archivo can be found at https://github.com/fflewddur/archivo/releases. We provide packages for Windows and Mac OS X. Archivo also runs on Linux, but we do not currently provide pre-compiled Linux packages.
