@@ -338,7 +338,12 @@
 
         <property name="dmg.name" value="${title} ${version}"/>
         <property name="dmg.path" value="${artifact.output.archivo}/${dmg.name}.dmg"/>
+        <property name="dmg.path.tmp" value="${artifact.output.archivo}/${dmg.name}.tmp.dmg"/>
+        <property name="mountdir" value="/tmp"/>
+
         <delete file="${dmg.path}" quiet="yes" failonerror="false"/>
+
+        <!-- Create a temporary image -->
         <exec executable="/usr/bin/hdiutil" os="Mac OS X" failonerror="true">
             <arg value="create"/>
             <arg value="-srcfolder"/>
@@ -346,10 +351,49 @@
             <arg value="-volname"/>
             <arg value="${dmg.name}"/>
             <arg value="-ov"/>
-            <arg value="${dmg.path}"/>
+            <arg value="${dmg.path.tmp}"/>
+            <arg value="-format"/>
+            <arg value="UDRW"/>
+        </exec>
+
+        <!-- Attach the temporary image -->
+        <exec executable="/usr/bin/hdiutil" os="Mac OS X" failonerror="true">
+            <arg value="attach"/>
+            <arg value="${dmg.path.tmp}"/>
+            <arg value="-mountroot"/>
+            <arg value="${mountdir}/"/>
+        </exec>
+
+        <!-- Copy the background, the volume icon and DS_Store files -->
+        <mkdir dir="${mountdir}/${dmg.name}/.background"/>
+        <copy file="${basedir}/package/macosx/background.png"
+              tofile="${mountdir}/${dmg.name}/.background/background.png"
+              overwrite="true"/>
+        <copy file="${basedir}/package/macosx/DS_Store"
+              tofile="${mountdir}/${dmg.name}/.DS_Store"
+              overwrite="true"/>
+
+        <!-- Add a symbolic link to the Applications directory -->
+        <symlink link="${mountdir}/${dmg.name}" resource="/Applications"/>
+
+        <!-- Detach the temporary image -->
+        <exec executable="/usr/bin/hdiutil" os="Mac OS X" failonerror="true">
+            <arg value="detach"/>
+            <arg value="${mountdir}/${dmg.name}"/>
+        </exec>
+
+        <!-- Compress it to a new image -->
+        <exec executable="/usr/bin/hdiutil" os="Mac OS X" failonerror="true">
+            <arg value="convert"/>
+            <arg value="${dmg.path.tmp}"/>
             <arg value="-format"/>
             <arg value="UDZO"/>
+            <arg value="-o"/>
+            <arg value="${dmg.path}"/>
         </exec>
+
+        <!-- Delete the temporary image -->
+        <delete file="${dmg.path.tmp}" quiet="yes" failonerror="false"/>
     </target>
 
     <target name="archivo.exe" depends="artifact.archivo">
