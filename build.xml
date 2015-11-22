@@ -366,8 +366,8 @@
 
         <!-- Copy the background, the volume icon and DS_Store files -->
         <mkdir dir="${mountdir}/${dmg.name}/.background"/>
-        <copy file="${basedir}/package/macosx/background.png"
-              tofile="${mountdir}/${dmg.name}/.background/background.png"
+        <copy file="${basedir}/package/macosx/background.tiff"
+              tofile="${mountdir}/${dmg.name}/.background/background.tiff"
               overwrite="true"/>
         <copy file="${basedir}/package/macosx/DS_Store"
               tofile="${mountdir}/${dmg.name}/.DS_Store"
