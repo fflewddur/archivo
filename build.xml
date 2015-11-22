@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project name="archivo" default="all">
+<project name="archivo" default="archivo">
     <property name="title" value="Archivo"/>
     <property name="version" value="0.4 Technology Preview"/>
     <property name="copyright" value="2015 Straylight Labs LLC"/>
@@ -376,6 +376,18 @@
             <arg value='"/dMyAppVersion=${version}"'/>
             <arg value="${basedir}/package/win32/installer.iss"/>
         </exec>
+
+        <!-- Delete temporary files -->
+        <delete dir="${artifacts.temp.dir}"/>
+    </target>
+
+    <target name="archivo" depends="artifact.archivo">
+        <delete dir="artifact.output.archivo" failonerror="false"/>
+        <mkdir dir="${artifact.output.archivo}"/>
+
+        <copy todir="${artifact.output.archivo}">
+            <fileset dir="${artifact.temp.output.Archivo}" includes="*.jar"/>
+        </copy>
 
         <!-- Delete temporary files -->
         <delete dir="${artifacts.temp.dir}"/>
