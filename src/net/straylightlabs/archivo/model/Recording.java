@@ -64,6 +64,24 @@ public class Recording {
     private final LocalDateTime expectedDeletion;
     private final Type collectionType;
 
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Recording recording = (Recording) o;
+
+        return !(recordingId != null ? !recordingId.equals(recording.recordingId) : recording.recordingId != null) &&
+                !(seriesTitle != null ? !seriesTitle.equals(recording.seriesTitle) : recording.seriesTitle != null);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = recordingId != null ? recordingId.hashCode() : 0;
+        result = 31 * result + (seriesTitle != null ? seriesTitle.hashCode() : 0);
+        return result;
+    }
+
     // Denotes Recordings that are child nodes in the RecordingListView
     private boolean isChildRecording;
     private final int numEpisodes;
@@ -361,15 +379,16 @@ public class Recording {
                     type == Character.DASH_PUNCTUATION) {
                 sb.append(c);
                 prevCharIsSpace = false;
-            } else if (type == Character.OTHER_PUNCTUATION) {
-                // Don't even add a space for these
-            } else if (Character.isWhitespace(c) && !prevCharIsSpace) {
-                sb.append(c);
-                prevCharIsSpace = true;
-            } else if (!prevCharIsSpace) {
-                // Replace an invalid character with a space
-                sb.append(' ');
-                prevCharIsSpace = true;
+            } else if (type != Character.OTHER_PUNCTUATION) {
+                // Don't even add a space for OTHER_PUNCTUATION
+                if (Character.isWhitespace(c) && !prevCharIsSpace) {
+                    sb.append(c);
+                    prevCharIsSpace = true;
+                } else if (!prevCharIsSpace) {
+                    // Replace an invalid character with a space
+                    sb.append(' ');
+                    prevCharIsSpace = true;
+                }
             }
         }
         return sb.toString();
@@ -450,6 +469,41 @@ public class Recording {
         if (this.isPlayable.get() != isPlayable) {
             this.isPlayable.set(isPlayable);
         }
+    }
+
+    @Override
+    public String toString() {
+        return "Recording{" +
+                "title=" + title +
+                ", dateRecorded=" + dateRecorded +
+                ", status=" + status +
+                ", isSeriesHeading=" + isSeriesHeading +
+                ", isArchivable=" + isArchivable +
+                ", isCancellable=" + isCancellable +
+                ", isPlayable=" + isPlayable +
+                ", isRemovable=" + isRemovable +
+                ", recordingId='" + recordingId + '\'' +
+                ", bodyId='" + bodyId + '\'' +
+                ", seriesTitle='" + seriesTitle + '\'' +
+                ", episodeTitle='" + episodeTitle + '\'' +
+                ", duration=" + duration +
+                ", seriesNumber=" + seriesNumber +
+                ", episodeNumbers=" + episodeNumbers +
+                ", channel=" + channel +
+                ", description='" + description + '\'' +
+                ", imageURL=" + imageURL +
+                ", originalAirDate=" + originalAirDate +
+                ", state=" + state +
+                ", reason=" + reason +
+                ", isCopyable=" + isCopyable +
+                ", expectedDeletion=" + expectedDeletion +
+                ", collectionType=" + collectionType +
+                ", isChildRecording=" + isChildRecording +
+                ", numEpisodes=" + numEpisodes +
+                ", seasonAndEpisode='" + seasonAndEpisode + '\'' +
+                ", destination=" + destination +
+                ", destinationType=" + destinationType +
+                '}';
     }
 
     public enum Type {

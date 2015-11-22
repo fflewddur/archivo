@@ -125,7 +125,7 @@ public class Archivo extends Application {
         initRecordingDetails();
         initRecordingList(initialTivos);
 
-        archiveQueueManager.addObserver(recordingListController);
+//        archiveQueueManager.addObserver(recordingListController);
         archiveQueueManager.addObserver(rootController);
 
         primaryStage.setOnCloseRequest(e -> {
@@ -470,6 +470,10 @@ public class Archivo extends Application {
 
     public ArchiveHistory getArchiveHistory() {
         return archiveHistory;
+    }
+
+    public ArchiveQueueManager getArchiveQueueManager() {
+        return archiveQueueManager;
     }
 
     public UserPrefs getUserPrefs() {

@@ -19,7 +19,6 @@
 
 package net.straylightlabs.archivo.controller;
 
-import javafx.concurrent.Task;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.ArchiveHistory;
 import net.straylightlabs.archivo.model.ArchiveStatus;
@@ -39,7 +38,7 @@ import java.util.concurrent.RejectedExecutionException;
 public class ArchiveQueueManager extends Observable {
     private final Archivo mainApp;
     private final ExecutorService executorService;
-    private final ConcurrentHashMap<Recording, Task<Recording>> queuedTasks;
+    private final ConcurrentHashMap<Recording, ArchiveTask> queuedTasks;
 
     public ArchiveQueueManager(Archivo mainApp) {
         this.mainApp = mainApp;
@@ -102,7 +101,7 @@ public class ArchiveQueueManager extends Observable {
     }
 
     public void cancelArchiveTask(Recording recording) {
-        Task<Recording> task = queuedTasks.get(recording);
+        ArchiveTask task = queuedTasks.get(recording);
         if (task != null) {
             task.cancel();
         }
@@ -114,5 +113,17 @@ public class ArchiveQueueManager extends Observable {
 
     public boolean hasTasks() {
         return queuedTasks.size() > 0;
+    }
+
+    public boolean containsRecording(Recording recording) {
+        return queuedTasks.containsKey(recording);
+    }
+
+    public Recording getQueuedRecording(Recording recording) {
+        ArchiveTask task = queuedTasks.get(recording);
+        if (task == null) {
+            throw new IllegalArgumentException("recording is not in queuedTasks");
+        }
+        return task.getRecording();
     }
 }

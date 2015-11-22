@@ -85,6 +85,10 @@ public class ArchiveTask extends Task<Recording> {
         this.prefs = prefs;
     }
 
+    public Recording getRecording() {
+        return recording;
+    }
+
     @Override
     protected Recording call() throws ArchiveTaskException {
         archive();

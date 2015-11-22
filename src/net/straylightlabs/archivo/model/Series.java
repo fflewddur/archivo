@@ -19,7 +19,6 @@
 
 package net.straylightlabs.archivo.model;
 
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -39,6 +38,6 @@ public class Series {
     }
 
     public List<Recording> getEpisodes() {
-        return Collections.unmodifiableList(episodes);
+        return episodes;
     }
 }

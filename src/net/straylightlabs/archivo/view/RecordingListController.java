@@ -32,6 +32,7 @@ import javafx.scene.Cursor;
 import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import net.straylightlabs.archivo.Archivo;
+import net.straylightlabs.archivo.controller.ArchiveQueueManager;
 import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.MindCommandBodyConfigSearch;
 import net.straylightlabs.archivo.net.MindCommandRecordingFolderItemSearch;
@@ -42,10 +43,12 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Iterator;
+import java.util.List;
+import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
-public class RecordingListController implements Initializable, Observer {
+public class RecordingListController implements Initializable {
     private final ObservableList<Tivo> tivos;
     private TreeItem<Recording> suggestions;
 
@@ -204,6 +207,7 @@ public class RecordingListController implements Initializable, Observer {
         for (Series s : series) {
             List<Recording> recordings = s.getEpisodes();
             markArchivedRecordings(recordings);
+            markQueuedRecordings(recordings);
             TreeItem<Recording> item;
             boolean allAreSuggestions = true;
             if (recordings.size() > 1) {
@@ -259,6 +263,21 @@ public class RecordingListController implements Initializable, Observer {
             recording.setStatus(ArchiveStatus.FINISHED);
             recording.setDestination(historyItem.getLocation());
         });
+    }
+
+    /**
+     * Check each recording to see if it's in our queue of archive tasks; if so, replace the recording
+     * with a reference to our previously queued task.
+     */
+    private void markQueuedRecordings(List<Recording> recordings) {
+        ArchiveQueueManager queueManager = mainApp.getArchiveQueueManager();
+        for (int i = 0; i < recordings.size(); i++) {
+            Recording recording = recordings.get(i);
+            if (!recording.isSeriesHeading() && queueManager.containsRecording(recording)) {
+                Recording queuedRecording = queueManager.getQueuedRecording(recording);
+                recordings.set(i, queuedRecording);
+            }
+        }
     }
 
     public void updateTivoDetails(Tivo tivo) {
@@ -362,25 +381,6 @@ public class RecordingListController implements Initializable, Observer {
     private void setUIDisabled(boolean disabled) {
         toolbar.setDisable(disabled);
         recordingTreeTable.setDisable(disabled);
-    }
-
-    /**
-     * Disable the TiVo controls
-     */
-    public void disableTivoControls() {
-        setTivoControlsDisabled(true);
-    }
-
-    /**
-     * Enable the TiVo controls
-     */
-    public void enableTivoControls() {
-        setTivoControlsDisabled(false);
-    }
-
-    private void setTivoControlsDisabled(boolean disabled) {
-        tivoList.setDisable(disabled);
-        refreshTivoList.setDisable(disabled);
     }
 
     public void addRecordingChangedListener(ChangeListener<Recording> listener) {
@@ -526,16 +526,6 @@ public class RecordingListController implements Initializable, Observer {
             }
             collapseTreeItemAndChildren(child);
         });
-    }
-
-    @Override
-    public void update(Observable o, Object arg) {
-        Boolean hasTasks = (Boolean) arg;
-        if (hasTasks) {
-            disableTivoControls();
-        } else {
-            enableTivoControls();
-        }
     }
 
     /**
