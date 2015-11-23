@@ -74,7 +74,7 @@ public class TivoSearchTask extends Task<Void> {
     }
 
     private void addTivosFromInstances(List<Instance> instances) {
-        instances.stream().forEach(instance -> {
+        instances.stream().filter(this::instanceIsSupportedTivo).forEach(instance -> {
             Tivo tivo = buildTivoFromInstance(instance);
             logger.info("New device: {}", tivo);
             // Add this device to our list, but use the JavaFX thread to do it.
@@ -89,6 +89,46 @@ public class TivoSearchTask extends Task<Void> {
                 }
             });
         });
+    }
+
+    /**
+     * Examine the instances "TSN" attribute to determine if this is a supported TiVo device.
+     */
+    private boolean instanceIsSupportedTivo(Instance instance) {
+        boolean isSupportedTivo = true;
+
+        String tsn = getTSN(instance);
+        if (tsn != null) {
+            if (tsn.startsWith("A")) {
+                // Streaming device
+                isSupportedTivo = false;
+            } else if (tsn.startsWith("0")) {
+                // Series 1
+                isSupportedTivo = false;
+            } else if (tsn.startsWith("1") || tsn.startsWith("2") || tsn.startsWith("3") || tsn.startsWith("5")) {
+                // Series 2
+                isSupportedTivo = false;
+            } else if (tsn.startsWith("6")) {
+                // Series 3
+                isSupportedTivo = false;
+            }
+            logger.info("isSupported = {} for instance {}", isSupportedTivo, instance);
+        } else {
+            logger.info("Instance {} has no TSN", instance);
+            isSupportedTivo = false;
+        }
+
+        return isSupportedTivo;
+    }
+
+    private String getTSN(Instance instance) {
+        String tsn = null;
+        if (instance.hasAttribute("TSN")) {
+            tsn = instance.lookupAttribute("TSN");
+        } else if (instance.hasAttribute("tsn")) {
+            tsn = instance.lookupAttribute("tsn");
+        }
+        return tsn;
     }
 
     private Tivo buildTivoFromInstance(Instance instance) {
