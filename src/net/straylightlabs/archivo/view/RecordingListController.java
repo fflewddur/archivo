@@ -109,6 +109,7 @@ public class RecordingListController implements Initializable {
 
         tivoList.getSelectionModel().selectedItemProperty().addListener(
                 (tivoList, oldTivo, curTivo) -> {
+                    logger.info("New TiVo selected: {}", curTivo);
                     if (curTivo != null) {
                         mainApp.setLastDevice(curTivo);
                         fetchRecordingsFrom(curTivo);
@@ -321,6 +322,7 @@ public class RecordingListController implements Initializable {
                 logger.debug("Tivo search task succeeded");
                 Tivo lastDevice = mainApp.getLastDevice();
                 if (lastDevice != null && tivos.contains(lastDevice)) {
+                    logger.info("Restoring previously used tivo: {}", lastDevice);
                     tivoList.setValue(lastDevice);
                 }
                 tivoSearchTask = null;

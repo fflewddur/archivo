@@ -206,6 +206,9 @@ public class UserPrefs {
     }
 
     public void setLastDevice(Tivo tivo) {
+        if (tivo == null) {
+            return;
+        }
         prefs.put(MOST_RECENT_DEVICE, tivo.toJSON().toString());
     }
 
