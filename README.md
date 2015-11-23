@@ -40,4 +40,4 @@ Archivo also makes use of the following Free Software projects:
 * **HandBrake** - For converting video files to more convenient formats (https://handbrake.fr/)
 * **TivoLibre** - For decoding TiVo recordings into standard MPEG-TS files (https://github.com/fflewddur/tivolibre)
 
-Thanks to Freepik (http://www.freepik.com/) for providing the Archivo logo.
+Thanks to Freepik (http://www.freepik.com/) for providing the icon the Archivo logo is based upon.
