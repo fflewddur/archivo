@@ -24,7 +24,6 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
-import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -51,6 +50,7 @@ import java.util.stream.Collectors;
 public class RecordingListController implements Initializable {
     private final ObservableList<Tivo> tivos;
     private TreeItem<Recording> suggestions;
+    private final ChangeListener<? super Tivo> tivoSelectedListener;
 
     private TivoSearchTask tivoSearchTask;
     private boolean alreadyDefaultSorted;
@@ -81,11 +81,18 @@ public class RecordingListController implements Initializable {
 
     private final static Logger logger = LoggerFactory.getLogger(RecordingListController.class);
 
-    public RecordingListController(Archivo mainApp, List<Tivo> initialTivos) {
+    public RecordingListController(Archivo mainApp) {
         alreadyDefaultSorted = false;
         this.mainApp = mainApp;
-        tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList(initialTivos));
+        tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
         tablePlaceholderMessage = new Label("No recordings are available");
+        tivoSelectedListener = (tivoList, oldTivo, curTivo) -> {
+            logger.info("New TiVo selected: {}", curTivo);
+            if (curTivo != null) {
+                mainApp.setLastDevice(curTivo);
+                fetchRecordingsFrom(curTivo);
+            }
+        };
     }
 
     @Override
@@ -106,19 +113,6 @@ public class RecordingListController implements Initializable {
 
         tivoList.setConverter(new Tivo.StringConverter());
         tivoList.setItems(tivos);
-
-        tivoList.getSelectionModel().selectedItemProperty().addListener(
-                (tivoList, oldTivo, curTivo) -> {
-                    logger.info("New TiVo selected: {}", curTivo);
-                    if (curTivo != null) {
-                        mainApp.setLastDevice(curTivo);
-                        fetchRecordingsFrom(curTivo);
-                    }
-                }
-        );
-
-        // When the list of TiVos is first populated, automatically select one
-        tivos.addListener(new TivoListChangeListener());
 
         setupStyles();
     }
@@ -316,15 +310,21 @@ public class RecordingListController implements Initializable {
         logger.debug("startTivoSearch()");
         assert (mainApp != null);
 
+        removeTivoSelectedListener();
         if (tivoSearchTask == null) {
             tivoSearchTask = new TivoSearchTask(tivos, mainApp.getMak());
             tivoSearchTask.setOnSucceeded(e -> {
                 logger.debug("Tivo search task succeeded");
                 Tivo lastDevice = mainApp.getLastDevice();
+                tivoList.getSelectionModel().clearSelection();
+                addTivoSelectedListener();
                 if (lastDevice != null && tivos.contains(lastDevice)) {
                     logger.info("Restoring previously used tivo: {}", lastDevice);
-                    tivoList.setValue(lastDevice);
+                    tivoList.getSelectionModel().select(lastDevice);
+                } else {
+                    tivoList.getSelectionModel().selectFirst();
                 }
+
                 tivoSearchTask = null;
             });
             tivoSearchTask.setOnFailed(e -> {
@@ -342,6 +342,14 @@ public class RecordingListController implements Initializable {
         tivos.clear();
 
         mainApp.getRpcExecutor().submit(tivoSearchTask);
+    }
+
+    private void addTivoSelectedListener() {
+        tivoList.getSelectionModel().selectedItemProperty().addListener(tivoSelectedListener);
+    }
+
+    private void removeTivoSelectedListener() {
+        tivoList.getSelectionModel().selectedItemProperty().removeListener(tivoSelectedListener);
     }
 
     public void updateMak(String newMak) {
@@ -528,25 +536,6 @@ public class RecordingListController implements Initializable {
             }
             collapseTreeItemAndChildren(child);
         });
-    }
-
-    /**
-     * Listen for changes to the list of available TiVo devices
-     */
-    private class TivoListChangeListener implements ListChangeListener<Tivo> {
-        @Override
-        public void onChanged(Change<? extends Tivo> c) {
-            while (c.next()) {
-                if (c.wasAdded()) {
-                    // If a new Tivo was found, and we don't currently have a selected Tivo, select the new device
-                    if (tivoList.getValue() == null) {
-                        tivoList.getSelectionModel().selectFirst();
-                    }
-                }
-            }
-            // Save our list of known TiVos
-            mainApp.setKnownDevices(tivos);
-        }
     }
 
     /**

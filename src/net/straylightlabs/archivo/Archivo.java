@@ -56,7 +56,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -121,11 +120,9 @@ public class Archivo extends Application {
                 cleanShutdown();
             }
         }
-        List<Tivo> initialTivos = prefs.getKnownDevices(mak);
         initRecordingDetails();
-        initRecordingList(initialTivos);
+        initRecordingList();
 
-//        archiveQueueManager.addObserver(recordingListController);
         archiveQueueManager.addObserver(rootController);
 
         primaryStage.setOnCloseRequest(e -> {
@@ -307,7 +304,7 @@ public class Archivo extends Application {
         }
     }
 
-    private void initRecordingList(List<Tivo> initialTivos) {
+    private void initRecordingList() {
         assert (rootController != null);
         assert (recordingDetailsController != null);
 
@@ -315,7 +312,7 @@ public class Archivo extends Application {
             FXMLLoader loader = new FXMLLoader();
             loader.setLocation(Archivo.class.getResource("view/RecordingList.fxml"));
 
-            recordingListController = new RecordingListController(this, initialTivos);
+            recordingListController = new RecordingListController(this);
             loader.setController(recordingListController);
 
             Pane recordingList = loader.load();
@@ -490,10 +487,6 @@ public class Archivo extends Application {
 
     public Tivo getLastDevice() {
         return prefs.getLastDevice(mak);
-    }
-
-    public void setKnownDevices(List<Tivo> tivos) {
-        prefs.setKnownDevices(tivos);
     }
 
     public Path getLastFolder() {

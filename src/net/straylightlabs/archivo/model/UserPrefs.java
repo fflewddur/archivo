@@ -28,11 +28,8 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.prefs.BackingStoreException;
 import java.util.prefs.Preferences;
 
 public class UserPrefs {
@@ -43,14 +40,12 @@ public class UserPrefs {
     private final static Logger logger = LoggerFactory.getLogger(UserPrefs.class);
 
     public static final String MAK = "mak";
-    public static final String DEVICE_LIST = "knownTivos";
     public static final String MOST_RECENT_DEVICE = "lastTivo";
     public static final String MOST_RECENT_FOLDER = "lastFolder";
     public static final String MOST_RECENT_TYPE = "lastFileType";
     public static final String SKIP_COMMERCIALS = "skipCommercials";
     public static final String VIDEO_LIMIT = "maxVideoResolution";
     public static final String AUDIO_LIMIT = "maxAudioChannels";
-    public static final String TOOLCHAIN = "toolchain";
     public static final String WINDOW_MAXIMIZED = "windowMaximized";
     public static final String WINDOW_HEIGHT = "windowHeight";
     public static final String WINDOW_WIDTH = "windowWidth";
@@ -58,7 +53,6 @@ public class UserPrefs {
     public static final String FFMPEG_PATH = "ffmpegPath";
     public static final String FFPROBE_PATH = "ffprobePath";
     public static final String HANDBRAKE_PATH = "handbrakePath";
-    public static final String VIDEO_REDO_PATH = "videoRedoPath";
 
     private static final String DEFAULT_TOOLDIR = ".";
 
@@ -127,68 +121,6 @@ public class UserPrefs {
 
     public synchronized void setAudioChannels(AudioChannel limit) {
         prefs.put(AUDIO_LIMIT, limit.getChannels());
-    }
-
-    public synchronized Toolchain getToolchain() {
-        return Toolchain.fromValue(prefs.get(TOOLCHAIN, Toolchain.FFMPEG_COMSKIP.getValue()));
-    }
-
-    public synchronized void setToolchain(Toolchain toolchain) {
-        prefs.put(TOOLCHAIN, toolchain.getValue());
-    }
-
-    /**
-     * Retrieve the list of detected TiVos the last time Archivo was run.
-     *
-     * @return A List of Tivo devices
-     */
-    public List<Tivo> getKnownDevices(final String mak) {
-        Preferences deviceNode = prefs.node(DEVICE_LIST);
-        try {
-            if (deviceNode == null || deviceNode.keys().length == 0) {
-                return Collections.emptyList();
-            }
-
-            List<Tivo> tivos = new ArrayList<>();
-            for (String key : deviceNode.keys()) {
-                String json = deviceNode.get(key, null);
-                try {
-                    logger.info("Known device = {}", json);
-                    tivos.add(Tivo.fromJSON(json, mak));
-                } catch (IllegalArgumentException e) {
-                    logger.error("Error building Tivo object from JSON: ", e);
-                }
-            }
-            return tivos;
-
-        } catch (BackingStoreException e) {
-            logger.error("Error accessing user preferences: ", e);
-        }
-
-        return Collections.emptyList();
-    }
-
-    /**
-     * Save the list of detected TiVos to use as our initial list next time.
-     *
-     * @param tivos The List of Tivo devices to save
-     */
-    public void setKnownDevices(List<Tivo> tivos) {
-        try {
-            if (prefs.nodeExists(DEVICE_LIST)) {
-                // Clear existing device list
-                Preferences existingDevices = prefs.node(DEVICE_LIST);
-                existingDevices.removeNode();
-            }
-            Preferences deviceNode = prefs.node(DEVICE_LIST);
-            int deviceNum = 1;
-            for (Tivo tivo : tivos) {
-                String key = String.format("device%02d", deviceNum++);
-                deviceNode.put(key, tivo.toJSON().toString());
-            }
-        } catch (BackingStoreException e) {
-            logger.error("Error accessing user preferences: ", e);
-        }
     }
 
     public Tivo getLastDevice(final String mak) {
@@ -272,14 +204,6 @@ public class UserPrefs {
 
     public synchronized String getHandbrakePath() {
         return prefs.get(HANDBRAKE_PATH, sysPrefs.get(HANDBRAKE_PATH, Paths.get(tooldir, "handbrake" + OSHelper.getExeSuffix()).toString()));
-    }
-
-    public synchronized void setVideoRedoPath(String path) {
-        prefs.put(VIDEO_REDO_PATH, path);
-    }
-
-    public synchronized String getVideoRedoPath() {
-        return prefs.get(VIDEO_REDO_PATH, sysPrefs.get(VIDEO_REDO_PATH, Paths.get(tooldir, "videoredo" + OSHelper.getExeSuffix()).toString()));
     }
 
     /**
