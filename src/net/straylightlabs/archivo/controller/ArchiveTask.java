@@ -70,7 +70,7 @@ public class ArchiveTask extends Task<Recording> {
     private Path metadataPath; // PyTivo metadata file
 
     private final static Logger logger = LoggerFactory.getLogger(ArchiveTask.class);
-    
+
     private static final int BUFFER_SIZE = 8192; // 8 KB
     private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 16; // 16 MB
     private static final int MIN_PROGRESS_INCREMENT = 10 * 1024 * 1024; // 10 MB, number of bytes that must transfer before we update our progress
@@ -128,10 +128,10 @@ public class ArchiveTask extends Task<Recording> {
                 } else {
                     cleanupFiles(recording.getDestination());
                     if (prefs.getSkipCommercials()) {
-                        Files.move(cutPath, recording.getDestination());
-                    } else {
-                        Files.move(fixedPath, recording.getDestination());
+                        Files.move(cutPath, downloadPath);
+                        remux();
                     }
+                    Files.move(fixedPath, recording.getDestination());
                 }
                 cleanupFiles(fixedPath, downloadPath);
             } else {
@@ -333,7 +333,7 @@ public class ArchiveTask extends Task<Recording> {
      */
     private void remux() {
         Platform.runLater(() -> recording.setStatus(
-                        ArchiveStatus.createRemuxingStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
+                ArchiveStatus.createRemuxingStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
         String ffmpegPath = prefs.getFFmpegPath();
@@ -374,7 +374,7 @@ public class ArchiveTask extends Task<Recording> {
 
     private void detectCommercials() {
         Platform.runLater(() -> recording.setStatus(
-                        ArchiveStatus.createFindingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
+                ArchiveStatus.createFindingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
         String comskipPath = prefs.getComskipPath();
@@ -408,7 +408,7 @@ public class ArchiveTask extends Task<Recording> {
 
     private void cutCommercials() {
         Platform.runLater(() -> recording.setStatus(
-                        ArchiveStatus.createRemovingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
+                ArchiveStatus.createRemovingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
 //        double audioOffset = findAudioOffset();
@@ -455,7 +455,7 @@ public class ArchiveTask extends Task<Recording> {
                     }
                     double progress = (curSegment++ / (double) toKeep.size()) * 0.9; // The final 10% is for concatenation
                     Platform.runLater(() -> recording.setStatus(
-                                    ArchiveStatus.createRemovingCommercialsStatus(progress, ArchiveStatus.TIME_UNKNOWN))
+                            ArchiveStatus.createRemovingCommercialsStatus(progress, ArchiveStatus.TIME_UNKNOWN))
                     );
                 } catch (InterruptedException | IOException e) {
                     logger.error("Error running ffmpeg to cut commercials: ", e);
@@ -472,7 +472,7 @@ public class ArchiveTask extends Task<Recording> {
         }
 
         Platform.runLater(() -> recording.setStatus(
-                        ArchiveStatus.createRemovingCommercialsStatus(.95, 30))
+                ArchiveStatus.createRemovingCommercialsStatus(.95, 30))
         );
 
         List<String> cmd = new ArrayList<>();
@@ -520,7 +520,7 @@ public class ArchiveTask extends Task<Recording> {
 
     private void transcode() {
         Platform.runLater(() -> recording.setStatus(
-                        ArchiveStatus.createTranscodingStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
+                ArchiveStatus.createTranscodingStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
         VideoResolution videoLimit = prefs.getVideoResolution();
@@ -530,6 +530,8 @@ public class ArchiveTask extends Task<Recording> {
         if (!Files.exists(sourcePath)) {
             sourcePath = fixedPath;
         }
+        boolean useQuickSync = isQuickSyncSupported(handbrakePath, sourcePath);
+        logger.info("Using Intel QuickSync: {}", useQuickSync);
         cleanupFiles(recording.getDestination());
         List<String> cmd = new ArrayList<>();
         cmd.add(handbrakePath);
@@ -567,6 +569,24 @@ public class ArchiveTask extends Task<Recording> {
         } finally {
             cleanupFiles(cutPath);
         }
+    }
+
+    private boolean isQuickSyncSupported(String handbrakePath, Path inputPath) {
+        List<String> cmd = new ArrayList<>();
+        cmd.add(handbrakePath);
+        cmd.add("--scan");
+        cmd.add("-i");
+        cmd.add(inputPath.toString());
+        try {
+            HandbrakeScanOutputReader outputReader = new HandbrakeScanOutputReader();
+            if (runProcess(cmd, outputReader)) {
+                return outputReader.isQuickSyncSupported();
+            }
+        } catch (InterruptedException | IOException e) {
+            logger.error("Error checking for QuickSync support: ", e);
+        }
+
+        return false;
     }
 
     private boolean runProcess(List<String> command, ProcessOutputReader outputReader) throws IOException, InterruptedException {
