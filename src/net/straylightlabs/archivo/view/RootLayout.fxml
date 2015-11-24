@@ -38,7 +38,7 @@
                <MenuItem text="Quit" onAction="#quit"/>
            </Menu>
            <Menu text="Edit">
-               <MenuItem text="Preferences" onAction="#showPreferencesDialog"/>
+               <MenuItem text="Preferences" fx:id="preferencesMenuItem" onAction="#showPreferencesDialog"/>
            </Menu>
            <Menu text="View">
                <MenuItem text="Expand All Shows" fx:id="expandMenuItem" onAction="#expandShows"/>
