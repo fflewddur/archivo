@@ -530,8 +530,8 @@ public class ArchiveTask extends Task<Recording> {
         if (!Files.exists(sourcePath)) {
             sourcePath = fixedPath;
         }
-        boolean useQuickSync = isQuickSyncSupported(handbrakePath, sourcePath);
-        logger.info("Using Intel QuickSync: {}", useQuickSync);
+        boolean useQuickSync = isQuickSyncSupported(handbrakePath, sourcePath) && prefs.getHardwareAcceleration();
+        logger.info("Using Intel Quick Sync Video: {}", useQuickSync);
         cleanupFiles(recording.getDestination());
         List<String> cmd = new ArrayList<>();
         cmd.add(handbrakePath);
@@ -550,6 +550,9 @@ public class ArchiveTask extends Task<Recording> {
         }
         handbrakeArgs.put("-Y", String.valueOf(videoLimit.getHeight()));
         handbrakeArgs.put("-X", String.valueOf(videoLimit.getWidth()));
+        if (useQuickSync) {
+            enableQSVEncoder(handbrakeArgs);
+        }
         cmd.addAll(mapToList(handbrakeArgs));
         try {
             HandbrakeOutputReader outputReader = new HandbrakeOutputReader(recording);
@@ -587,6 +590,19 @@ public class ArchiveTask extends Task<Recording> {
         }
 
         return false;
+    }
+
+    /**
+     * Replace the default Handbrake encoder arguments with Intel Quick Sync Video encoder arguments.
+     */
+    private void enableQSVEncoder(Map<String, String> args) {
+        args.put("-e", "qsv_h264");
+        args.put("--encoder-preset", "balanced");
+        args.put("--encoder-level", args.getOrDefault("--h264-level", "4.0"));
+        args.put("--encoder-profile", args.getOrDefault("--h264-profile", "main"));
+        args.remove("--x264-preset");
+        args.remove("--h264-level");
+        args.remove("--h264-profile");
     }
 
     private boolean runProcess(List<String> command, ProcessOutputReader outputReader) throws IOException, InterruptedException {

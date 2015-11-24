@@ -108,28 +108,31 @@ public class PreferencesDialog {
         grid.add(header, 0, 2, 3, 1);
 
         CheckBox comskip = new CheckBox("Try to remove commercials");
+        comskip.setTooltip(new Tooltip("Try to determine when commercials start and end, and remove them from the final video. May not always be accurate."));
         comskip.setSelected(userPrefs.getSkipCommercials());
         grid.add(comskip, 1, 3, 2, 1);
 
+        CheckBox qsv = new CheckBox("Use hardware acceleration");
+        qsv.setTooltip(new Tooltip("Use Intel Quick Sync Video (if available) to accelerate video conversions. May result in large file sizes."));
+        qsv.setSelected(userPrefs.getHardwareAcceleration());
+        grid.add(qsv, 1, 4, 2, 1);
+        if (!OSHelper.isWindows()) {
+            // For now, QSV is only supported by the Windows version of Handbrake
+            qsv.setSelected(false);
+            qsv.setDisable(true);
+        }
+
         label = createLabelWithTooltip("Limit video resolution to", "If your selected file type has a larger resolution than this, archived recordings will be scaled down to this size");
-        grid.add(label, 1, 4);
+        grid.add(label, 1, 5);
         ChoiceBox<VideoResolution> videoResolution = new ChoiceBox<>(videoResolutions);
         videoResolution.setValue(userPrefs.getVideoResolution());
-        grid.add(videoResolution, 2, 4);
+        grid.add(videoResolution, 2, 5);
 
         label = createLabelWithTooltip("Limit audio channels to", "If your selected file type supports multiple audio channels, archived recordings will have their sound limited to these channels");
-        grid.add(label, 1, 5);
+        grid.add(label, 1, 6);
         ChoiceBox<AudioChannel> audioChannel = new ChoiceBox<>(audioChannels);
         audioChannel.setValue(userPrefs.getAudioChannels());
-        grid.add(audioChannel, 2, 5);
-
-//        label = createLabelWithTooltip("Video processing tools", "Select the tools to use for repairing recordings and removing commercials");
-//        grid.add(label, 1, 6);
-//        ChoiceBox<Toolchain> toolchain = new ChoiceBox<>(toolchains);
-//        toolchain.setValue(userPrefs.getToolchain());
-//        grid.add(toolchain, 2, 6);
-//
-//        setupVideoRedoPathControl(grid, toolchain);
+        grid.add(audioChannel, 2, 6);
 
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
@@ -145,6 +148,9 @@ public class PreferencesDialog {
             if (button == ButtonType.OK) {
                 mainApp.updateMAK(mak.getText());
                 userPrefs.setSkipCommercials(comskip.isSelected());
+                if (OSHelper.isWindows()) {
+                    userPrefs.setHardwareAcceleration(qsv.isSelected());
+                }
                 userPrefs.setVideoResolution(videoResolution.getValue());
                 userPrefs.setAudioChannels(audioChannel.getValue());
             }

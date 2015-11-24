@@ -44,6 +44,7 @@ public class UserPrefs {
     public static final String MOST_RECENT_FOLDER = "lastFolder";
     public static final String MOST_RECENT_TYPE = "lastFileType";
     public static final String SKIP_COMMERCIALS = "skipCommercials";
+    public static final String HARDWARE_ACCELERATION = "hardwareAcceleration";
     public static final String VIDEO_LIMIT = "maxVideoResolution";
     public static final String AUDIO_LIMIT = "maxAudioChannels";
     public static final String WINDOW_MAXIMIZED = "windowMaximized";
@@ -103,6 +104,14 @@ public class UserPrefs {
 
     public synchronized void setSkipCommercials(boolean val) {
         prefs.putBoolean(SKIP_COMMERCIALS, val);
+    }
+
+    public synchronized boolean getHardwareAcceleration() {
+        return prefs.getBoolean(HARDWARE_ACCELERATION, true);
+    }
+
+    public synchronized void setHardwareAcceleration(boolean val) {
+        prefs.putBoolean(HARDWARE_ACCELERATION, val);
     }
 
     public synchronized VideoResolution getVideoResolution() {
