@@ -84,7 +84,7 @@
     </path>
 
     <path id="library.tivo-libre.classpath">
-        <pathelement location="${basedir}/lib/tivo-libre-0.7.1.jar"/>
+        <pathelement location="${basedir}/lib/tivo-libre-0.7.2.jar"/>
     </path>
 
     <!-- Modules -->
