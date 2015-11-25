@@ -52,8 +52,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Optional;
@@ -141,6 +140,15 @@ public class Archivo extends Application {
         logger.info("Running on Java {} from {}", System.getProperty("java.version"), System.getProperty("java.vendor"));
         logger.info("System is {} (version = {}, arch = {})", System.getProperty("os.name"),
                 System.getProperty("os.version"), System.getProperty("os.arch"));
+        for (Path root : FileSystems.getDefault().getRootDirectories()) {
+            try {
+                FileStore store = Files.getFileStore(root);
+                logger.info("Volume {} has {} MB free of {} MB", root,
+                        store.getUsableSpace() / 1024 / 1024, store.getTotalSpace() / 1024 / 1024);
+            } catch (IOException e) {
+                logger.error("Error getting available disk space: ", e.getLocalizedMessage());
+            }
+        }
     }
 
     private void checkForUpdates() {
