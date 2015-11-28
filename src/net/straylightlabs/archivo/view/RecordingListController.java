@@ -174,6 +174,7 @@ public class RecordingListController implements Initializable {
         MindCommandRecordingFolderItemSearch command = new MindCommandRecordingFolderItemSearch(tivo);
         MindTask task = new MindTask(tivo.getClient(), command);
         task.setOnSucceeded(event -> {
+            logger.info("Fetching list of recordings succeeded.");
             fillTreeTableView(command.getSeries());
             updateTivoDetails(tivo);
         });

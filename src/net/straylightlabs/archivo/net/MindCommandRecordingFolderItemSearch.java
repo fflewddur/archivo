@@ -25,6 +25,8 @@ import net.straylightlabs.archivo.model.Series;
 import net.straylightlabs.archivo.model.Tivo;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.*;
@@ -34,6 +36,7 @@ public class MindCommandRecordingFolderItemSearch extends MindCommand {
     private Tivo tivo; // Since we always call this command at startup, use it to figure out the TiVo's bodyId
 
     private final static JSONArray templateList;
+    private final static Logger logger = LoggerFactory.getLogger(MindCommandRecordingFolderItemSearch.class);
 
     static {
         templateList = buildTemplate();
@@ -94,6 +97,7 @@ public class MindCommandRecordingFolderItemSearch extends MindCommand {
 
     public List<Series> getSeries() {
         if (series == null) {
+            logger.error("Cannot call getSeries() before series has been initialized");
             throw new IllegalStateException("Cannot call getSeries() before series has been initialized");
         }
         return series;

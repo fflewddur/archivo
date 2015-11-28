@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="archivo" default="archivo">
     <property name="title" value="Archivo"/>
-    <property name="version" value="0.4 Technology Preview"/>
+    <property name="version" value="1.0-beta1"/>
     <property name="copyright" value="2015 Straylight Labs LLC"/>
 
     <property file="build.properties"/>
@@ -80,7 +80,7 @@
     </path>
 
     <path id="library.slf4j-api.classpath">
-        <pathelement location="${basedir}/lib/slf4j-api-1.7.12.jar"/>
+        <pathelement location="${basedir}/lib/slf4j-api-1.7.13.jar"/>
     </path>
 
     <path id="library.tivo-libre.classpath">
