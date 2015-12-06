@@ -24,6 +24,7 @@ Compression=lzma
 SolidCompression=yes
 SourceDir={#SrcDir}
 MinVersion=0,6.0
+SignTool=signtool
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
