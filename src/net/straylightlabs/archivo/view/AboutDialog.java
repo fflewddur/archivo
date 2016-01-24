@@ -66,7 +66,7 @@ public class AboutDialog {
 
         VBox nestedPane = new VBox();
         nestedPane.setSpacing(3);
-        Text text = new Text("\u00a9 2015 Straylight Labs LLC");
+        Text text = new Text("\u00a9 2015\u20132016 Straylight Labs LLC");
         Hyperlink link = new Hyperlink(HOMEPAGE);
         link.setOnAction(event -> {
             try {
@@ -86,7 +86,7 @@ public class AboutDialog {
                 "the Free Software Foundation, either version 3 of the License, or " +
                 "(at your option) any later version.", pane);
 
-        addWrappedLabel("Made with \u2665 in Oregon", pane);
+        addWrappedLabel("Made with \u2665 in Seattle", pane);
 
         dialog.getDialogPane().setContent(pane);
 
