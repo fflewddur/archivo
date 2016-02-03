@@ -80,11 +80,11 @@
     </path>
 
     <path id="library.slf4j-api.classpath">
-        <pathelement location="${basedir}/lib/slf4j-api-1.7.13.jar"/>
+        <pathelement location="${basedir}/lib/slf4j-api-1.7.14.jar"/>
     </path>
 
     <path id="library.tivo-libre.classpath">
-        <pathelement location="${basedir}/lib/tivo-libre-0.7.2.jar"/>
+        <pathelement location="${basedir}/lib/tivo-libre-0.7.3.jar"/>
     </path>
 
     <!-- Modules -->
