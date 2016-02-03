@@ -413,6 +413,40 @@
             <file file="${basedir}/package/win32/archivo.ico"/>
         </copy>
 
+        <property name="signtool.bin" value="C:\Program Files\Windows Kits\8.1\bin\x86\signtool.exe"/>
+        <property name="signtool.cert" value="C:\Users\Todd\Documents\Straylight Code Signing.p12"/>
+        <property name="signtool.cert.pw" value="9BGb6fXEf2zA"/>
+        <exec executable="${signtool.bin}">
+            <arg value="sign"/>
+            <arg value="/f"/>
+            <arg value="${signtool.cert}"/>
+            <arg value="/t"/>
+            <arg value="http://timestamp.comodoca.com/authenticode"/>
+            <arg value="/p"/>
+            <arg value="${signtool.cert.pw}"/>
+            <arg value="${inno.dir}\ffmpeg.exe"/>
+        </exec>
+        <exec executable="${signtool.bin}">
+            <arg value="sign"/>
+            <arg value="/f"/>
+            <arg value="${signtool.cert}"/>
+            <arg value="/t"/>
+            <arg value="http://timestamp.comodoca.com/authenticode"/>
+            <arg value="/p"/>
+            <arg value="${signtool.cert.pw}"/>
+            <arg value="${inno.dir}\ffprobe.exe"/>
+        </exec>
+        <exec executable="${signtool.bin}">
+            <arg value="sign"/>
+            <arg value="/f"/>
+            <arg value="${signtool.cert}"/>
+            <arg value="/t"/>
+            <arg value="http://timestamp.comodoca.com/authenticode"/>
+            <arg value="/p"/>
+            <arg value="${signtool.cert.pw}"/>
+            <arg value="${inno.dir}\comskip.exe"/>
+        </exec>
+
         <exec executable="${inno.compiler}">
             <arg value='/O"${artifact.output.archivo}"'/>
             <arg value='"/dSrcDir=${inno.dir}"'/>
