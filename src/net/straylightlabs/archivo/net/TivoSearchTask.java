@@ -41,6 +41,7 @@ import java.util.List;
 public class TivoSearchTask extends Task<Void> {
     private final ObservableList<Tivo> tivos;
     private String mak;
+    private boolean searchFailed;
 
     private static final String SERVICE_TYPE = "_tivo-mindrpc._tcp";
     private static final String IDENTIFYING_PROPERTY = "platform";
@@ -60,6 +61,10 @@ public class TivoSearchTask extends Task<Void> {
         return null;
     }
 
+    public boolean searchFailed() {
+        return searchFailed;
+    }
+
     private void startSearch() {
         logger.info("Starting search for TiVo devices...");
         Service tivoMindService = Service.fromName(SERVICE_TYPE);
@@ -68,8 +73,10 @@ public class TivoSearchTask extends Task<Void> {
             List<Instance> instances = query.runOnce();
             logger.info("Found instances: {}", instances);
             addTivosFromInstances(instances);
+            searchFailed = false;
         } catch (IOException e) {
             logger.error("Error searching for TiVo devices: ", e);
+            searchFailed = true;
         }
     }
 

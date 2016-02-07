@@ -55,6 +55,7 @@ public class RecordingListController implements Initializable {
     private TivoSearchTask tivoSearchTask;
     private boolean alreadyDefaultSorted;
     private boolean uiDisabled;
+    private boolean trySearchAgain;
 
     private Label tablePlaceholderMessage;
 
@@ -312,21 +313,40 @@ public class RecordingListController implements Initializable {
         assert (mainApp != null);
 
         removeTivoSelectedListener();
+        trySearchAgain = false;
         if (tivoSearchTask == null) {
             tivoSearchTask = new TivoSearchTask(tivos, mainApp.getMak());
             tivoSearchTask.setOnSucceeded(e -> {
                 logger.debug("Tivo search task succeeded");
-                Tivo lastDevice = mainApp.getLastDevice();
-                tivoList.getSelectionModel().clearSelection();
-                addTivoSelectedListener();
-                if (lastDevice != null && tivos.contains(lastDevice)) {
-                    logger.info("Restoring previously used tivo: {}", lastDevice);
-                    tivoList.getSelectionModel().select(lastDevice);
+                if (tivoSearchTask.searchFailed()) {
+                    logger.debug("Search task failed because of a network error");
+                    mainApp.clearStatusText();
+                    trySearchAgain = mainApp.showErrorMessageWithAction("We can't seem to access your network",
+                            "Archivo encountered a problem when it tried to search for TiVos on your network.\n\n" +
+                                    "This is usually caused by another program on your computer that is blocking the network port Archivo needs to use.",
+                            "Try Again");
+                } else if (tivos.size() < 1) {
+                    logger.debug("Could not find any TiVos");
+                    mainApp.clearStatusText();
+                    trySearchAgain = mainApp.showErrorMessageWithAction("We didn't find any TiVos",
+                            "Archivo couldn't find any TiVos on your network.\n\n" +
+                                    "This may mean that your TiVo is too busy to respond, or that there's a problem with your network.",
+                            "Try Again");
                 } else {
-                    tivoList.getSelectionModel().selectFirst();
+                    Tivo lastDevice = mainApp.getLastDevice();
+                    tivoList.getSelectionModel().clearSelection();
+                    addTivoSelectedListener();
+                    if (lastDevice != null && tivos.contains(lastDevice)) {
+                        logger.info("Restoring previously used tivo: {}", lastDevice);
+                        tivoList.getSelectionModel().select(lastDevice);
+                    } else {
+                        tivoList.getSelectionModel().selectFirst();
+                    }
                 }
-
                 tivoSearchTask = null;
+                if (trySearchAgain) {
+                    startTivoSearch();
+                }
             });
             tivoSearchTask.setOnFailed(e -> {
                 logger.error("Tivo search task failed: ", e.getSource().getException());

@@ -457,6 +457,22 @@ public class Archivo extends Application {
         alert.showAndWait();
     }
 
+    public boolean showErrorMessageWithAction(String header, String message, String action) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle("Something went wrong...");
+        alert.setHeaderText(header);
+        alert.setContentText(message);
+
+        ButtonType closeButtonType = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
+        ButtonType actionButtonType = new ButtonType(action, ButtonBar.ButtonData.YES);
+        alert.getButtonTypes().setAll(closeButtonType, actionButtonType);
+        ((Button) alert.getDialogPane().lookupButton(closeButtonType)).setDefaultButton(false);
+        ((Button) alert.getDialogPane().lookupButton(actionButtonType)).setDefaultButton(true);
+
+        Optional<ButtonType> result = alert.showAndWait();
+        return (result.get() == actionButtonType);
+    }
+
     public void updateMAK(String newMak) {
         if (newMak == null) {
             logger.error("MAK cannot be empty");
