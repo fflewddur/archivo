@@ -10,6 +10,10 @@
     -fx-font-smoothing-type: lcd;
 }
 
+.menu-item {
+    -fx-padding: 4 6 4 12;
+}
+
 .recording-list .scroll-bar:vertical .increment-button,
 .recording-list .scroll-bar:vertical .decrement-button {
     -fx-padding: 5;
