@@ -40,7 +40,8 @@ import java.util.List;
  */
 public class TivoSearchTask extends Task<Void> {
     private final ObservableList<Tivo> tivos;
-    private String mak;
+    private final String mak;
+    private final int timeout;
     private boolean searchFailed;
 
     private static final String SERVICE_TYPE = "_tivo-mindrpc._tcp";
@@ -50,9 +51,13 @@ public class TivoSearchTask extends Task<Void> {
 
     private final static Logger logger = LoggerFactory.getLogger(TivoSearchTask.class);
 
-    public TivoSearchTask(ObservableList<Tivo> tivos, String mak) {
+    public final static int SEARCH_TIMEOUT_SHORT = 750;
+    public final static int SEARCH_TIMEOUT_LONG = 5000;
+
+    public TivoSearchTask(ObservableList<Tivo> tivos, String mak, int timeout) {
         this.tivos = tivos;
         this.mak = mak;
+        this.timeout = timeout;
     }
 
     @Override
@@ -68,7 +73,7 @@ public class TivoSearchTask extends Task<Void> {
     private void startSearch() {
         logger.info("Starting search for TiVo devices...");
         Service tivoMindService = Service.fromName(SERVICE_TYPE);
-        Query query = Query.createFor(tivoMindService, Domain.LOCAL);
+        Query query = Query.createWithTimeout(tivoMindService, Domain.LOCAL, timeout);
         try {
             List<Instance> instances = query.runOnce();
             logger.info("Found instances: {}", instances);

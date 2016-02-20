@@ -181,6 +181,11 @@ public class RootLayoutController implements Initializable, Observer {
         statusMessage.textProperty().bind(mainApp.statusTextProperty());
     }
 
+    public void setMenuBindings(RecordingListController listController) {
+        expandMenuItem.disableProperty().bind(Bindings.size(listController.getTivos()).lessThan(1));
+        collapseMenuItem.disableProperty().bind(Bindings.size(listController.getTivos()).lessThan(1));
+    }
+
     public void hideStatus() {
         statusIndicator.setVisible(false);
         statusMessage.setVisible(false);

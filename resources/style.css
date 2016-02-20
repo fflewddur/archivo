@@ -11,7 +11,7 @@
 }
 
 .menu-item {
-    -fx-padding: 4 6 4 12;
+    -fx-padding: 4 12 4 18;
 }
 
 .recording-list .scroll-bar:vertical .increment-button,

@@ -115,6 +115,13 @@ public class RecordingListController implements Initializable {
         tivoList.setConverter(new Tivo.StringConverter());
         tivoList.setItems(tivos);
 
+        // Disable the TiVo controls when no devices are available
+        refreshTivoList.disableProperty().bind(Bindings.size(tivos).lessThan(1));
+        tivoList.disableProperty().bind(Bindings.size(tivos).lessThan(1));
+        storageIndicator.disableProperty().bind(Bindings.size(tivos).lessThan(1));
+        storageLabel.disableProperty().bind(Bindings.size(tivos).lessThan(1));
+        recordingTreeTable.disableProperty().bind(Bindings.size(tivos).lessThan(1));
+
         setupStyles();
     }
 
@@ -159,6 +166,10 @@ public class RecordingListController implements Initializable {
 
     public Tivo getSelectedTivo() {
         return tivoList.getSelectionModel().getSelectedItem();
+    }
+
+    public ObservableList<Tivo> getTivos() {
+        return tivos;
     }
 
     @SuppressWarnings("unused")
@@ -309,18 +320,23 @@ public class RecordingListController implements Initializable {
     }
 
     public void startTivoSearch() {
+        startTivoSearchWithTimeout(TivoSearchTask.SEARCH_TIMEOUT_SHORT);
+    }
+
+    private void startTivoSearchWithTimeout(int timeout) {
         logger.debug("startTivoSearch()");
         assert (mainApp != null);
 
         removeTivoSelectedListener();
         trySearchAgain = false;
         if (tivoSearchTask == null) {
-            tivoSearchTask = new TivoSearchTask(tivos, mainApp.getMak());
+            tivoSearchTask = new TivoSearchTask(tivos, mainApp.getMak(), timeout);
             tivoSearchTask.setOnSucceeded(e -> {
                 logger.debug("Tivo search task succeeded");
                 if (tivoSearchTask.searchFailed()) {
                     logger.debug("Search task failed because of a network error");
                     mainApp.clearStatusText();
+                    enableUI();
                     trySearchAgain = mainApp.showErrorMessageWithAction("We can't seem to access your network",
                             "Archivo encountered a problem when it tried to search for TiVos on your network.\n\n" +
                                     "This is usually caused by another program on your computer that is blocking the network port Archivo needs to use.",
@@ -328,6 +344,7 @@ public class RecordingListController implements Initializable {
                 } else if (tivos.size() < 1) {
                     logger.debug("Could not find any TiVos");
                     mainApp.clearStatusText();
+                    enableUI();
                     trySearchAgain = mainApp.showErrorMessageWithAction("We didn't find any TiVos",
                             "Archivo couldn't find any TiVos on your network.\n\n" +
                                     "This may mean that your TiVo is too busy to respond, or that there's a problem with your network.",
@@ -345,7 +362,7 @@ public class RecordingListController implements Initializable {
                 }
                 tivoSearchTask = null;
                 if (trySearchAgain) {
-                    startTivoSearch();
+                    startTivoSearchWithTimeout(TivoSearchTask.SEARCH_TIMEOUT_LONG);
                 }
             });
             tivoSearchTask.setOnFailed(e -> {
@@ -392,7 +409,6 @@ public class RecordingListController implements Initializable {
         if (!uiDisabled) {
             logger.debug("Disabling UI");
             mainApp.getPrimaryStage().getScene().setCursor(Cursor.WAIT);
-            setUIDisabled(true);
             uiDisabled = true;
         }
     }
@@ -403,15 +419,9 @@ public class RecordingListController implements Initializable {
     private void enableUI() {
         if (uiDisabled) {
             logger.debug("Enabling UI");
-            setUIDisabled(false);
             mainApp.getPrimaryStage().getScene().setCursor(Cursor.DEFAULT);
             uiDisabled = false;
         }
-    }
-
-    private void setUIDisabled(boolean disabled) {
-        toolbar.setDisable(disabled);
-        recordingTreeTable.setDisable(disabled);
     }
 
     public void addRecordingChangedListener(ChangeListener<Recording> listener) {

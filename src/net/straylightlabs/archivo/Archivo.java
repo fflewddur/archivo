@@ -333,6 +333,8 @@ public class Archivo extends Application {
                     (observable, oldValue, newValue) -> rootController.recordingSelected(newValue)
             );
 
+            rootController.setMenuBindings(recordingListController);
+
             recordingListController.startTivoSearch();
         } catch (IOException e) {
             logger.error("Error initializing recording list: ", e);
@@ -487,6 +489,10 @@ public class Archivo extends Application {
 
     public RecordingDetailsController getRecordingDetailsController() {
         return recordingDetailsController;
+    }
+
+    public RecordingListController getRecordingListController() {
+        return recordingListController;
     }
 
     public ArchiveHistory getArchiveHistory() {
