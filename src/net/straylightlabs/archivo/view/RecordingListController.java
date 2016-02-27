@@ -21,6 +21,8 @@ package net.straylightlabs.archivo.view;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
@@ -57,6 +59,8 @@ public class RecordingListController implements Initializable {
     private boolean uiDisabled;
     private boolean trySearchAgain;
 
+    private final BooleanProperty tivoIsBusy; // set to true when we're communicating w/ the selected device
+
     private Label tablePlaceholderMessage;
 
     @FXML
@@ -83,6 +87,7 @@ public class RecordingListController implements Initializable {
     private final static Logger logger = LoggerFactory.getLogger(RecordingListController.class);
 
     public RecordingListController(Archivo mainApp) {
+        tivoIsBusy = new SimpleBooleanProperty(false);
         alreadyDefaultSorted = false;
         this.mainApp = mainApp;
         tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
@@ -116,11 +121,11 @@ public class RecordingListController implements Initializable {
         tivoList.setItems(tivos);
 
         // Disable the TiVo controls when no devices are available
-        refreshTivoList.disableProperty().bind(Bindings.size(tivos).lessThan(1));
-        tivoList.disableProperty().bind(Bindings.size(tivos).lessThan(1));
-        storageIndicator.disableProperty().bind(Bindings.size(tivos).lessThan(1));
-        storageLabel.disableProperty().bind(Bindings.size(tivos).lessThan(1));
-        recordingTreeTable.disableProperty().bind(Bindings.size(tivos).lessThan(1));
+        refreshTivoList.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
+        tivoList.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
+        storageIndicator.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
+        storageLabel.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
+        recordingTreeTable.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
 
         setupStyles();
     }
@@ -180,6 +185,7 @@ public class RecordingListController implements Initializable {
     private void fetchRecordingsFrom(Tivo tivo) {
         logger.debug("Fetching recordings from {}", tivo);
         mainApp.setStatusText("Fetching recordings...");
+        tivoIsBusy.setValue(true);
         recordingTreeTable.getSelectionModel().clearSelection();
         disableUI();
 
@@ -199,7 +205,7 @@ public class RecordingListController implements Initializable {
                             "recordings from %s. This usually means that either your computer or your TiVo has lost " +
                             "its network connection.%n%nError message: %s", tivo.getName(), e.getLocalizedMessage())
             );
-
+            tivoIsBusy.setValue(false);
             enableUI();
         });
         mainApp.getRpcExecutor().submit(task);
@@ -294,12 +300,14 @@ public class RecordingListController implements Initializable {
         bodyConfigTask.setOnSucceeded(event -> {
             updateStorageControls(tivo);
             mainApp.clearStatusText();
+            tivoIsBusy.setValue(false);
             enableUI();
         });
         bodyConfigTask.setOnFailed(event -> {
             Throwable e = event.getSource().getException();
             logger.error("Error fetching details of {}: ", tivo.getName(), e);
             mainApp.clearStatusText();
+            tivoIsBusy.setValue(false);
             enableUI();
         });
         mainApp.getRpcExecutor().submit(bodyConfigTask);

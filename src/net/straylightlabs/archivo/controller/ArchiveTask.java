@@ -216,7 +216,8 @@ public class ArchiveTask extends Task<Recording> {
             Thread thread = null;
             if (decrypt) {
                 thread = new Thread(() -> {
-                    TivoDecoder decoder = new TivoDecoder.Builder().input(pipedInputStream).output(outputStream).mak(mak).build();
+                    TivoDecoder decoder = new TivoDecoder.Builder().input(pipedInputStream).output(outputStream)
+                            .mak(mak).compatibilityMode(true).build();
                     if (!decoder.decode()) {
                         logger.error("Failed to decode file");
                         throw new ArchiveTaskException("Problem decoding recording");
