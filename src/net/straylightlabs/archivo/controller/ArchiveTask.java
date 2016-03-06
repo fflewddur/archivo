@@ -75,8 +75,11 @@ public class ArchiveTask extends Task<Recording> {
     private static final int PIPE_BUFFER_SIZE = 1024 * 1024 * 16; // 16 MB
     private static final int MIN_PROGRESS_INCREMENT = 10 * 1024 * 1024; // 10 MB, number of bytes that must transfer before we update our progress
     private static final int NUM_RETRIES = 5; // number of times to retry a failed download
-    private static final int RETRY_DELAY = 5000; // delay between retry attempts, in ms
+    private static final int RETRY_DELAY = 30; // delay between retry attempts, in seconds
+    private static final int RETRY_MULTIPLIER = 2; // Multiplier for increasing the delay between retry attempts
     private static final double ESTIMATED_SIZE_THRESHOLD = 0.8; // Need to download this % of a file to consider it successful
+
+    private static final int MS_PER_SECOND = 1000;
 
     public ArchiveTask(Recording recording, Tivo tivo, String mak, final UserPrefs prefs) {
         this.recording = recording;
@@ -106,6 +109,9 @@ public class ArchiveTask extends Task<Recording> {
 
         logger.info("Starting archive task for {}", recording.getTitle());
         try {
+            Platform.runLater(() -> recording.setStatus(
+                    ArchiveStatus.createConnectingStatus(0, 0, NUM_RETRIES)
+            ));
             MindCommandIdSearch command = new MindCommandIdSearch(recording, tivo);
 //            command.setCompatibilityMode(true); // Download a PS file instead of a TS file
             command.executeOn(tivo.getClient());
@@ -164,9 +170,12 @@ public class ArchiveTask extends Task<Recording> {
                 try (CloseableHttpResponse response = client.execute(get)) {
                     if (response.getStatusLine().getStatusCode() != 200) {
                         logger.error("Error downloading recording: {}", response.getStatusLine());
-                        logger.info("Sleeping for {} ms", retryDelay);
-                        Thread.sleep(retryDelay);
-                        retryDelay += RETRY_DELAY;
+                        logger.info("Sleeping for {} ms", retryDelay * MS_PER_SECOND);
+                        int failures = NUM_RETRIES - retries + 1;
+                        ArchiveStatus status = ArchiveStatus.createConnectingStatus(retryDelay, failures, retries);
+                        Platform.runLater(() -> recording.setStatus(status));
+                        Thread.sleep(retryDelay * MS_PER_SECOND);
+                        retryDelay *= RETRY_MULTIPLIER;
                         retries--;
                     } else {
                         logger.info("Status line: {}", response.getStatusLine());
@@ -178,7 +187,7 @@ public class ArchiveTask extends Task<Recording> {
                 }
             }
             if (!responseOk) {
-                throw new ArchiveTaskException("Problem downloading recording");
+                throw new ArchiveTaskException("Problem downloading recording", "Your TiVo is too busy to connect to. You can try again later or restart your TiVo.");
             }
         } catch (IOException e) {
             logger.error("Error downloading recording: ", e);

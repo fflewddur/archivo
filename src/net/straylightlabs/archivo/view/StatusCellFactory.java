@@ -58,28 +58,45 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
                     setGraphic(null);
                     updateTooltip(null);
                     break;
+                case CONNECTING:
+                    setProgress(ArchiveStatus.INDETERMINATE);
+                    int secondsRemaining = status.getSecondsRemaining();
+                    if (secondsRemaining > 0) {
+                        setText(String.format("Connection failed, retrying in %s...", formatRetryTime(secondsRemaining)));
+                        int retriesRemaining = status.getRetriesRemaining();
+                        String msg = String.format("Your TiVo is too busy to connect to right now. We'll try to reconnect %d more time", retriesRemaining);
+                        if (retriesRemaining != 1) {
+                            msg += "s";
+                        }
+                        msg += ".";
+                        updateTooltip(msg);
+                    } else {
+                        setText("Connecting...");
+                        updateTooltip(null);
+                    }
+                    break;
                 case DOWNLOADING:
-                    setText(String.format("Downloading... (%s)", formatTime(status.getSecondsRemaining())));
+                    setText(String.format("Downloading... (%s)", formatRemainingTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
                     updateTooltip(String.format("Download speed: %s", formatSpeed(status.getKilobytesPerSecond())));
                     break;
                 case REMUXING:
-                    setText(String.format("Repairing video file... (%s)", formatTime(status.getSecondsRemaining())));
+                    setText(String.format("Repairing video file... (%s)", formatRemainingTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
                     updateTooltip(null);
                     break;
                 case FINDING_COMMERCIALS:
-                    setText(String.format("Finding commercials... (%s)", formatTime(status.getSecondsRemaining())));
+                    setText(String.format("Finding commercials... (%s)", formatRemainingTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
                     updateTooltip(null);
                     break;
                 case REMOVING_COMMERCIALS:
-                    setText(String.format("Removing commercials... (%s)", formatTime(status.getSecondsRemaining())));
+                    setText(String.format("Removing commercials... (%s)", formatRemainingTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
                     updateTooltip(null);
                     break;
                 case TRANSCODING:
-                    setText(String.format("Compressing video... (%s)", formatTime(status.getSecondsRemaining())));
+                    setText(String.format("Compressing video... (%s)", formatRemainingTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
                     updateTooltip(null);
                     break;
@@ -91,7 +108,7 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
                 case ERROR:
                     setText(status.getMessage());
                     setGraphic(null);
-                    updateTooltip(null);
+                    updateTooltip(status.getTooltip());
                     break;
                 default:
                     setText(status.getStatus().toString());
@@ -128,7 +145,20 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
         setGraphic(indicator);
     }
 
-    private String formatTime(int seconds) {
+    private String formatRetryTime(int seconds) {
+        if (seconds < 60) {
+            return String.format("%d seconds", seconds);
+        } else {
+            int minutes = (int)Math.round(seconds / 60.0);
+            if (minutes == 1) {
+                return String.format("%d minute", minutes);
+            } else {
+                return String.format("%d minutes", minutes);
+            }
+        }
+    }
+
+    private String formatRemainingTime(int seconds) {
         if (seconds == ArchiveStatus.TIME_UNKNOWN) {
             return "calculating time left";
         } else if (seconds <= 30) {

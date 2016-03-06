@@ -64,7 +64,7 @@ public class ArchiveQueueManager extends Observable {
                 Archivo.logger.error("ArchiveTask failed for {}: ", recording.getFullTitle(), e);
                 e.printStackTrace();
                 removeTask(recording);
-                recording.setStatus(ArchiveStatus.createErrorStatus(event.getSource().getException()));
+                recording.setStatus(ArchiveStatus.createErrorStatus(e));
             });
             task.setOnCancelled(event -> {
                 Archivo.logger.info("ArchiveTask canceled for {}", recording.getFullTitle());

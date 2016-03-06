@@ -20,7 +20,19 @@
 package net.straylightlabs.archivo.controller;
 
 public class ArchiveTaskException extends RuntimeException {
+    private final String tooltip;
+
     public ArchiveTaskException(String message) {
         super(message);
+        tooltip = null;
+    }
+
+    public ArchiveTaskException(String message, String tooltip) {
+        super(message);
+        this.tooltip = tooltip;
+    }
+
+    public String getTooltip() {
+        return tooltip;
     }
 }

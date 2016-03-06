@@ -19,6 +19,8 @@
 
 package net.straylightlabs.archivo.model;
 
+import net.straylightlabs.archivo.controller.ArchiveTaskException;
+
 /**
  * Model the status of an archive task.
  */
@@ -26,8 +28,11 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
     private final TaskStatus status;
     private final double progress;
     private final int secondsRemaining;
+    private final int retriesUsed;
+    private final int retriesRemaining;
     private final double kbs; // KB per sec
     private final String message;
+    private final String tooltip;
 
     public final static int TIME_UNKNOWN = -1;
     public final static int INDETERMINATE = -1;
@@ -40,7 +45,21 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         progress = 0;
         secondsRemaining = 0;
         kbs = 0;
+        retriesUsed = 0;
+        retriesRemaining = 0;
         message = "";
+        tooltip = "";
+    }
+
+    private ArchiveStatus(TaskStatus status, int retriesUsed, int retriesRemaining, int secondsRemaining) {
+        this.status = status;
+        progress = 0;
+        this.secondsRemaining = secondsRemaining;
+        kbs = 0;
+        this.retriesUsed = retriesUsed;
+        this.retriesRemaining = retriesRemaining;
+        message = "";
+        tooltip = "";
     }
 
     private ArchiveStatus(TaskStatus status, double progress, int secondsRemaining) {
@@ -48,7 +67,10 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         this.progress = progress;
         this.secondsRemaining = secondsRemaining;
         kbs = 0;
+        retriesUsed = 0;
+        retriesRemaining = 0;
         message = "";
+        tooltip = "";
     }
 
     private ArchiveStatus(TaskStatus status, double progress, int secondsRemaining, double kbs) {
@@ -56,7 +78,10 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         this.progress = progress;
         this.secondsRemaining = secondsRemaining;
         this.kbs = kbs;
+        retriesUsed = 0;
+        retriesRemaining = 0;
         message = "";
+        tooltip = "";
     }
 
     private ArchiveStatus(TaskStatus status, String message) {
@@ -64,7 +89,21 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         progress = 0;
         secondsRemaining = 0;
         kbs = 0;
+        retriesUsed = 0;
+        retriesRemaining = 0;
         this.message = message;
+        tooltip = null;
+    }
+
+    private ArchiveStatus(TaskStatus status, String message, String tooltip) {
+        this.status = status;
+        progress = 0;
+        secondsRemaining = 0;
+        kbs = 0;
+        retriesUsed = 0;
+        retriesRemaining = 0;
+        this.message = message;
+        this.tooltip = tooltip;
     }
 
     public TaskStatus getStatus() {
@@ -85,6 +124,23 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
 
     public double getKilobytesPerSecond() {
         return kbs;
+    }
+
+    @SuppressWarnings("unused")
+    public int getRetriesUsed() {
+        return retriesUsed;
+    }
+
+    public int getRetriesRemaining() {
+        return retriesRemaining;
+    }
+
+    public String getTooltip() {
+        return tooltip;
+    }
+
+    public static ArchiveStatus createConnectingStatus(int secondsToWait, int failures, int retriesRemaining) {
+        return new ArchiveStatus(TaskStatus.CONNECTING, failures, retriesRemaining, secondsToWait);
     }
 
     public static ArchiveStatus createDownloadingStatus(double progress, int secondsRemaining, double kbs) {
@@ -123,7 +179,12 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
     }
 
     public static ArchiveStatus createErrorStatus(Throwable e) {
-        return new ArchiveStatus(TaskStatus.ERROR, e.getLocalizedMessage());
+        if (e instanceof ArchiveTaskException) {
+            ArchiveTaskException ate = (ArchiveTaskException) e;
+            return new ArchiveStatus(TaskStatus.ERROR, ate.getLocalizedMessage(), ate.getTooltip());
+        } else {
+            return new ArchiveStatus(TaskStatus.ERROR, e.getLocalizedMessage());
+        }
     }
 
     @Override
@@ -177,6 +238,7 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         REMOVING_COMMERCIALS,
         FINDING_COMMERCIALS,
         REMUXING,
+        CONNECTING,
         DOWNLOADING,
         QUEUED,
         FINISHED,
@@ -190,6 +252,7 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
                 case ERROR:
                     return false;
                 case QUEUED:
+                case CONNECTING:
                 case DOWNLOADING:
                 case TRANSCODING:
                 case REMOVING_COMMERCIALS:
