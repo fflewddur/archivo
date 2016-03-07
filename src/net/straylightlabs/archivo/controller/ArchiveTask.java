@@ -607,10 +607,10 @@ public class ArchiveTask extends Task<Recording> {
         try {
             HandbrakeScanOutputReader outputReader = new HandbrakeScanOutputReader();
             if (runProcess(cmd, outputReader)) {
-                logger.error("HandBrake error: {}", outputReader.getOutput());
+                logger.debug("HandBrake output: {}", outputReader.getOutput());
                 return outputReader.isQuickSyncSupported();
             } else {
-                logger.debug("HandBrake output: {}", outputReader.getOutput());
+                logger.error("HandBrake error: {}", outputReader.getOutput());
             }
         } catch (InterruptedException | IOException e) {
             logger.error("Error checking for QuickSync support: ", e);
