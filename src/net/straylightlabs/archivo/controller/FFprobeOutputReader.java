@@ -44,6 +44,7 @@ public class FFprobeOutputReader extends ProcessOutputReader {
 
     @Override
     public void processLine(String line) {
+        addLineToOutput(line);
         lines.add(line);
     }
 

@@ -33,6 +33,7 @@ public class HandbrakeScanOutputReader extends ProcessOutputReader {
 
     @Override
     public void processLine(String line) {
+        addLineToOutput(line);
         Matcher matcher = QSV.matcher(line);
         if (matcher.find()) {
             isQuickSyncSupported = true;

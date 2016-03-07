@@ -35,6 +35,7 @@ public class HandbrakeOutputReader extends ProcessOutputReader {
 
     @Override
     public void processLine(String line) {
+        addLineToOutput(line);
         Matcher matcher = PERCENT.matcher(line);
         if (matcher.find()) {
             double percentComplete = Double.parseDouble(matcher.group(1)) * .01;

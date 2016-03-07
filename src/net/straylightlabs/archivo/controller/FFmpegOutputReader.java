@@ -22,6 +22,8 @@ package net.straylightlabs.archivo.controller;
 import javafx.application.Platform;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,6 +42,7 @@ public class FFmpegOutputReader extends ProcessOutputReader {
 
     @Override
     public void processLine(String line) {
+        addLineToOutput(line);
         if (task == ArchiveStatus.TaskStatus.REMUXING) {
             if (duration == 0) {
                 Matcher matcher = DURATION.matcher(line);

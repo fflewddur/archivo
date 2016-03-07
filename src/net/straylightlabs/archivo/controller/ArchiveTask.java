@@ -365,7 +365,10 @@ public class ArchiveTask extends Task<Recording> {
         try {
             FFmpegOutputReader outputReader = new FFmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMUXING);
             if (!runProcess(cmd, outputReader)) {
+                logger.error("FFmpeg error: {}", outputReader.getOutput());
                 throw new ArchiveTaskException("Error repairing video");
+            } else {
+                logger.debug("FFmpeg output: {}", outputReader.getOutput());
             }
         } catch (InterruptedException | IOException e) {
             Platform.runLater(() -> {
@@ -406,7 +409,10 @@ public class ArchiveTask extends Task<Recording> {
             ComskipOutputReader outputReader = new ComskipOutputReader(recording);
             outputReader.addExitCode(1); // Means that commercials were found
             if (!runProcess(cmd, outputReader)) {
+                logger.error("Comskip error: {}", outputReader.getOutput());
                 throw new ArchiveTaskException("Error finding commercials");
+            } else {
+                logger.debug("Comskip output: {}", outputReader.getOutput());
             }
         } catch (InterruptedException | IOException e) {
             logger.error("Error running comskip: ", e);
@@ -421,18 +427,15 @@ public class ArchiveTask extends Task<Recording> {
                 ArchiveStatus.createRemovingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
-//        double audioOffset = findAudioOffset();
         double videoStartTime = findVideoStartTime();
         logger.info("Video start time: {}", videoStartTime);
         Path partList = buildPath(fixedPath, "parts");
         cleanupFiles(cutPath, partList);
         String ffmpegPath = prefs.getFFmpegPath();
-//        String handbrakePath = prefs.getHandbrakePath();
         int filePartCounter = 1;
         List<Path> partPaths = new ArrayList<>();
         try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(partList))) {
             FFSplitList splitList = FFSplitList.createFromFileWithOffset(ffsplitPath, videoStartTime);
-//            EditDecisionList editDecisionList = EditDecisionList.createFromFileWithOffset(edlPath, audioOffset);
             logger.info("splitList: {}", splitList);
             List<FFSplitList.Segment> toKeep = splitList.getSegmentsToKeep();
             int curSegment = 1;
@@ -458,10 +461,12 @@ public class ArchiveTask extends Task<Recording> {
 
                 try {
                     FFmpegOutputReader outputReader = new FFmpegOutputReader(recording, ArchiveStatus.TaskStatus.NONE);
-//                    HandbrakeOutputReader outputReader = new HandbrakeOutputReader(recording);
                     cleanupFiles(partPath);
                     if (!runProcess(cmd, outputReader)) {
+                        logger.error("FFmpeg error: {}", outputReader.getOutput());
                         throw new ArchiveTaskException("Error removing commercials");
+                    } else {
+                        logger.debug("FFmpeg output: {}", outputReader.getOutput());
                     }
                     double progress = (curSegment++ / (double) toKeep.size()) * 0.9; // The final 10% is for concatenation
                     Platform.runLater(() -> recording.setStatus(
@@ -499,7 +504,10 @@ public class ArchiveTask extends Task<Recording> {
         try {
             FFmpegOutputReader outputReader = new FFmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMOVING_COMMERCIALS);
             if (!runProcess(cmd, outputReader)) {
+                logger.error("FFmpeg error: {}", outputReader.getOutput());
                 throw new ArchiveTaskException("Error removing commercials");
+            } else {
+                logger.debug("FFmpeg output: {}", outputReader.getOutput());
             }
         } catch (InterruptedException | IOException e) {
             logger.error("Error running ffmpeg to join files: ", e);
@@ -519,7 +527,10 @@ public class ArchiveTask extends Task<Recording> {
         FFprobeOutputReader outputReader = new FFprobeOutputReader(recording);
         try {
             if (!runProcess(cmd, outputReader)) {
+                logger.error("FFprobe error: {}", outputReader.getOutput());
                 throw new ArchiveTaskException("Error finding video stream start time");
+            } else {
+                logger.debug("FFprobe output: {}", outputReader.getOutput());
             }
         } catch (InterruptedException | IOException e) {
             logger.error("Error running ffprobe: ", e);
@@ -567,7 +578,10 @@ public class ArchiveTask extends Task<Recording> {
         try {
             HandbrakeOutputReader outputReader = new HandbrakeOutputReader(recording);
             if (!runProcess(cmd, outputReader)) {
+                logger.error("HandBrake error: {}", outputReader.getOutput());
                 throw new ArchiveTaskException("Error compressing video");
+            } else {
+                logger.debug("HandBrake output: {}", outputReader.getOutput());
             }
         } catch (InterruptedException | IOException e) {
             Platform.runLater(() -> {
@@ -593,7 +607,10 @@ public class ArchiveTask extends Task<Recording> {
         try {
             HandbrakeScanOutputReader outputReader = new HandbrakeScanOutputReader();
             if (runProcess(cmd, outputReader)) {
+                logger.error("HandBrake error: {}", outputReader.getOutput());
                 return outputReader.isQuickSyncSupported();
+            } else {
+                logger.debug("HandBrake output: {}", outputReader.getOutput());
             }
         } catch (InterruptedException | IOException e) {
             logger.error("Error checking for QuickSync support: ", e);

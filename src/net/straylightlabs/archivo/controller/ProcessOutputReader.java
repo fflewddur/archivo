@@ -41,6 +41,7 @@ public abstract class ProcessOutputReader implements Runnable {
     private final Deque<Integer> recentEndTimeEstimates;
     private double priorProgress;
     private InputStream inputStream;
+    private final StringBuilder output;
 
     private final static int MIN_END_TIME_ESTIMATES = 5;
     private final static int MAX_END_TIME_ESTIMATES = 10;
@@ -52,6 +53,7 @@ public abstract class ProcessOutputReader implements Runnable {
         startTime = LocalDateTime.now();
         recentEndTimeEstimates = new ArrayDeque<>();
         priorProgress = -1;
+        output = new StringBuilder();
     }
 
     public void setInputStream(InputStream inputStream) {
@@ -64,6 +66,15 @@ public abstract class ProcessOutputReader implements Runnable {
 
     public boolean isValidExitCode(int code) {
         return exitCodes.contains(code);
+    }
+
+    public String getOutput() {
+        return output.toString();
+    }
+
+    protected void addLineToOutput(String line) {
+        output.append(line);
+        output.append(System.lineSeparator());
     }
 
     @Override
