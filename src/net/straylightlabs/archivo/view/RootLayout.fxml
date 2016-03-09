@@ -46,6 +46,7 @@
            </Menu>
            <Menu text="Help">
                <MenuItem text="View Log" onAction="#openLog"/>
+               <MenuItem text="Report a Problem" onAction="#reportProblem"/>
                <SeparatorMenuItem/>
                <MenuItem text="About" onAction="#showAboutDialog"/>
            </Menu>

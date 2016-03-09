@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.io.IOException;
+import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -55,6 +56,8 @@ public class RootLayoutController implements Initializable, Observer {
     private Recording selectedRecording;
     private final ChangeListener<ArchiveStatus> statusChangeListener;
     private final SimpleBooleanProperty trueProperty;
+
+    private static final String ISSUE_URL = "https://github.com/fflewddur/archivo/issues";
 
     @FXML
     private MenuBar menubar;
@@ -81,7 +84,6 @@ public class RootLayoutController implements Initializable, Observer {
     @FXML
     private Label statusMessage;
 
-    @SuppressWarnings("unused")
     private final static Logger logger = LoggerFactory.getLogger(RootLayoutController.class);
 
     public RootLayoutController() {
@@ -172,7 +174,16 @@ public class RootLayoutController implements Initializable, Observer {
         try {
             Desktop.getDesktop().open(logPath.toFile());
         } catch (IOException e) {
-            Archivo.logger.error("Could not open log file '{}': ", logPath, e);
+            logger.error("Could not open log file '{}': ", logPath, e);
+        }
+    }
+
+    @FXML
+    public void reportProblem(ActionEvent event) {
+        try {
+            Desktop.getDesktop().browse(URI.create(ISSUE_URL));
+        } catch (IOException e) {
+            logger.error("Could not open issues URL '{}': ", ISSUE_URL, e);
         }
     }
 
