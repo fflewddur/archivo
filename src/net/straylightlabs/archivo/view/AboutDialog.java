@@ -44,7 +44,7 @@ import java.net.URISyntaxException;
 public class AboutDialog {
     private final Dialog dialog;
 
-    private static final String HOMEPAGE = "https://github.com/fflewddur/archivo";
+    private static final String HOMEPAGE = "http://straylightlabs.net/archivo";
     private static final int DIALOG_WIDTH = 400;
 
     public AboutDialog(Window parent) {
