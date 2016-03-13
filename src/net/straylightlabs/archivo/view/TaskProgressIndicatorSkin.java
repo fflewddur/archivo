@@ -53,7 +53,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicator, BehaviorBase<ProgressIndicator>> {
+class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicator, BehaviorBase<ProgressIndicator>> {
 
     /***************************************************************************
      *                                                                         *
@@ -64,7 +64,7 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
     /**
      * The colour of the progress segment.
      */
-    private ObjectProperty<Paint> progressColor = new StyleableObjectProperty<Paint>(null) {
+    private final ObjectProperty<Paint> progressColor = new StyleableObjectProperty<Paint>(null) {
         @Override
         protected void invalidated() {
             final Paint value = get();
@@ -95,6 +95,7 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
         }
     };
 
+    @SuppressWarnings("unused")
     Paint getProgressColor() {
         return progressColor.get();
     }
@@ -102,7 +103,7 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
     /**
      * The number of segments in the spinner.
      */
-    private IntegerProperty indeterminateSegmentCount = new StyleableIntegerProperty(8) {
+    private final IntegerProperty indeterminateSegmentCount = new StyleableIntegerProperty(8) {
         @Override
         protected void invalidated() {
             if (spinner != null) spinner.rebuild();
@@ -160,7 +161,7 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
     private DeterminateIndicator determinateIndicator;
     private ProgressIndicator control;
 
-    protected Animation indeterminateTransition;
+    private Animation indeterminateTransition;
 
 
     /***************************************************************************
@@ -208,7 +209,7 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
         }
     }
 
-    protected void initialize() {
+    private void initialize() {
         boolean isIndeterminate = control.isIndeterminate();
         if (isIndeterminate) {
             // clean up determinateIndicator
@@ -254,19 +255,19 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
         control = null;
     }
 
-    protected void updateProgress() {
+    private void updateProgress() {
         if (determinateIndicator != null) {
             determinateIndicator.updateProgress(control.getProgress());
         }
     }
 
-    protected void createIndeterminateTimeline() {
+    private void createIndeterminateTimeline() {
         if (spinner != null) {
             spinner.rebuildTimeline();
         }
     }
 
-    protected void pauseTimeline(boolean pause) {
+    private void pauseTimeline(boolean pause) {
         if (getSkinnable().isIndeterminate()) {
             if (indeterminateTransition == null) {
                 createIndeterminateTimeline();
@@ -279,7 +280,7 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
         }
     }
 
-    protected void updateAnimation() {
+    private void updateAnimation() {
         ProgressIndicator control = getSkinnable();
         final boolean isTreeVisible = control.isVisible() &&
                 control.getParent() != null &&
@@ -327,11 +328,11 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
     private class DeterminateIndicator extends Region {
         // only update pie arc to nearest degree
         private int degProgress;
-        private StackPane indicator;
-        private StackPane progress;
-        private StackPane tick;
-        private Arc arcShape;
-        private Circle indicatorCircle;
+        private final StackPane indicator;
+        private final StackPane progress;
+        private final StackPane tick;
+        private final Arc arcShape;
+        private final Circle indicatorCircle;
 
         public DeterminateIndicator(ProgressIndicator control, Paint fillOverride) {
 
@@ -507,10 +508,10 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
      * *
      **************************************************************************/
 
-    protected final Duration UNCLIPPED_DELAY = new Duration(0);
+    private final Duration UNCLIPPED_DELAY = new Duration(0);
 
     private final class IndeterminateSpinner extends Region {
-        private IndicatorPaths pathsG;
+        private final IndicatorPaths pathsG;
         private final List<Double> opacities = new ArrayList<>();
         private boolean spinEnabled = false;
         private Paint fillOverride = null;
@@ -607,20 +608,18 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
             protected void layoutChildren() {
                 // calculate scale
                 double scale = getWidth() / computePrefWidth(-1);
-                for (Node child : getChildren()) {
-                    if (child instanceof Region) {
-                        Region region = (Region) child;
-                        if (region.getShape() != null) {
-                            region.resize(
-                                    region.getShape().getLayoutBounds().getMaxX(),
-                                    region.getShape().getLayoutBounds().getMaxY()
-                            );
-                            region.getTransforms().setAll(new Scale(scale, scale, 0, 0));
-                        } else {
-                            region.autosize();
-                        }
+                getChildren().stream().filter(child -> child instanceof Region).forEach(child -> {
+                    Region region = (Region) child;
+                    if (region.getShape() != null) {
+                        region.resize(
+                                region.getShape().getLayoutBounds().getMaxX(),
+                                region.getShape().getLayoutBounds().getMaxY()
+                        );
+                        region.getTransforms().setAll(new Scale(scale, scale, 0, 0));
+                    } else {
+                        region.autosize();
                     }
-                }
+                });
             }
         }
 
@@ -686,14 +685,19 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
                 @Override
                 public boolean isSettable(ProgressIndicator n) {
                     final TaskProgressIndicatorSkin skin = (TaskProgressIndicatorSkin) n.getSkin();
-                    return skin.progressColor == null ||
-                            !skin.progressColor.isBound();
+                    return skin == null || !skin.progressColor.isBound();
                 }
 
                 @Override
                 public StyleableProperty<Paint> getStyleableProperty(ProgressIndicator n) {
                     final TaskProgressIndicatorSkin skin = (TaskProgressIndicatorSkin) n.getSkin();
-                    return (StyleableProperty<Paint>) skin.progressColor;
+                    if (skin.indeterminateSegmentCount instanceof StyleableProperty) {
+                        @SuppressWarnings("unchecked")
+                        StyleableProperty<Paint> property = (StyleableProperty<Paint>) skin.progressColor;
+                        return property;
+                    } else {
+                        throw new RuntimeException("Illegal cast to StyleableProperty<Paint>");
+                    }
                 }
             };
     private static final CssMetaData<ProgressIndicator, Number> INDETERMINATE_SEGMENT_COUNT =
@@ -703,15 +707,19 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
                 @Override
                 public boolean isSettable(ProgressIndicator n) {
                     final TaskProgressIndicatorSkin skin = (TaskProgressIndicatorSkin) n.getSkin();
-                    return skin.indeterminateSegmentCount == null ||
-                            !skin.indeterminateSegmentCount.isBound();
+                    return skin == null || !skin.indeterminateSegmentCount.isBound();
                 }
 
                 @Override
                 public StyleableProperty<Number> getStyleableProperty(ProgressIndicator n) {
                     final TaskProgressIndicatorSkin skin = (TaskProgressIndicatorSkin) n.getSkin();
-                    StyleableProperty<Number> property = (StyleableProperty<Number>) skin.indeterminateSegmentCount;
-                    return property;
+                    if (skin.indeterminateSegmentCount instanceof StyleableProperty) {
+                        @SuppressWarnings("unchecked")
+                        StyleableProperty<Number> property = (StyleableProperty<Number>) skin.indeterminateSegmentCount;
+                        return property;
+                    } else {
+                        throw new RuntimeException("Illegal cast to StyleableProperty<Number>");
+                    }
                 }
             };
     private static final CssMetaData<ProgressIndicator, Boolean> SPIN_ENABLED =
@@ -720,17 +728,23 @@ public class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicato
                 @Override
                 public boolean isSettable(ProgressIndicator node) {
                     final TaskProgressIndicatorSkin skin = (TaskProgressIndicatorSkin) node.getSkin();
-                    return skin.spinEnabled == null || !skin.spinEnabled.isBound();
+                    return skin == null || !skin.spinEnabled.isBound();
                 }
 
                 @Override
                 public StyleableProperty<Boolean> getStyleableProperty(ProgressIndicator node) {
                     final TaskProgressIndicatorSkin skin = (TaskProgressIndicatorSkin) node.getSkin();
-                    return (StyleableProperty<Boolean>) skin.spinEnabled;
+                    if (skin.spinEnabled instanceof StyleableProperty) {
+                        @SuppressWarnings("unchecked")
+                        StyleableProperty<Boolean> spinEnabled = (StyleableProperty<Boolean>) skin.spinEnabled;
+                        return spinEnabled;
+                    } else {
+                        throw new RuntimeException("Illegal cast to StyleableProperty<Boolean>");
+                    }
                 }
             };
 
-    public static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
+    private static final List<CssMetaData<? extends Styleable, ?>> STYLEABLES;
 
     static {
         final List<CssMetaData<? extends Styleable, ?>> styleables =

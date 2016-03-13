@@ -34,9 +34,9 @@ import java.util.Deque;
 import java.util.HashSet;
 import java.util.Set;
 
-public abstract class ProcessOutputReader implements Runnable {
-    protected final Recording recording;
-    protected final Set<Integer> exitCodes;
+abstract class ProcessOutputReader implements Runnable {
+    final Recording recording;
+    private final Set<Integer> exitCodes;
     private final LocalDateTime startTime;
     private final Deque<Integer> recentEndTimeEstimates;
     private double priorProgress;
@@ -46,7 +46,7 @@ public abstract class ProcessOutputReader implements Runnable {
     private final static int MIN_END_TIME_ESTIMATES = 5;
     private final static int MAX_END_TIME_ESTIMATES = 10;
 
-    public ProcessOutputReader(Recording recording) {
+    ProcessOutputReader(Recording recording) {
         this.recording = recording;
         exitCodes = new HashSet<>();
         exitCodes.add(0);
@@ -72,7 +72,7 @@ public abstract class ProcessOutputReader implements Runnable {
         return output.toString();
     }
 
-    protected void addLineToOutput(String line) {
+    void addLineToOutput(String line) {
         output.append(line);
         output.append(System.lineSeparator());
     }
@@ -92,9 +92,9 @@ public abstract class ProcessOutputReader implements Runnable {
         }
     }
 
-    public abstract void processLine(String line);
+    protected abstract void processLine(String line);
 
-    protected int getSecondsRemaining(double progress) {
+    int getSecondsRemaining(double progress) {
         if (progressRegressed(progress)) {
             clearEstimates();
         }

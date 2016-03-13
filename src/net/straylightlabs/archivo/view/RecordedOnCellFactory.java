@@ -24,7 +24,7 @@ import net.straylightlabs.archivo.model.Recording;
 
 import java.time.LocalDateTime;
 
-public class RecordedOnCellFactory extends TreeTableCell<Recording, LocalDateTime> {
+class RecordedOnCellFactory extends TreeTableCell<Recording, LocalDateTime> {
     @Override
     protected void updateItem(LocalDateTime date, boolean isEmpty) {
         super.updateItem(date, isEmpty);

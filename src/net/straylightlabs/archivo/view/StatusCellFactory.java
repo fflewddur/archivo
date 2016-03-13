@@ -25,7 +25,7 @@ import javafx.scene.control.TreeTableCell;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 
-public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
+class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
     private ProgressIndicator progressIndicator;
 
     public StatusCellFactory() {
@@ -149,7 +149,7 @@ public class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
         if (seconds < 60) {
             return String.format("%d seconds", seconds);
         } else {
-            int minutes = (int)Math.round(seconds / 60.0);
+            int minutes = (int) Math.round(seconds / 60.0);
             if (minutes == 1) {
                 return String.format("%d minute", minutes);
             } else {

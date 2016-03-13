@@ -33,7 +33,7 @@ import java.util.*;
 
 public class MindCommandRecordingFolderItemSearch extends MindCommand {
     private List<Series> series;
-    private Tivo tivo; // Since we always call this command at startup, use it to figure out the TiVo's bodyId
+    private final Tivo tivo; // Since we always call this command at startup, use it to figure out the TiVo's bodyId
 
     private final static JSONArray templateList;
     private final static Logger logger = LoggerFactory.getLogger(MindCommandRecordingFolderItemSearch.class);

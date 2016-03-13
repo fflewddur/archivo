@@ -61,7 +61,7 @@ public class RecordingListController implements Initializable {
 
     private final BooleanProperty tivoIsBusy; // set to true when we're communicating w/ the selected device
 
-    private Label tablePlaceholderMessage;
+    private final Label tablePlaceholderMessage;
 
     @FXML
     private HBox toolbar;
@@ -82,7 +82,7 @@ public class RecordingListController implements Initializable {
     @FXML
     private Label storageLabel;
 
-    private Archivo mainApp;
+    private final Archivo mainApp;
 
     private final static Logger logger = LoggerFactory.getLogger(RecordingListController.class);
 
@@ -403,7 +403,7 @@ public class RecordingListController implements Initializable {
         tivos.stream().forEach(tivo -> tivo.updateMak(newMak));
     }
 
-    public void restartTivoSearch() {
+    private void restartTivoSearch() {
         if (tivoSearchTask != null) {
             tivoSearchTask.cancel();
         }

@@ -92,8 +92,8 @@ public class Recording {
 
     public final static int DESIRED_IMAGE_WIDTH = 200;
     public final static int DESIRED_IMAGE_HEIGHT = 150;
-    public final static char EM_DASH = '\u2014';
-    public final static String UNTITLED_TEXT = "Untitled";
+    private final static char EM_DASH = '\u2014';
+    private final static String UNTITLED_TEXT = "Untitled";
 
     private Recording(Builder builder) {
         recordingId = builder.recordingId;
@@ -226,7 +226,7 @@ public class Recording {
         return duration;
     }
 
-    public boolean hasSeasonAndEpisode() {
+    private boolean hasSeasonAndEpisode() {
         return (seriesNumber > 0 || episodeNumbers.size() > 0);
     }
 

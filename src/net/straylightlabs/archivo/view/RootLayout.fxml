@@ -25,43 +25,43 @@
 <BorderPane prefHeight="650.0" prefWidth="900.0"
             xmlns="http://javafx.com/javafx/8.0.40" xmlns:fx="http://javafx.com/fxml/1"
             fx:controller="net.straylightlabs.archivo.view.RootLayoutController">
-   <top>
-       <MenuBar id="menubar" fx:id="menubar" BorderPane.alignment="CENTER">
-           <Menu text="File">
-               <MenuItem text="Archive..." fx:id="archiveMenuItem" onAction="#archive"/>
-               <MenuItem text="Cancel" fx:id="cancelMenuItem" onAction="#cancel"/>
-               <MenuItem text="Play" fx:id="playMenuItem" onAction="#play"/>
-               <MenuItem text="Remove from TiVo..." fx:id="deleteMenuItem" onAction="#delete"/>
-               <SeparatorMenuItem/>
-               <MenuItem text="Cancel All Tasks" fx:id="cancelAllMenuItem" onAction="#cancelAll"/>
-               <SeparatorMenuItem/>
-               <MenuItem text="Quit" onAction="#quit"/>
-           </Menu>
-           <Menu text="Edit">
-               <MenuItem text="Preferences" fx:id="preferencesMenuItem" onAction="#showPreferencesDialog"/>
-           </Menu>
-           <Menu text="View">
-               <MenuItem text="Expand All Shows" fx:id="expandMenuItem" onAction="#expandShows"/>
-               <MenuItem text="Collapse All Shows" fx:id="collapseMenuItem" onAction="#collapseShows"/>
-           </Menu>
-           <Menu text="Help">
-               <MenuItem text="View Log" onAction="#openLog"/>
-               <MenuItem text="Report a Problem" onAction="#reportProblem"/>
-               <SeparatorMenuItem/>
-               <MenuItem text="About" onAction="#showAboutDialog"/>
-           </Menu>
-       </MenuBar>
-   </top>
-   <bottom>
-       <HBox minHeight="30" prefHeight="30.0" prefWidth="600.0" BorderPane.alignment="CENTER">
-           <ProgressIndicator fx:id="statusIndicator" prefHeight="20.0" prefWidth="20.0">
-               <HBox.margin>
-                   <Insets bottom="3.0" left="12.0" right="8.0" top="3.0"/>
-               </HBox.margin>
-           </ProgressIndicator>
-           <Label fx:id="statusMessage" prefHeight="30.0" text="Status message"/>
-       </HBox>
-   </bottom>
+    <top>
+        <MenuBar id="menubar" fx:id="menubar" BorderPane.alignment="CENTER">
+            <Menu text="File">
+                <MenuItem text="Archive..." fx:id="archiveMenuItem" onAction="#archive"/>
+                <MenuItem text="Cancel" fx:id="cancelMenuItem" onAction="#cancel"/>
+                <MenuItem text="Play" fx:id="playMenuItem" onAction="#play"/>
+                <MenuItem text="Remove from TiVo..." fx:id="deleteMenuItem" onAction="#delete"/>
+                <SeparatorMenuItem/>
+                <MenuItem text="Cancel All Tasks" fx:id="cancelAllMenuItem" onAction="#cancelAll"/>
+                <SeparatorMenuItem/>
+                <MenuItem text="Quit" onAction="#quit"/>
+            </Menu>
+            <Menu text="Edit">
+                <MenuItem text="Preferences" fx:id="preferencesMenuItem" onAction="#showPreferencesDialog"/>
+            </Menu>
+            <Menu text="View">
+                <MenuItem text="Expand All Shows" fx:id="expandMenuItem" onAction="#expandShows"/>
+                <MenuItem text="Collapse All Shows" fx:id="collapseMenuItem" onAction="#collapseShows"/>
+            </Menu>
+            <Menu text="Help">
+                <MenuItem text="View Log" onAction="#openLog"/>
+                <MenuItem text="Report a Problem" onAction="#reportProblem"/>
+                <SeparatorMenuItem/>
+                <MenuItem text="About" onAction="#showAboutDialog"/>
+            </Menu>
+        </MenuBar>
+    </top>
+    <bottom>
+        <HBox minHeight="30" prefHeight="30.0" prefWidth="600.0" BorderPane.alignment="CENTER">
+            <ProgressIndicator fx:id="statusIndicator" prefHeight="20.0" prefWidth="20.0">
+                <HBox.margin>
+                    <Insets bottom="3.0" left="12.0" right="8.0" top="3.0"/>
+                </HBox.margin>
+            </ProgressIndicator>
+            <Label fx:id="statusMessage" prefHeight="30.0" text="Status message"/>
+        </HBox>
+    </bottom>
     <center>
         <GridPane fx:id="mainGrid" BorderPane.alignment="CENTER">
             <columnConstraints>

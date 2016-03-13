@@ -40,6 +40,7 @@ public class Channel {
         return name;
     }
 
+    @SuppressWarnings("unused")
     public URL getLogoURL() {
         return logoURL;
     }
@@ -58,7 +59,7 @@ public class Channel {
             return false;
         }
 
-        Channel channel = (Channel)o;
+        Channel channel = (Channel) o;
         return ((number.equals(channel.number)) && (name.equals(channel.name)));
     }
 

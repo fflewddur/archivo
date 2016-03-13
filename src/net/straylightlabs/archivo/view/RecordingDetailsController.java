@@ -51,9 +51,9 @@ import java.util.List;
 
 public class RecordingDetailsController implements Initializable {
     private final Archivo mainApp;
-    private Map<URL, Image> imageCache;
+    private final Map<URL, Image> imageCache;
     private Recording recording;
-    private ChangeListener<ArchiveStatus> statusChangeListener;
+    private final ChangeListener<ArchiveStatus> statusChangeListener;
 
     @FXML
     private Label title;
@@ -184,7 +184,7 @@ public class RecordingDetailsController implements Initializable {
         return fileType;
     }
 
-    public void clearRecording() {
+    private void clearRecording() {
         setLabelText(title, "");
         setLabelText(subtitle, "");
         setLabelText(episode, "");

@@ -35,7 +35,7 @@ public enum VideoResolution {
     }
 
     public static VideoResolution fromHeight(int height) {
-        switch(height) {
+        switch (height) {
             case 720:
                 return HD_720;
             case 480:

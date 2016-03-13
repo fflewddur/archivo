@@ -26,7 +26,7 @@ import java.util.List;
  */
 public class Series {
     private final String title;
-    private List<Recording> episodes;
+    private final List<Recording> episodes;
 
     public Series(String title, List<Recording> episodes) {
         this.title = title;

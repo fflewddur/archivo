@@ -41,7 +41,7 @@ import java.net.URISyntaxException;
 /**
  * Display information about Archivo.
  */
-public class AboutDialog {
+class AboutDialog {
     private final Dialog dialog;
 
     private static final String HOMEPAGE = "http://straylightlabs.net/archivo";

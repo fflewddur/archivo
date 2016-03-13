@@ -27,7 +27,7 @@ import java.net.URL;
 /**
  * Download an image via an HTTP connection for displaying in the UI.
  */
-public class ImageDownloadTask extends Task<Image> {
+class ImageDownloadTask extends Task<Image> {
     private final URL url;
 
     public ImageDownloadTask(URL url) {

@@ -39,7 +39,7 @@ public class ComskipOutputReader extends ProcessOutputReader {
         if (matcher.find()) {
             double percentComplete = Double.parseDouble(matcher.group(1)) * .01;
             Platform.runLater(() -> recording.setStatus(
-                            ArchiveStatus.createFindingCommercialsStatus(percentComplete, getSecondsRemaining(percentComplete)))
+                    ArchiveStatus.createFindingCommercialsStatus(percentComplete, getSecondsRemaining(percentComplete)))
             );
         }
     }

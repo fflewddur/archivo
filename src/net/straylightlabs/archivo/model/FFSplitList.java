@@ -40,6 +40,7 @@ public class FFSplitList {
     /**
      * Create a new FFSplitList from a standard split file.
      */
+    @SuppressWarnings("unused")
     public static FFSplitList createFromFile(Path input) throws IOException {
         List<Segment> toKeep = parseFFSkipFile(input);
         return new FFSplitList(toKeep);

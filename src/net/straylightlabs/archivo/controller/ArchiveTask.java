@@ -58,7 +58,7 @@ import java.util.stream.Collectors;
 /**
  * Handle the tasks of fetching the recording file from a TiVo, decrypting it, and transcoding it.
  */
-public class ArchiveTask extends Task<Recording> {
+class ArchiveTask extends Task<Recording> {
     private final Recording recording;
     private final Tivo tivo;
     private final String mak;

@@ -60,7 +60,7 @@ public class FFmpegOutputReader extends ProcessOutputReader {
 //                    switch (task) {
 //                        case REMUXING:
                     Platform.runLater(() -> recording.setStatus(
-                                    ArchiveStatus.createRemuxingStatus(percentComplete, getSecondsRemaining(percentComplete)))
+                            ArchiveStatus.createRemuxingStatus(percentComplete, getSecondsRemaining(percentComplete)))
                     );
 //                            break;
 //                    case REMOVING_COMMERCIALS:

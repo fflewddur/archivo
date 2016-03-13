@@ -32,28 +32,28 @@ import java.util.StringJoiner;
  */
 
 public abstract class MindCommand {
-    protected MindRPC client;
-    protected MindCommandType commandType;
-    protected final JSONObject bodyData;
-    protected JSONObject response;
+    MindRPC client;
+    MindCommandType commandType;
+    final JSONObject bodyData;
+    JSONObject response;
 
-    public static final String RPC_ENCODING = "UTF-8";
+    static final String RPC_ENCODING = "UTF-8";
 
     // We use these values in the subclasses
-    public static final String BODY_ID = "bodyId";
-    public static final String FIELD_NAME = "fieldName";
-    public static final String LOD = "levelOfDetail";
-    public static final String LOD_HIGH = "high";
-    public static final String NAMESPACE = "namespace";
-    public static final String OBJECT_ID = "objectId";
-    public static final String RECORDING_ID = "recordingId";
-    public static final String RESPONSE_TEMPLATE = "responseTemplate";
-    public static final String STATE = "state";
-    public static final String STATE_DELETE = "deleted";
-    public static final String TYPE = "type";
-    public static final String TYPE_NAME = "typeName";
+    static final String BODY_ID = "bodyId";
+    static final String FIELD_NAME = "fieldName";
+    static final String LOD = "levelOfDetail";
+    static final String LOD_HIGH = "high";
+    static final String NAMESPACE = "namespace";
+    static final String OBJECT_ID = "objectId";
+    static final String RECORDING_ID = "recordingId";
+    static final String RESPONSE_TEMPLATE = "responseTemplate";
+    static final String STATE = "state";
+    static final String STATE_DELETE = "deleted";
+    static final String TYPE = "type";
+    static final String TYPE_NAME = "typeName";
 
-    protected MindCommand() {
+    MindCommand() {
         this.commandType = MindCommandType.UNKNOWN;
         this.bodyData = new JSONObject();
     }
@@ -64,6 +64,7 @@ public abstract class MindCommand {
      *
      * @param source The MindCommand to copy.
      */
+    @SuppressWarnings("unused")
     protected MindCommand(MindCommand source) {
         this.client = source.client;
         this.commandType = source.commandType;
@@ -71,7 +72,7 @@ public abstract class MindCommand {
         this.response = null;
     }
 
-    public final JSONObject execute() throws IOException {
+    private JSONObject execute() throws IOException {
         assert (client != null);
         response = this.client.send(buildRequest());
         failOnInvalidResponse();
@@ -87,7 +88,7 @@ public abstract class MindCommand {
     /**
      * Override this method to execute code following the network operation.
      */
-    protected void afterExecute() {
+    void afterExecute() {
 
     }
 

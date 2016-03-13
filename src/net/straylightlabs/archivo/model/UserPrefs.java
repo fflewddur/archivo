@@ -39,21 +39,21 @@ public class UserPrefs {
 
     private final static Logger logger = LoggerFactory.getLogger(UserPrefs.class);
 
-    public static final String MAK = "mak";
-    public static final String MOST_RECENT_DEVICE = "lastTivo";
-    public static final String MOST_RECENT_FOLDER = "lastFolder";
-    public static final String MOST_RECENT_TYPE = "lastFileType";
-    public static final String SKIP_COMMERCIALS = "skipCommercials";
-    public static final String HARDWARE_ACCELERATION = "hardwareAcceleration";
-    public static final String VIDEO_LIMIT = "maxVideoResolution";
-    public static final String AUDIO_LIMIT = "maxAudioChannels";
-    public static final String WINDOW_MAXIMIZED = "windowMaximized";
-    public static final String WINDOW_HEIGHT = "windowHeight";
-    public static final String WINDOW_WIDTH = "windowWidth";
-    public static final String COMSKIP_PATH = "comskipPath";
-    public static final String FFMPEG_PATH = "ffmpegPath";
-    public static final String FFPROBE_PATH = "ffprobePath";
-    public static final String HANDBRAKE_PATH = "handbrakePath";
+    private static final String MAK = "mak";
+    private static final String MOST_RECENT_DEVICE = "lastTivo";
+    private static final String MOST_RECENT_FOLDER = "lastFolder";
+    private static final String MOST_RECENT_TYPE = "lastFileType";
+    private static final String SKIP_COMMERCIALS = "skipCommercials";
+    private static final String HARDWARE_ACCELERATION = "hardwareAcceleration";
+    private static final String VIDEO_LIMIT = "maxVideoResolution";
+    private static final String AUDIO_LIMIT = "maxAudioChannels";
+    private static final String WINDOW_MAXIMIZED = "windowMaximized";
+    private static final String WINDOW_HEIGHT = "windowHeight";
+    private static final String WINDOW_WIDTH = "windowWidth";
+    private static final String COMSKIP_PATH = "comskipPath";
+    private static final String FFMPEG_PATH = "ffmpegPath";
+    private static final String FFPROBE_PATH = "ffprobePath";
+    private static final String HANDBRAKE_PATH = "handbrakePath";
 
     private static final String DEFAULT_TOOLDIR = ".";
 

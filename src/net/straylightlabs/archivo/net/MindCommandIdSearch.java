@@ -51,6 +51,7 @@ public class MindCommandIdSearch extends MindCommand {
     /**
      * Turn on compatibility mode, which downloads files in the older and slower PS format.
      */
+    @SuppressWarnings("unused")
     public void setCompatibilityMode(boolean val) {
         compatibilityMode = val;
     }

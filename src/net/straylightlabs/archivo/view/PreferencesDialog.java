@@ -26,17 +26,14 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
-import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Window;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.AudioChannel;
-import net.straylightlabs.archivo.model.Toolchain;
 import net.straylightlabs.archivo.model.UserPrefs;
 import net.straylightlabs.archivo.model.VideoResolution;
 import net.straylightlabs.archivo.utilities.OSHelper;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -44,14 +41,13 @@ import java.util.List;
 /**
  * This dialog is for user-configurable options.
  */
-public class PreferencesDialog {
+class PreferencesDialog {
     private final Dialog<String> dialog;
     private final Archivo mainApp;
     private final UserPrefs userPrefs;
 
     private final ObservableList<VideoResolution> videoResolutions;
     private final ObservableList<AudioChannel> audioChannels;
-    private final ObservableList<Toolchain> toolchains;
 
     public PreferencesDialog(Window parent, Archivo mainApp) {
         dialog = new Dialog<>();
@@ -59,7 +55,6 @@ public class PreferencesDialog {
         userPrefs = mainApp.getUserPrefs();
         videoResolutions = buildVideoResolutionList();
         audioChannels = buildAudioChannelList();
-        toolchains = buildToolchainList();
         initDialog(parent);
     }
 
@@ -73,12 +68,6 @@ public class PreferencesDialog {
         List<AudioChannel> channels = new ArrayList<>();
         channels.addAll(Arrays.asList(AudioChannel.values()));
         return FXCollections.observableArrayList(channels);
-    }
-
-    private ObservableList<Toolchain> buildToolchainList() {
-        List<Toolchain> toolchains = new ArrayList<>();
-        toolchains.addAll(Arrays.asList(Toolchain.values()));
-        return FXCollections.observableArrayList(toolchains);
     }
 
     private void initDialog(Window parent) {
@@ -155,31 +144,6 @@ public class PreferencesDialog {
                 userPrefs.setAudioChannels(audioChannel.getValue());
             }
             return null;
-        });
-    }
-
-    /**
-     * Video ReDo only supports Windows platforms, so we don't need to be OS-agnostic here.
-     */
-    private void setupVideoRedoPathControl(GridPane grid, ChoiceBox<Toolchain> toolchain) {
-        Label vrdLabel = createLabelWithTooltip("Video ReDo location", "Location of the Video ReDo program");
-        grid.add(vrdLabel, 1, 7);
-        TextField vrdPath = new TextField();
-        vrdPath.setEditable(false);
-        grid.add(vrdPath, 2, 7);
-        Button vrdChoosePath = new Button("Change");
-        grid.add(vrdChoosePath, 3, 7);
-        vrdLabel.disableProperty().bind(toolchain.valueProperty().isEqualTo(Toolchain.VIDEO_REDO).not());
-        vrdPath.disableProperty().bind(toolchain.valueProperty().isEqualTo(Toolchain.VIDEO_REDO).not());
-        vrdChoosePath.disableProperty().bind(toolchain.valueProperty().isEqualTo(Toolchain.VIDEO_REDO).not());
-        vrdChoosePath.setOnAction(event -> {
-            FileChooser chooser = new FileChooser();
-            chooser.setInitialDirectory(OSHelper.getApplicationDirectory().toFile());
-            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Executable Files", "*.exe"));
-            File selectedFile = chooser.showOpenDialog(dialog.getOwner());
-            if (selectedFile != null) {
-                vrdPath.setText(selectedFile.toString());
-            }
         });
     }
 

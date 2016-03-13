@@ -35,6 +35,7 @@ import java.util.regex.Pattern;
  * Model the Edit Decision List (EDL) format used by Comskip and MPlayer.
  * Includes methods for using EDL files with ffmpeg.
  */
+@SuppressWarnings("unused")
 public class EditDecisionList {
     private final List<Segment> segmentsToKeep;
     private final List<Segment> segmentsToCut;

@@ -23,15 +23,15 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 
-public class DateUtils {
+class DateUtils {
     private final static DateTimeFormatter DATE_RECORDED_LONG_DATE_FORMATTER;
     private final static DateTimeFormatter DATE_RECORDED_SHORT_DATE_FORMATTER;
     private final static DateTimeFormatter DATE_RECORDED_TIME_FORMATTER;
     public final static DateTimeFormatter DATE_AIRED_FORMATTER;
 
-    private static int currentYear;
-    private static int today;
-    private static int yesterday;
+    private static final int currentYear;
+    private static final int today;
+    private static final int yesterday;
 
     static {
         DATE_RECORDED_LONG_DATE_FORMATTER = DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM);

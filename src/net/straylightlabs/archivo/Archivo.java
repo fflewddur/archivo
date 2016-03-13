@@ -77,8 +77,8 @@ public class Archivo extends Application {
     public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
     public static final String APPLICATION_VERSION = "1.0";
     public static final String USER_AGENT = String.format("%s/%s", APPLICATION_NAME, APPLICATION_VERSION);
-    public static final int WINDOW_MIN_HEIGHT = 400;
-    public static final int WINDOW_MIN_WIDTH = 555;
+    private static final int WINDOW_MIN_HEIGHT = 400;
+    private static final int WINDOW_MIN_WIDTH = 555;
     private static final Path ARCHIVE_HISTORY_PATH = Paths.get(OSHelper.getDataDirectory().toString(), "history.xml");
 
     public Archivo() {
@@ -428,7 +428,7 @@ public class Archivo extends Application {
         return primaryStage;
     }
 
-    public Tivo getActiveTivo() {
+    private Tivo getActiveTivo() {
         return recordingListController.getSelectedTivo();
     }
 

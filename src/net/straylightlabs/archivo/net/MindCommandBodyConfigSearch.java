@@ -28,7 +28,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class MindCommandBodyConfigSearch extends MindCommand {
-    private Tivo tivo;
+    private final Tivo tivo;
 
     private final static JSONArray templateList;
 

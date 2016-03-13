@@ -28,9 +28,10 @@ public enum MindCommandType {
     RECORDING_SEARCH,
     RECORDING_UPDATE;
 
-    @Override public String toString() {
+    @Override
+    public String toString() {
         // These strings must match the name of the command in the TiVo Mind API
-        switch(this) {
+        switch (this) {
             case AUTH:
                 return "bodyAuthenticate";
             case BODY_CONFIG_SEARCH:

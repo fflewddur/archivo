@@ -51,6 +51,7 @@ public class OSHelper {
         return runtime.availableProcessors();
     }
 
+    @SuppressWarnings("unused")
     public static Path getApplicationDirectory() {
         if (isWindows()) {
             String programFilesEnv = System.getenv("ProgramFiles");

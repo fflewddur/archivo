@@ -40,7 +40,7 @@ public class HandbrakeOutputReader extends ProcessOutputReader {
         if (matcher.find()) {
             double percentComplete = Double.parseDouble(matcher.group(1)) * .01;
             Platform.runLater(() -> recording.setStatus(
-                            ArchiveStatus.createTranscodingStatus(percentComplete, getSecondsRemaining(percentComplete)))
+                    ArchiveStatus.createTranscodingStatus(percentComplete, getSecondsRemaining(percentComplete)))
             );
         }
     }
