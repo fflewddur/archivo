@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Todd Kulesza <todd@dropline.net>.
+ * Copyright 2015-2016 Todd Kulesza <todd@dropline.net>.
  *
  * This file is part of Archivo.
  *

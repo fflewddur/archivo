@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 Todd Kulesza <todd@dropline.net>.
+ * Copyright 2015-2016 Todd Kulesza <todd@dropline.net>.
  *
  * This file is part of Archivo.
  *
@@ -22,8 +22,6 @@ package net.straylightlabs.archivo.controller;
 import javafx.application.Platform;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
