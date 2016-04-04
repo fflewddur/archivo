@@ -81,7 +81,7 @@ class ArchiveTask extends Task<Recording> {
 
     private static final int MS_PER_SECOND = 1000;
 
-    public ArchiveTask(Recording recording, Tivo tivo, String mak, final UserPrefs prefs) {
+    ArchiveTask(Recording recording, Tivo tivo, String mak, final UserPrefs prefs) {
         this.recording = recording;
         this.tivo = tivo;
         this.mak = mak;
@@ -226,7 +226,7 @@ class ArchiveTask extends Task<Recording> {
             if (decrypt) {
                 thread = new Thread(() -> {
                     TivoDecoder decoder = new TivoDecoder.Builder().input(pipedInputStream).output(outputStream)
-                            .mak(mak).compatibilityMode(true).build();
+                            .mak(mak).compatibilityMode(false).build();
                     if (!decoder.decode()) {
                         logger.error("Failed to decode file");
                         throw new ArchiveTaskException("Problem decoding recording");
@@ -496,6 +496,8 @@ class ArchiveTask extends Task<Recording> {
         cmd.add("concat");
         cmd.add("-fflags");
         cmd.add("+genpts+igndts");
+        cmd.add("-safe");
+        cmd.add("0");
         cmd.add("-i");
         cmd.add(partList.toString());
         cmd.add("-codec");
