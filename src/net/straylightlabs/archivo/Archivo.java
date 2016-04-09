@@ -184,7 +184,7 @@ public class Archivo extends Application {
         ((Button) alert.getDialogPane().lookupButton(updateButtonType)).setDefaultButton(true);
 
         Optional<ButtonType> result = alert.showAndWait();
-        if ((result.get() == updateButtonType)) {
+        if ((result.isPresent() && result.get() == updateButtonType)) {
             try {
                 Desktop.getDesktop().browse(updateDetails.getLocation().toURI());
             } catch (URISyntaxException | IOException e) {
@@ -240,7 +240,12 @@ public class Archivo extends Application {
             ((Button) alert.getDialogPane().lookupButton(keepButtonType)).setDefaultButton(true);
 
             Optional<ButtonType> result = alert.showAndWait();
-            return (result.get() == cancelButtonType);
+            if (!result.isPresent()) {
+                logger.error("No result from alert dialog");
+                return false;
+            } else {
+                return (result.get() == cancelButtonType);
+            }
         }
         return true;
     }
@@ -385,7 +390,12 @@ public class Archivo extends Application {
         ((Button) alert.getDialogPane().lookupButton(keepButtonType)).setDefaultButton(true);
 
         Optional<ButtonType> result = alert.showAndWait();
-        return (result.get() == deleteButtonType);
+        if (!result.isPresent()) {
+            logger.error("No result from alert dialog");
+            return false;
+        } else {
+            return (result.get() == deleteButtonType);
+        }
     }
 
     private void sendDeleteCommand(Recording recording, Tivo tivo) {
@@ -472,7 +482,7 @@ public class Archivo extends Application {
         ((Button) alert.getDialogPane().lookupButton(actionButtonType)).setDefaultButton(true);
 
         Optional<ButtonType> result = alert.showAndWait();
-        return (result.get() == actionButtonType);
+        return (result.isPresent() && result.get() == actionButtonType);
     }
 
     public void updateMAK(String newMak) {

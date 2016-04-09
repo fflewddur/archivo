@@ -19,11 +19,15 @@
 
 package net.straylightlabs.archivo.model;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class SoftwareUpdateDetails {
@@ -33,7 +37,11 @@ public class SoftwareUpdateDetails {
     private final LocalDate releaseDate;
     private final boolean isAvailable;
 
+    public final static Logger logger = LoggerFactory.getLogger(SoftwareUpdateDetails.class);
+
     public static final SoftwareUpdateDetails UNAVAILABLE = new SoftwareUpdateDetails();
+
+    private static final int MIN_VERSION_PARTS = 3;
 
     private SoftwareUpdateDetails() {
         version = null;
@@ -49,6 +57,14 @@ public class SoftwareUpdateDetails {
         this.location = location;
         this.releaseDate = releaseDate;
         this.isAvailable = true;
+    }
+
+    public SoftwareUpdateDetails(String version) {
+        this.version = version;
+        notableChanges = Collections.emptyList();
+        location = null;
+        releaseDate = null;
+        isAvailable = false;
     }
 
     public String getVersion() {
@@ -85,6 +101,45 @@ public class SoftwareUpdateDetails {
 
     public boolean isAvailable() {
         return isAvailable;
+    }
+
+    /**
+     * Return true if this update is equal to or newer than @other.
+     * Return false if @other is newer.
+     */
+    public boolean isSameOrNewerThan(SoftwareUpdateDetails other) {
+        assert (other != null);
+        if (other == UNAVAILABLE) {
+            return true;
+        }
+        int thisVersionValue = getVersionAsInt();
+        int otherVersionValue = other.getVersionAsInt();
+        logger.debug("thisVersion = {}, otherVersion = {}", thisVersionValue, otherVersionValue);
+        return thisVersionValue >= otherVersionValue;
+    }
+
+    private int getVersionAsInt() {
+        int versionAsInt = 0;
+        int multiplier = 1;
+        boolean hasChars = false;
+
+        String[] versionParts = version.split(Pattern.quote("."));
+        for (int i = MIN_VERSION_PARTS - versionParts.length; i > 0; i--) {
+            multiplier *= 10;
+        }
+        for (int i = versionParts.length - 1; i >= 0; i--, multiplier *= 10) {
+            try {
+                versionAsInt += Integer.parseInt(versionParts[i]) * multiplier;
+            } catch (NumberFormatException e) {
+                hasChars = true;
+            }
+        }
+        if (hasChars) {
+            // if this was using our old beta version numbering, ensure it's lower than the equivalent version
+            // without the beta tag
+            versionAsInt--;
+        }
+        return versionAsInt;
     }
 
     @Override

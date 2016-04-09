@@ -28,6 +28,8 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
@@ -51,6 +53,8 @@ public class UpdateCheckTask extends Task<SoftwareUpdateDetails> {
     private String latestReleaseVersion;
     private List<SoftwareUpdateDetails> releaseList;
 
+    public final static Logger logger = LoggerFactory.getLogger(UpdateCheckTask.class);
+
     private static final String UPDATE_CHECK_URL = "http://straylightlabs.net/archivo/current_version.xml";
 
     @Override
@@ -61,7 +65,7 @@ public class UpdateCheckTask extends Task<SoftwareUpdateDetails> {
             int statusCode = response.getStatusLine().getStatusCode();
             HttpEntity entity = response.getEntity();
             if (statusCode == 200) {
-                Archivo.logger.info("Successfully fetched current_version.xml");
+                logger.info("Successfully fetched current_version.xml");
                 DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
                 try {
                     DocumentBuilder builder = factory.newDocumentBuilder();
@@ -69,12 +73,12 @@ public class UpdateCheckTask extends Task<SoftwareUpdateDetails> {
                     parseReleaseList();
                     return getCurrentRelease();
                 } catch (ParserConfigurationException | IllegalStateException | SAXException e) {
-                    Archivo.logger.error("Error parsing release list: {}", e.getLocalizedMessage());
+                    logger.error("Error parsing release list: {}", e.getLocalizedMessage());
                     throw e;
                 }
             } else {
                 EntityUtils.consume(entity);
-                Archivo.logger.error("Error fetching release list: HTTP code {}", statusCode);
+                logger.error("Error fetching release list: HTTP code {}", statusCode);
                 throw new IOException(String.format("Error fetching %s: status code %d", UPDATE_CHECK_URL, statusCode));
             }
         }
@@ -131,7 +135,7 @@ public class UpdateCheckTask extends Task<SoftwareUpdateDetails> {
     }
 
     private SoftwareUpdateDetails getCurrentRelease() {
-        Archivo.logger.debug("Release list: {}", releaseList);
+        logger.debug("Release list: {}", releaseList);
 
         // Figure out the dates associated with the user's release and the current release
         SoftwareUpdateDetails latestRelease = SoftwareUpdateDetails.UNAVAILABLE;
@@ -144,11 +148,15 @@ public class UpdateCheckTask extends Task<SoftwareUpdateDetails> {
                 usersRelease = release;
             }
         }
+        if (usersRelease == SoftwareUpdateDetails.UNAVAILABLE) {
+            // Ensure we have a version for the user's release
+            usersRelease = new SoftwareUpdateDetails(Archivo.APPLICATION_VERSION);
+        }
 
-        Archivo.logger.debug("latestRelease = {}, usersRelease = {}", latestRelease, usersRelease);
-        if (latestRelease == SoftwareUpdateDetails.UNAVAILABLE || latestRelease == usersRelease) {
+        logger.debug("latestRelease = {}, usersRelease = {}", latestRelease, usersRelease);
+        if (usersRelease.isSameOrNewerThan(latestRelease)) {
             return SoftwareUpdateDetails.UNAVAILABLE;
-        } else if (usersRelease != SoftwareUpdateDetails.UNAVAILABLE) {
+        } else {
             // Build a summary of all changes occurring between the user's release and the latest release
             List<String> changes = new ArrayList<>();
             for (SoftwareUpdateDetails release : releaseList) {
@@ -158,8 +166,6 @@ public class UpdateCheckTask extends Task<SoftwareUpdateDetails> {
             }
             return new SoftwareUpdateDetails(latestRelease.getVersion(), latestRelease.getLocation(),
                     latestRelease.getReleaseDate(), changes);
-        } else {
-            return latestRelease;
         }
     }
 }
