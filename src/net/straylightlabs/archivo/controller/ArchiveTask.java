@@ -49,10 +49,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -563,7 +560,7 @@ class ArchiveTask extends Task<Recording> {
         cmd.add("-o");
         cmd.add(recording.getDestination().toString());
         FileType fileType = recording.getDestinationType();
-        Map<String, String> handbrakeArgs = fileType.getHandbrakeArgs();
+        Map<String, String> handbrakeArgs = new HashMap<>(fileType.getHandbrakeArgs());
         if (audioLimit == AudioChannel.STEREO) {
             logger.info("Audio limit == STEREO");
             // Overwrite the existing list of audio encoders with just one

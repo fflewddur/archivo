@@ -91,7 +91,7 @@ public enum FileType {
     }
 
     public Map<String, String> getHandbrakeArgs() {
-        return handbrakeArgs.getOrDefault(this, Collections.<String, String>emptyMap());
+        return Collections.unmodifiableMap(handbrakeArgs.getOrDefault(this, Collections.<String, String>emptyMap()));
     }
 
     private static Map<FileType, Map<String, String>> buildHandbrakeArgsMap() {
