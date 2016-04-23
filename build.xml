@@ -60,13 +60,13 @@
     <!-- Project Libraries -->
 
     <path id="library.hola.classpath">
-        <pathelement location="${basedir}/lib/hola-0.1.3.jar"/>
+        <pathelement location="${basedir}/lib/hola-0.2.0.jar"/>
     </path>
 
     <path id="library.httpclient.classpath">
         <pathelement location="${basedir}/lib/commons-codec-1.10.jar"/>
         <pathelement location="${basedir}/lib/commons-logging-1.2.jar"/>
-        <pathelement location="${basedir}/lib/httpclient-4.5.1.jar"/>
+        <pathelement location="${basedir}/lib/httpclient-4.5.2.jar"/>
         <pathelement location="${basedir}/lib/httpcore-4.4.4.jar"/>
     </path>
 
@@ -75,16 +75,16 @@
     </path>
 
     <path id="library.logback.classpath">
-        <pathelement location="${basedir}/lib/logback-classic-1.1.3.jar"/>
-        <pathelement location="${basedir}/lib/logback-core-1.1.3.jar"/>
+        <pathelement location="${basedir}/lib/logback-classic-1.1.7.jar"/>
+        <pathelement location="${basedir}/lib/logback-core-1.1.7.jar"/>
     </path>
 
     <path id="library.slf4j-api.classpath">
-        <pathelement location="${basedir}/lib/slf4j-api-1.7.14.jar"/>
+        <pathelement location="${basedir}/lib/slf4j-api-1.7.21.jar"/>
     </path>
 
     <path id="library.tivo-libre.classpath">
-        <pathelement location="${basedir}/lib/tivo-libre-0.7.3.jar"/>
+        <pathelement location="${basedir}/lib/tivo-libre-0.7.4.jar"/>
     </path>
 
     <!-- Modules -->

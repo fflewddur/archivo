@@ -3,8 +3,8 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/commons-logging-1.2.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/commons-codec-1.10.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/httpclient-4.5.1.jar!/" />
       <root url="jar://$PROJECT_DIR$/lib/httpcore-4.4.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/httpclient-4.5.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
