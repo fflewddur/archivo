@@ -32,7 +32,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.InetAddress;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Use mDNS to identify TiVo devices on the local network.
@@ -75,7 +75,7 @@ public class TivoSearchTask extends Task<Void> {
         Service tivoMindService = Service.fromName(SERVICE_TYPE);
         Query query = Query.createWithTimeout(tivoMindService, Domain.LOCAL, timeout);
         try {
-            List<Instance> instances = query.runOnce();
+            Set<Instance> instances = query.runOnce();
             logger.info("Found instances: {}", instances);
             addTivosFromInstances(instances);
             searchFailed = false;
@@ -85,7 +85,7 @@ public class TivoSearchTask extends Task<Void> {
         }
     }
 
-    private void addTivosFromInstances(List<Instance> instances) {
+    private void addTivosFromInstances(Set<Instance> instances) {
         instances.stream().filter(this::instanceIsSupportedTivo).forEach(instance -> {
             Tivo tivo = buildTivoFromInstance(instance);
             logger.info("New device: {}", tivo);
@@ -150,7 +150,7 @@ public class TivoSearchTask extends Task<Void> {
             throw new IllegalArgumentException("This does not look like a supported TiVo device.");
         }
         String tsn = instance.lookupAttribute(TSN_PROPERTY);
-        List<InetAddress> addresses = instance.getAddresses();
+        Set<InetAddress> addresses = instance.getAddresses();
         String name = instance.getName();
         int port = instance.getPort();
         return new Tivo.Builder().name(name).addresses(addresses).tsn(tsn).mak(mak).port(port).build();

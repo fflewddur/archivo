@@ -25,15 +25,12 @@ import org.json.JSONObject;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class Tivo {
     private final String name;
     private final String tsn;
-    private final List<InetAddress> addresses;
+    private final Set<InetAddress> addresses;
     private final int port;
     private String mak;
     private long storageBytesUsed;
@@ -60,7 +57,7 @@ public class Tivo {
         client = null;
     }
 
-    public void updateAddresses(List<InetAddress> addresses) {
+    public void updateAddresses(Set<InetAddress> addresses) {
         this.addresses.clear();
         this.addresses.addAll(addresses);
     }
@@ -69,8 +66,8 @@ public class Tivo {
         return name;
     }
 
-    public List<InetAddress> getAddresses() {
-        return Collections.unmodifiableList(addresses);
+    public Set<InetAddress> getAddresses() {
+        return Collections.unmodifiableSet(addresses);
     }
 
     public String getBodyId() {
@@ -104,7 +101,7 @@ public class Tivo {
 
     private void initRPCClientIfNeeded() {
         if (client == null) {
-            client = new MindRPC(addresses.get(0), port, mak);
+            client = new MindRPC(addresses.iterator().next(), port, mak);
         }
     }
 
@@ -142,8 +139,11 @@ public class Tivo {
         json.put(JSON_PORT, port);
         Base64.Encoder encoder = Base64.getEncoder();
         String[] encodedAddresses = new String[addresses.size()];
-        for (int i = 0; i < addresses.size(); i++) {
-            encodedAddresses[i] = encoder.encodeToString(addresses.get(i).getAddress());
+        Iterator<InetAddress> iterator = addresses.iterator();
+        int i = 0;
+        while (iterator.hasNext()) {
+            encodedAddresses[i] = encoder.encodeToString(iterator.next().getAddress());
+            i++;
         }
         json.put(JSON_ADDRESSES, new JSONArray(encodedAddresses));
         return json;
@@ -163,7 +163,7 @@ public class Tivo {
         String tsn = jo.getString(JSON_TSN);
         int port = jo.getInt(JSON_PORT);
         JSONArray jsonAddresses = jo.getJSONArray(JSON_ADDRESSES);
-        List<InetAddress> addresses = new ArrayList<>();
+        Set<InetAddress> addresses = new HashSet<>();
         Base64.Decoder decoder = Base64.getDecoder();
         for (int i = 0; i < jsonAddresses.length(); i++) {
             try {
@@ -178,7 +178,7 @@ public class Tivo {
 
     public static class Builder {
         private String name;
-        private List<InetAddress> addresses;
+        private Set<InetAddress> addresses;
         private String tsn;
         private int port;
         private String mak;
@@ -188,7 +188,7 @@ public class Tivo {
             return this;
         }
 
-        public Builder addresses(List<InetAddress> val) {
+        public Builder addresses(Set<InetAddress> val) {
             addresses = val;
             return this;
         }
