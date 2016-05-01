@@ -447,6 +447,16 @@
             <arg value="${signtool.cert.pw}"/>
             <arg value="${inno.dir}\comskip.exe"/>
         </exec>
+        <exec executable="${signtool.bin}">
+            <arg value="sign"/>
+            <arg value="/f"/>
+            <arg value="${signtool.cert}"/>
+            <arg value="/t"/>
+            <arg value="http://timestamp.comodoca.com/authenticode"/>
+            <arg value="/p"/>
+            <arg value="${signtool.cert.pw}"/>
+            <arg value="${inno.dir}\HandBrake.exe"/>
+        </exec>
 
         <exec executable="${inno.compiler}">
             <arg value='/O"${artifact.output.archivo}"'/>
