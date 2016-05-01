@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="archivo" default="archivo">
     <property name="title" value="Archivo"/>
-    <property name="version" value="1.0.1"/>
+    <property name="version" value="1.0.2"/>
     <property name="copyright" value="2016 Straylight Labs LLC"/>
 
     <property file="build.properties"/>
@@ -303,6 +303,7 @@
                 mainclassname="net.straylightlabs.archivo.Archivo">
             <classpath dir="${artifact.temp.output.Archivo}" includes="*.jar"/>
             <arch name="x86_64"/>
+            <option value="-Djava.net.preferIPv4Stack=true"/>
             <argument value="-tooldir"/>
             <argument value="$APP_ROOT/Contents/MacOS"/>
         </bundleapp>
