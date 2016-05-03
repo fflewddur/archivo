@@ -361,6 +361,9 @@ public class RecordingListController implements Initializable {
                                 "Archivo couldn't find any TiVos on your network.\n\n" +
                                         "This may mean that your TiVo is too busy to respond, or that there's a problem with your network.",
                                 "Try Again");
+                        if (!trySearchAgain) {
+                            mainApp.cleanShutdown();
+                        }
                     }
                 } else {
                     Tivo lastDevice = mainApp.getLastDevice();
@@ -376,8 +379,6 @@ public class RecordingListController implements Initializable {
                 tivoSearchTask = null;
                 if (trySearchAgain) {
                     startTivoSearchWithTimeout(TivoSearchTask.SEARCH_TIMEOUT_LONG, retries_before_prompt - 1);
-                } else {
-                    mainApp.cleanShutdown();
                 }
             });
             tivoSearchTask.setOnFailed(e -> {
