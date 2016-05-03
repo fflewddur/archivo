@@ -51,8 +51,9 @@ public class TivoSearchTask extends Task<Void> {
 
     private final static Logger logger = LoggerFactory.getLogger(TivoSearchTask.class);
 
-    public final static int SEARCH_TIMEOUT_SHORT = 750;
-    public final static int SEARCH_TIMEOUT_LONG = 5000;
+    public final static int SEARCH_TIMEOUT_SHORT = 1000;
+    public final static int SEARCH_TIMEOUT_LONG = 7000;
+    public final static int TIMEOUTS_BEFORE_PROMPT = 3;
 
     public TivoSearchTask(ObservableList<Tivo> tivos, String mak, int timeout) {
         this.tivos = tivos;

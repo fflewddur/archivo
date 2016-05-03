@@ -328,10 +328,10 @@ public class RecordingListController implements Initializable {
     }
 
     public void startTivoSearch() {
-        startTivoSearchWithTimeout(TivoSearchTask.SEARCH_TIMEOUT_SHORT);
+        startTivoSearchWithTimeout(TivoSearchTask.SEARCH_TIMEOUT_SHORT, TivoSearchTask.TIMEOUTS_BEFORE_PROMPT);
     }
 
-    private void startTivoSearchWithTimeout(int timeout) {
+    private void startTivoSearchWithTimeout(int timeout, int retries_before_prompt) {
         logger.debug("startTivoSearch()");
         assert (mainApp != null);
 
@@ -347,16 +347,21 @@ public class RecordingListController implements Initializable {
                     enableUI();
                     trySearchAgain = mainApp.showErrorMessageWithAction("We can't seem to access your network",
                             "Archivo encountered a problem when it tried to search for TiVos on your network.\n\n" +
-                                    "This is usually caused by another program on your computer that is blocking the network port Archivo needs to use.",
+                                    "This is usually caused by another program on your computer that is blocking " +
+                                    "the network port Archivo needs to use.",
                             "Try Again");
                 } else if (tivos.size() < 1) {
-                    logger.debug("Could not find any TiVos");
-                    mainApp.clearStatusText();
-                    enableUI();
-                    trySearchAgain = mainApp.showErrorMessageWithAction("We didn't find any TiVos",
-                            "Archivo couldn't find any TiVos on your network.\n\n" +
-                                    "This may mean that your TiVo is too busy to respond, or that there's a problem with your network.",
-                            "Try Again");
+                    if (retries_before_prompt > 0) {
+                        trySearchAgain = true;
+                    } else {
+                        logger.debug("Could not find any TiVos");
+                        mainApp.clearStatusText();
+                        enableUI();
+                        trySearchAgain = mainApp.showErrorMessageWithAction("We didn't find any TiVos",
+                                "Archivo couldn't find any TiVos on your network.\n\n" +
+                                        "This may mean that your TiVo is too busy to respond, or that there's a problem with your network.",
+                                "Try Again");
+                    }
                 } else {
                     Tivo lastDevice = mainApp.getLastDevice();
                     tivoList.getSelectionModel().clearSelection();
@@ -370,7 +375,7 @@ public class RecordingListController implements Initializable {
                 }
                 tivoSearchTask = null;
                 if (trySearchAgain) {
-                    startTivoSearchWithTimeout(TivoSearchTask.SEARCH_TIMEOUT_LONG);
+                    startTivoSearchWithTimeout(TivoSearchTask.SEARCH_TIMEOUT_LONG, retries_before_prompt - 1);
                 }
             });
             tivoSearchTask.setOnFailed(e -> {
