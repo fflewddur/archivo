@@ -376,6 +376,8 @@ public class RecordingListController implements Initializable {
                 tivoSearchTask = null;
                 if (trySearchAgain) {
                     startTivoSearchWithTimeout(TivoSearchTask.SEARCH_TIMEOUT_LONG, retries_before_prompt - 1);
+                } else {
+                    mainApp.cleanShutdown();
                 }
             });
             tivoSearchTask.setOnFailed(e -> {
