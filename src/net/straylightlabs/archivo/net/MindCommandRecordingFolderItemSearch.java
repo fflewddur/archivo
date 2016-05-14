@@ -58,9 +58,13 @@ public class MindCommandRecordingFolderItemSearch extends MindCommand {
      */
     @Override
     protected void afterExecute() {
-        JSONArray items = response.getJSONArray("recordingFolderItem");
-        Map<String, List<Recording>> seriesToRecordings = mapSeriesToRecordings(items);
-        series = buildSeriesList(seriesToRecordings);
+        if (response.has("recordingFolderItem")) {
+            JSONArray items = response.getJSONArray("recordingFolderItem");
+            Map<String, List<Recording>> seriesToRecordings = mapSeriesToRecordings(items);
+            series = buildSeriesList(seriesToRecordings);
+        } else {
+            series = Collections.emptyList();
+        }
     }
 
     private Map<String, List<Recording>> mapSeriesToRecordings(JSONArray items) {

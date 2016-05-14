@@ -248,7 +248,9 @@ public class RecordingListController implements Initializable {
                 root.getChildren().add(item);
             }
         }
-        root.getChildren().add(suggestions);
+        if (suggestions.getChildren().size() > 0) {
+            root.getChildren().add(suggestions);
+        }
         recordingTreeTable.setRoot(root);
 
         Platform.runLater(() -> {
