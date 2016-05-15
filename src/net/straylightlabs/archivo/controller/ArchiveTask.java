@@ -61,6 +61,7 @@ class ArchiveTask extends Task<Recording> {
     private final String mak;
     private final UserPrefs prefs;
     private Path downloadPath; // downloaded file
+    private Path encryptedPath; // for debugging, the original encrypted file
     private Path fixedPath; // re-muxed file
     private Path ffsplitPath; // FFSkip file from Comskip
     private Path cutPath; // file with commercials removed
@@ -115,6 +116,7 @@ class ArchiveTask extends Task<Recording> {
             URL url = command.getDownloadUrl();
             logger.info("URL: {}", url);
             downloadPath = buildPath(recording.getDestination(), "download.ts");
+            encryptedPath = buildPath(recording.getDestination(), "TiVo");
             fixedPath = buildPath(recording.getDestination(), "fixed.ts");
             cutPath = buildPath(recording.getDestination(), "cut.ts");
             metadataPath = buildPath(recording.getDestination(), "ts.txt");
@@ -211,6 +213,7 @@ class ArchiveTask extends Task<Recording> {
     private void handleResponse(CloseableHttpResponse response, Recording recording) throws ArchiveTaskException {
         long estimatedLength = getEstimatedLengthFromHeaders(response);
         boolean decrypt = shouldDecrypt(recording);
+        boolean keepEncryptedFile = prefs.getDebugMode();
         cleanupFiles(downloadPath);
         try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(downloadPath));
              BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent(), BUFFER_SIZE);
@@ -218,9 +221,9 @@ class ArchiveTask extends Task<Recording> {
              PipedOutputStream pipedOutputStream = new PipedOutputStream(pipedInputStream)
         ) {
             logger.info("Starting download...");
-            // Pipe the network stream to our TiVo decoder, then pipe the output of that to the output file stream
             Thread thread = null;
-            if (decrypt) {
+            if (decrypt && !keepEncryptedFile) {
+                // Pipe the network stream to our TiVo decoder, then pipe the output of that to the output file stream
                 thread = new Thread(() -> {
                     TivoDecoder decoder = new TivoDecoder.Builder().input(pipedInputStream).output(outputStream)
                             .mak(mak).compatibilityMode(false).build();
@@ -243,7 +246,7 @@ class ArchiveTask extends Task<Recording> {
             for (int bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE);
                  bytesRead >= 0;
                  bytesRead = inputStream.read(buffer, 0, BUFFER_SIZE)) {
-                if (decrypt && !thread.isAlive()) {
+                if (decrypt && !keepEncryptedFile && !thread.isAlive()) {
                     logger.error("Decoding thread died prematurely");
                     response.close();
                     throw new ArchiveTaskException("Problem decoding recording");
@@ -256,7 +259,7 @@ class ArchiveTask extends Task<Recording> {
                 totalBytesRead += bytesRead;
                 logger.trace("Bytes read: {}", bytesRead);
 
-                if (decrypt) {
+                if (decrypt && !keepEncryptedFile) {
                     pipedOutputStream.write(buffer, 0, bytesRead);
                 } else {
                     outputStream.write(buffer, 0, bytesRead);
@@ -272,12 +275,16 @@ class ArchiveTask extends Task<Recording> {
             logger.info("Download finished.");
 
             if (decrypt) {
-                // Close the pipe to ensure the decoding thread finishes
-                pipedOutputStream.flush();
-                pipedOutputStream.close();
-                // Wait for the decoding thread to finish
-                thread.join();
-                logger.info("Decoding finished.");
+                if (keepEncryptedFile) {
+                    decryptRecording();
+                } else {
+                    // Close the pipe to ensure the decoding thread finishes
+                    pipedOutputStream.flush();
+                    pipedOutputStream.close();
+                    // Wait for the decoding thread to finish
+                    thread.join();
+                    logger.info("Decoding finished.");
+                }
             }
 
             verifyDownloadSize(totalBytesRead, estimatedLength);
@@ -332,6 +339,31 @@ class ArchiveTask extends Task<Recording> {
         if (bytesRead / (double) bytesExpected < ESTIMATED_SIZE_THRESHOLD) {
             logger.error("Failed to download file ({} bytes read, {} bytes expected)", bytesRead, bytesExpected);
             throw new ArchiveTaskException("Failed to download recording");
+        }
+    }
+
+    private void decryptRecording() {
+        try {
+            Files.move(downloadPath, encryptedPath);
+            try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(downloadPath));
+                 BufferedInputStream inputStream = new BufferedInputStream(Files.newInputStream(encryptedPath))) {
+                // TODO refactor this with the piped decoding block so it's all in one place
+                logger.info("Decrypting file...");
+                TivoDecoder decoder = new TivoDecoder.Builder().input(inputStream).output(outputStream)
+                        .mak(mak).compatibilityMode(false).build();
+                if (!decoder.decode()) {
+                    logger.error("Failed to decode file");
+                    throw new ArchiveTaskException("Problem decoding recording");
+                }
+                if (recording.getDestinationType().includeMetadata()) {
+                    logger.info("Saving metadata to '{}'", metadataPath);
+                    decoder.saveMetadata(metadataPath);
+                }
+                logger.info("Decoding finished.");
+            }
+        } catch (IOException e) {
+            logger.error("Could not rename {} to {}: {}", downloadPath, encryptedPath, e.getLocalizedMessage());
+            throw new ArchiveTaskException("Failed to rename recording");
         }
     }
 
