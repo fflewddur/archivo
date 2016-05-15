@@ -54,6 +54,8 @@ public class UserPrefs {
     private static final String FFMPEG_PATH = "ffmpegPath";
     private static final String FFPROBE_PATH = "ffprobePath";
     private static final String HANDBRAKE_PATH = "handbrakePath";
+    private static final String SHARE_TELEMETRY = "shareTelemetry";
+    private static final String DEBUG_MODE = "debugMode";
 
     private static final String DEFAULT_TOOLDIR = ".";
 
@@ -213,6 +215,22 @@ public class UserPrefs {
 
     public synchronized String getHandbrakePath() {
         return prefs.get(HANDBRAKE_PATH, sysPrefs.get(HANDBRAKE_PATH, Paths.get(tooldir, "handbrake" + OSHelper.getExeSuffix()).toString()));
+    }
+
+    public synchronized boolean getShareTelemetry() {
+        return prefs.getBoolean(SHARE_TELEMETRY, sysPrefs.getBoolean(SHARE_TELEMETRY, true));
+    }
+
+    public synchronized void setShareTelemetry(boolean val) {
+        prefs.putBoolean(SHARE_TELEMETRY, val);
+    }
+
+    public synchronized boolean getDebugMode() {
+        return prefs.getBoolean(DEBUG_MODE, sysPrefs.getBoolean(DEBUG_MODE, false));
+    }
+
+    public synchronized void setDebugMode(boolean val) {
+        prefs.putBoolean(DEBUG_MODE, val);
     }
 
     /**

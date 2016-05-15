@@ -123,6 +123,19 @@ class PreferencesDialog {
         audioChannel.setValue(userPrefs.getAudioChannels());
         grid.add(audioChannel, 2, 6);
 
+        header = createHeader("Improve Archivo");
+        grid.add(header, 0, 7, 3, 1);
+
+        CheckBox telemetry = new CheckBox("Share anonymous data about feature usage");
+        telemetry.setTooltip(new Tooltip("This helps the Archivo developers identify features that aren't working as intended"));
+        telemetry.setSelected(userPrefs.getShareTelemetry());
+        grid.add(telemetry, 1, 8, 2, 1);
+
+        CheckBox debugMode = new CheckBox("Save debugging files\n(May use significant disk space)");
+        debugMode.setTooltip(new Tooltip("Only check this box if you're working with the Archivo developers to diagnose a specific problem.\nIt will make Archivo keep intermediate debugging files that are normally deleted, but which can use several gigabytes of disk space."));
+        debugMode.setSelected(userPrefs.getDebugMode());
+        grid.add(debugMode, 1, 9, 2, 1);
+
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         // Disable the OK button if the user deletes their MAK
@@ -141,7 +154,8 @@ class PreferencesDialog {
                     userPrefs.setHardwareAcceleration(qsv.isSelected());
                 }
                 userPrefs.setVideoResolution(videoResolution.getValue());
-                userPrefs.setAudioChannels(audioChannel.getValue());
+                userPrefs.setShareTelemetry(telemetry.isSelected());
+                userPrefs.setDebugMode(debugMode.isSelected());
             }
             return null;
         });
