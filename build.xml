@@ -60,7 +60,7 @@
     <!-- Project Libraries -->
 
     <path id="library.hola.classpath">
-        <pathelement location="${basedir}/lib/hola-0.2.0.jar"/>
+        <pathelement location="${basedir}/lib/hola-0.2.1.jar"/>
     </path>
 
     <path id="library.httpclient.classpath">
