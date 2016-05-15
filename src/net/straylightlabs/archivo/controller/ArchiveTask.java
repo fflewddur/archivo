@@ -225,16 +225,7 @@ class ArchiveTask extends Task<Recording> {
             if (decrypt && !keepEncryptedFile) {
                 // Pipe the network stream to our TiVo decoder, then pipe the output of that to the output file stream
                 thread = new Thread(() -> {
-                    TivoDecoder decoder = new TivoDecoder.Builder().input(pipedInputStream).output(outputStream)
-                            .mak(mak).compatibilityMode(false).build();
-                    if (!decoder.decode()) {
-                        logger.error("Failed to decode file");
-                        throw new ArchiveTaskException("Problem decoding recording");
-                    }
-                    if (recording.getDestinationType().includeMetadata()) {
-                        logger.info("Saving metadata to '{}'", metadataPath);
-                        decoder.saveMetadata(metadataPath);
-                    }
+                    runDecoder(pipedInputStream, outputStream);
                 });
                 thread.start();
             }
@@ -347,23 +338,26 @@ class ArchiveTask extends Task<Recording> {
             Files.move(downloadPath, encryptedPath);
             try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(downloadPath));
                  BufferedInputStream inputStream = new BufferedInputStream(Files.newInputStream(encryptedPath))) {
-                // TODO refactor this with the piped decoding block so it's all in one place
                 logger.info("Decrypting file...");
-                TivoDecoder decoder = new TivoDecoder.Builder().input(inputStream).output(outputStream)
-                        .mak(mak).compatibilityMode(false).build();
-                if (!decoder.decode()) {
-                    logger.error("Failed to decode file");
-                    throw new ArchiveTaskException("Problem decoding recording");
-                }
-                if (recording.getDestinationType().includeMetadata()) {
-                    logger.info("Saving metadata to '{}'", metadataPath);
-                    decoder.saveMetadata(metadataPath);
-                }
+                runDecoder(inputStream, outputStream);
                 logger.info("Decoding finished.");
             }
         } catch (IOException e) {
             logger.error("Could not rename {} to {}: {}", downloadPath, encryptedPath, e.getLocalizedMessage());
             throw new ArchiveTaskException("Failed to rename recording");
+        }
+    }
+
+    private void runDecoder(InputStream inputStream, OutputStream outputStream) {
+        TivoDecoder decoder = new TivoDecoder.Builder().input(inputStream).output(outputStream)
+                .mak(mak).compatibilityMode(false).build();
+        if (!decoder.decode()) {
+            logger.error("Failed to decode file");
+            throw new ArchiveTaskException("Problem decoding recording");
+        }
+        if (recording.getDestinationType().includeMetadata()) {
+            logger.info("Saving metadata to '{}'", metadataPath);
+            decoder.saveMetadata(metadataPath);
         }
     }
 
