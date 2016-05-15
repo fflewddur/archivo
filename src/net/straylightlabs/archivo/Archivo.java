@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo;
 
+import ch.qos.logback.classic.Level;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
@@ -84,9 +85,22 @@ public class Archivo extends Application {
     public Archivo() {
         super();
         prefs = new UserPrefs();
+        setLogLevel();
         statusText = new SimpleStringProperty();
         rpcExecutor = Executors.newSingleThreadExecutor();
         archiveQueueManager = new ArchiveQueueManager(this);
+    }
+
+    /**
+     * If the user has requested debugging mode, set the root logger to the DEBUG level
+     */
+    private void setLogLevel() {
+        if (prefs.getDebugMode()) {
+            ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(
+                    ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME
+            );
+            root.setLevel(Level.DEBUG);
+        }
     }
 
     @Override
