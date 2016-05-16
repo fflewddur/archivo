@@ -30,6 +30,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
+import java.util.UUID;
 import java.util.prefs.Preferences;
 
 public class UserPrefs {
@@ -56,6 +57,7 @@ public class UserPrefs {
     private static final String HANDBRAKE_PATH = "handbrakePath";
     private static final String SHARE_TELEMETRY = "shareTelemetry";
     private static final String DEBUG_MODE = "debugMode";
+    private static final String USER_ID = "userId";
 
     private static final String DEFAULT_TOOLDIR = ".";
 
@@ -130,6 +132,7 @@ public class UserPrefs {
         return AudioChannel.fromChannels(channel);
     }
 
+    @SuppressWarnings("unused")
     public synchronized void setAudioChannels(AudioChannel limit) {
         prefs.put(AUDIO_LIMIT, limit.getChannels());
     }
@@ -223,6 +226,11 @@ public class UserPrefs {
 
     public synchronized void setShareTelemetry(boolean val) {
         prefs.putBoolean(SHARE_TELEMETRY, val);
+        if (val) {
+            Archivo.telemetryController.enable();
+        } else {
+            Archivo.telemetryController.disable();
+        }
     }
 
     public synchronized boolean getDebugMode() {
@@ -231,6 +239,20 @@ public class UserPrefs {
 
     public synchronized void setDebugMode(boolean val) {
         prefs.putBoolean(DEBUG_MODE, val);
+    }
+
+    public String getUserId() {
+        String userId = prefs.get(USER_ID, null);
+        if (userId == null) {
+            userId = generateNewUserId();
+        }
+        return userId;
+    }
+
+    private String generateNewUserId() {
+        String userId = UUID.randomUUID().toString();
+        prefs.put(USER_ID, userId);
+        return userId;
     }
 
     /**

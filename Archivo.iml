@@ -29,5 +29,6 @@
       </library>
     </orderEntry>
     <orderEntry type="library" name="hola" level="project" />
+    <orderEntry type="library" name="mixpanel" level="project" />
   </component>
 </module>

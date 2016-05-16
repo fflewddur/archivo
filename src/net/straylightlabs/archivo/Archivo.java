@@ -37,6 +37,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import net.straylightlabs.archivo.controller.ArchiveQueueManager;
+import net.straylightlabs.archivo.controller.TelemetryController;
 import net.straylightlabs.archivo.controller.UpdateCheckTask;
 import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.MindCommandRecordingUpdate;
@@ -73,6 +74,7 @@ public class Archivo extends Application {
     private ArchiveHistory archiveHistory;
 
     public final static Logger logger = LoggerFactory.getLogger(Archivo.class);
+    public final static TelemetryController telemetryController = new TelemetryController();
 
     public static final String APPLICATION_NAME = "Archivo";
     public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
@@ -85,7 +87,11 @@ public class Archivo extends Application {
     public Archivo() {
         super();
         prefs = new UserPrefs();
+        if (prefs.getShareTelemetry()) {
+            telemetryController.enable();
+        }
         setLogLevel();
+        telemetryController.setUserId(prefs.getUserId());
         statusText = new SimpleStringProperty();
         rpcExecutor = Executors.newSingleThreadExecutor();
         archiveQueueManager = new ArchiveQueueManager(this);
@@ -147,6 +153,7 @@ public class Archivo extends Application {
             }
         });
 
+        telemetryController.sendStartupEvent();
         checkForUpdates();
     }
 

@@ -347,11 +347,15 @@ public class RecordingListController implements Initializable {
                     logger.debug("Search task failed because of a network error");
                     mainApp.clearStatusText();
                     enableUI();
+                    Archivo.telemetryController.sendFoundTivosEvent(
+                            0, TivoSearchTask.TIMEOUTS_BEFORE_PROMPT - retries_before_prompt, true
+                    );
                     trySearchAgain = mainApp.showErrorMessageWithAction("We can't seem to access your network",
                             "Archivo encountered a problem when it tried to search for TiVos on your network.\n\n" +
                                     "This is usually caused by another program on your computer that is blocking " +
                                     "the network port Archivo needs to use.",
                             "Try Again");
+
                 } else if (tivos.size() < 1) {
                     if (retries_before_prompt > 0) {
                         trySearchAgain = true;
@@ -359,6 +363,9 @@ public class RecordingListController implements Initializable {
                         logger.debug("Could not find any TiVos");
                         mainApp.clearStatusText();
                         enableUI();
+                        Archivo.telemetryController.sendFoundTivosEvent(
+                                0, TivoSearchTask.TIMEOUTS_BEFORE_PROMPT - retries_before_prompt, false
+                        );
                         trySearchAgain = mainApp.showErrorMessageWithAction("We didn't find any TiVos",
                                 "Archivo couldn't find any TiVos on your network.\n\n" +
                                         "This may mean that your TiVo is too busy to respond, or that there's a problem with your network.",
@@ -377,6 +384,9 @@ public class RecordingListController implements Initializable {
                     } else {
                         tivoList.getSelectionModel().selectFirst();
                     }
+                    Archivo.telemetryController.sendFoundTivosEvent(
+                            tivos.size(), TivoSearchTask.TIMEOUTS_BEFORE_PROMPT - retries_before_prompt, false
+                    );
                 }
                 tivoSearchTask = null;
                 if (trySearchAgain) {

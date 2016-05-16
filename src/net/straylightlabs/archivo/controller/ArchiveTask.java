@@ -93,6 +93,7 @@ class ArchiveTask extends Task<Recording> {
     @Override
     protected Recording call() throws ArchiveTaskException {
         archive();
+        Archivo.telemetryController.sendArchivedEvent();
         return recording;
     }
 
