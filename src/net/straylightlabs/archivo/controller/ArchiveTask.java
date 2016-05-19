@@ -66,6 +66,8 @@ class ArchiveTask extends Task<Recording> {
     private Path ffsplitPath; // FFSkip file from Comskip
     private Path cutPath; // file with commercials removed
     private Path metadataPath; // PyTivo metadata file
+    private long downloadDurationMS;
+    private long processingDurationMS;
 
     private final static Logger logger = LoggerFactory.getLogger(ArchiveTask.class);
 
@@ -93,7 +95,9 @@ class ArchiveTask extends Task<Recording> {
     @Override
     protected Recording call() throws ArchiveTaskException {
         archive();
-        Archivo.telemetryController.sendArchivedEvent();
+        int downloadMins = (int)(downloadDurationMS / 1000 / 60);
+        int processingMins = (int)(processingDurationMS / 1000 / 60);
+        Archivo.telemetryController.sendArchivedEvent(downloadMins, processingMins, isCancelled());
         return recording;
     }
 
@@ -123,6 +127,7 @@ class ArchiveTask extends Task<Recording> {
             metadataPath = buildPath(recording.getDestination(), "ts.txt");
             logger.info("Saving file to {}", downloadPath);
             getRecording(recording, url);
+            long processingStartTime = System.currentTimeMillis();
             if (shouldDecrypt(recording)) {
                 remux();
                 if (prefs.getSkipCommercials()) {
@@ -144,6 +149,7 @@ class ArchiveTask extends Task<Recording> {
                 cleanupFiles(recording.getDestination());
                 Files.move(downloadPath, recording.getDestination());
             }
+            processingDurationMS = System.currentTimeMillis() - processingStartTime;
         } catch (IOException e) {
             logger.error("Error fetching recording information: ", e);
             throw new ArchiveTaskException("Problem fetching recording information");
@@ -156,6 +162,7 @@ class ArchiveTask extends Task<Recording> {
             return;
         }
 
+        long downloadStartTime = System.currentTimeMillis();
         try (CloseableHttpClient client = buildHttpClient()) {
             HttpGet get = new HttpGet(url.toString());
             // Initial request to set the session cookie
@@ -193,6 +200,7 @@ class ArchiveTask extends Task<Recording> {
             logger.error("Error downloading recording: ", e);
             throw new ArchiveTaskException("Problem downloading recording");
         }
+        downloadDurationMS = System.currentTimeMillis() - downloadStartTime;
     }
 
     private CloseableHttpClient buildHttpClient() {

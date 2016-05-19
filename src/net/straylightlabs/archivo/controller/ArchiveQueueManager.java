@@ -65,6 +65,7 @@ public class ArchiveQueueManager extends Observable {
                 e.printStackTrace();
                 removeTask(recording);
                 recording.setStatus(ArchiveStatus.createErrorStatus(e));
+                Archivo.telemetryController.sendArchiveFailedEvent(e);
             });
             task.setOnCancelled(event -> {
                 Archivo.logger.info("ArchiveTask canceled for {}", recording.getFullTitle());

@@ -120,13 +120,33 @@ public class TelemetryController {
                 "Retries Needed", Integer.toString(retriesNeeded),
                 "Search Failed", Boolean.toString(searchFailed)
         );
+        JSONObject userDetails = new JSONObject();
+        userDetails.put("Found TiVos", numFound);
+        userDetails.put("Search Retries", retriesNeeded);
+        eventQueue.addLast(messageBuilder.set(userId, userDetails));
         sendAll();
     }
 
-    public synchronized void sendArchivedEvent() {
-        addEvent("Recording Archived");
+    public synchronized void sendArchivedEvent(int downloadDuration, int processingDuration, boolean cancelled) {
+        addEvent(
+                "Recording Archived",
+                "Download Duration", Integer.toString(downloadDuration),
+                "Processing Duration", Integer.toString(processingDuration),
+                "Was Cancelled", Boolean.toString(cancelled)
+        );
         Map<String, Long> props = new HashMap<>();
         props.put("Recordings Archived", 1L);
+        eventQueue.addLast(messageBuilder.increment(userId, props));
+        sendAll();
+    }
+
+    public synchronized void sendArchiveFailedEvent(Throwable exception) {
+        addEvent(
+                "Archive Failed",
+                "Error Message", exception.getMessage()
+        );
+        Map<String, Long> props = new HashMap<>();
+        props.put("Failed Archives", 1L);
         eventQueue.addLast(messageBuilder.increment(userId, props));
         sendAll();
     }
