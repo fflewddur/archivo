@@ -28,10 +28,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.util.ArrayDeque;
-import java.util.Deque;
-import java.util.HashMap;
-import java.util.Map;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.*;
 
 /**
  * Manage collecting and sending telemetry data.
@@ -78,7 +78,7 @@ public class TelemetryController {
 
     public synchronized void sendAll() {
         ClientDelivery delivery = new ClientDelivery();
-        while(!eventQueue.isEmpty()) {
+        while (!eventQueue.isEmpty()) {
             delivery.addMessage(eventQueue.removeFirst());
         }
 
@@ -113,30 +113,51 @@ public class TelemetryController {
         sendAll();
     }
 
-    public synchronized void sendFoundTivosEvent(int numFound, int retriesNeeded, boolean searchFailed) {
-        addEvent(
-                "Found TiVos",
-                "Number Found", Integer.toString(numFound),
-                "Retries Needed", Integer.toString(retriesNeeded),
-                "Search Failed", Boolean.toString(searchFailed)
-        );
+    public synchronized void sendFoundTivosEvent(int numFound, int retriesNeeded) {
+        JSONObject eventProps = new JSONObject();
+        eventProps.put("Number Found", numFound);
+        eventProps.put("Retries Needed", retriesNeeded);
+        JSONObject event = messageBuilder.event(userId, "Found TiVos", eventProps);
+        eventQueue.addLast(event);
         JSONObject userDetails = new JSONObject();
         userDetails.put("Found TiVos", numFound);
         userDetails.put("Search Retries", retriesNeeded);
+        userDetails.put("No TiVos Found", numFound < 1);
+        eventQueue.addLast(messageBuilder.set(userId, userDetails));
+        sendAll();
+    }
+
+    public synchronized void sendNoTivosFoundEvent(int retries, boolean searchFailed) {
+        JSONObject eventProps = new JSONObject();
+        eventProps.put("Search Failed", searchFailed);
+        eventProps.put("Retries", retries);
+        JSONObject event = messageBuilder.event(userId, "No TiVos Found", eventProps);
+        eventQueue.addLast(event);
+        JSONObject userDetails = new JSONObject();
+        userDetails.put("Found TiVos", 0);
+        userDetails.put("Search Retries", retries);
+        userDetails.put("No TiVos Found", true);
+        int i = 0;
+        for (String nic : getNetworkInterfaces()) {
+            userDetails.put(String.format("Network Interface %d", i), nic);
+            i++;
+        }
         eventQueue.addLast(messageBuilder.set(userId, userDetails));
         sendAll();
     }
 
     public synchronized void sendArchivedEvent(int downloadDuration, int processingDuration, boolean cancelled) {
-        addEvent(
-                "Recording Archived",
-                "Download Duration", Integer.toString(downloadDuration),
-                "Processing Duration", Integer.toString(processingDuration),
-                "Was Cancelled", Boolean.toString(cancelled)
-        );
-        Map<String, Long> props = new HashMap<>();
-        props.put("Recordings Archived", 1L);
-        eventQueue.addLast(messageBuilder.increment(userId, props));
+        JSONObject eventProps = new JSONObject();
+        eventProps.put("Download Duration", downloadDuration);
+        eventProps.put("Processing Duration", processingDuration);
+        eventProps.put("Was Cancelled", cancelled);
+        JSONObject event = messageBuilder.event(userId, "Recording Archived", eventProps);
+        eventQueue.addLast(event);
+        if (!cancelled) {
+            Map<String, Long> props = new HashMap<>();
+            props.put("Recordings Archived", 1L);
+            eventQueue.addLast(messageBuilder.increment(userId, props));
+        }
         sendAll();
     }
 
@@ -149,5 +170,29 @@ public class TelemetryController {
         props.put("Failed Archives", 1L);
         eventQueue.addLast(messageBuilder.increment(userId, props));
         sendAll();
+    }
+
+    private synchronized List<String> getNetworkInterfaces() {
+        List<String> nics = new ArrayList<>();
+        try {
+            for (NetworkInterface nic : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                if (nic.isUp())
+                    nics.add(String.format("name='%s' isLoopback=%b isP2P=%b isVirtual=%b multicast=%b addresses=[%s]\n",
+                            nic.getDisplayName(), nic.isLoopback(), nic.isPointToPoint(), nic.isVirtual(),
+                            nic.supportsMulticast(), getAddressesAsString(nic)));
+            }
+        } catch (SocketException e) {
+            logger.error("Error fetching network interface list: ", e);
+        }
+        return nics;
+    }
+
+    private synchronized String getAddressesAsString(NetworkInterface nic) {
+        StringJoiner sj = new StringJoiner(", ");
+        for (InetAddress address : Collections.list(nic.getInetAddresses())) {
+            sj.add(address.getHostAddress());
+
+        }
+        return sj.toString();
     }
 }
