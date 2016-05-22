@@ -43,10 +43,7 @@ import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.MindCommandRecordingUpdate;
 import net.straylightlabs.archivo.net.MindTask;
 import net.straylightlabs.archivo.utilities.OSHelper;
-import net.straylightlabs.archivo.view.RecordingDetailsController;
-import net.straylightlabs.archivo.view.RecordingListController;
-import net.straylightlabs.archivo.view.RootLayoutController;
-import net.straylightlabs.archivo.view.SetupDialog;
+import net.straylightlabs.archivo.view.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -509,6 +506,16 @@ public class Archivo extends Application {
             result = alert.showAndWait();
         }
         return (result.isPresent() && result.get() == actionButtonType);
+    }
+
+    public void promptForMAK() {
+        logger.debug("mak = {}", mak);
+        ChangeMAKDialog dialog = new ChangeMAKDialog(primaryStage, mak);
+        try {
+            updateMAK(dialog.promptUser());
+        } catch (IllegalStateException e) {
+            cleanShutdown();
+        }
     }
 
     public void updateMAK(String newMak) {

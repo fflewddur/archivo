@@ -100,8 +100,11 @@ public class MindRPC {
     }
 
     private void authenticate() throws IOException {
-        MindCommand authCommand = new MindCommandAuth(mak);
+        MindCommandAuth authCommand = new MindCommandAuth(mak);
         authCommand.executeOn(this);
+        if (authCommand.credentialsRejected()) {
+            throw new MindCommandAuthException();
+        }
     }
 
     private SSLSocketFactory createSecureSocketFactory() {

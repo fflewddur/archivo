@@ -35,10 +35,7 @@ import javafx.scene.layout.HBox;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.controller.ArchiveQueueManager;
 import net.straylightlabs.archivo.model.*;
-import net.straylightlabs.archivo.net.MindCommandBodyConfigSearch;
-import net.straylightlabs.archivo.net.MindCommandRecordingFolderItemSearch;
-import net.straylightlabs.archivo.net.MindTask;
-import net.straylightlabs.archivo.net.TivoSearchTask;
+import net.straylightlabs.archivo.net.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -192,19 +189,24 @@ public class RecordingListController implements Initializable {
         MindCommandRecordingFolderItemSearch command = new MindCommandRecordingFolderItemSearch(tivo);
         MindTask task = new MindTask(tivo.getClient(), command);
         task.setOnSucceeded(event -> {
-            logger.info("Fetching list of recordings succeeded.");
+            logger.info("Fetching list of recordings credentialsRejected.");
             fillTreeTableView(command.getSeries());
             updateTivoDetails(tivo);
         });
         task.setOnFailed(event -> {
             Throwable e = event.getSource().getException();
-            logger.error("Error fetching recordings from {}: ", tivo.getName(), e);
+            if (e instanceof MindCommandAuthException) {
+                logger.error("Could not authenticate");
+                mainApp.promptForMAK();
+            } else {
+                logger.error("Error fetching recordings from {}: ", tivo.getName(), e);
+                mainApp.showErrorMessage("Problem fetching list of recordings",
+                        String.format("Unfortunately we encountered a problem while fetching the list of available " +
+                                "recordings from %s. This usually means that either your computer or your TiVo has lost " +
+                                "its network connection.%n%nError message: %s", tivo.getName(), e.getLocalizedMessage())
+                );
+            }
             mainApp.clearStatusText();
-            mainApp.showErrorMessage("Problem fetching list of recordings",
-                    String.format("Unfortunately we encountered a problem while fetching the list of available " +
-                            "recordings from %s. This usually means that either your computer or your TiVo has lost " +
-                            "its network connection.%n%nError message: %s", tivo.getName(), e.getLocalizedMessage())
-            );
             tivoIsBusy.setValue(false);
             enableUI();
         });
@@ -342,7 +344,7 @@ public class RecordingListController implements Initializable {
         if (tivoSearchTask == null) {
             tivoSearchTask = new TivoSearchTask(tivos, mainApp.getMak(), timeout);
             tivoSearchTask.setOnSucceeded(e -> {
-                logger.debug("Tivo search task succeeded");
+                logger.debug("Tivo search task credentialsRejected");
                 if (tivoSearchTask.searchFailed()) {
                     logger.debug("Search task failed because of a network error");
                     mainApp.clearStatusText();
