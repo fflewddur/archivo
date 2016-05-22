@@ -44,7 +44,7 @@ public class ArchiveQueueManager extends Observable {
     private final Lock downloadLock;
     private final Lock processingLock;
 
-    private final int POOL_SIZE = 2;
+    private static final int POOL_SIZE = 2;
 
     public ArchiveQueueManager(Archivo mainApp) {
         this.mainApp = mainApp;
