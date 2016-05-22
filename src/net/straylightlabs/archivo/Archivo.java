@@ -483,11 +483,7 @@ public class Archivo extends Application {
     }
 
     public void showErrorMessage(String header, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Something went wrong...");
-        alert.setHeaderText(header);
-        alert.setContentText(message);
-        alert.showAndWait();
+        showErrorMessageWithAction(header, message, null);
     }
 
     public boolean showErrorMessageWithAction(String header, String message, String action) {
@@ -498,11 +494,20 @@ public class Archivo extends Application {
 
         ButtonType closeButtonType = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
         ButtonType actionButtonType = new ButtonType(action, ButtonBar.ButtonData.YES);
-        alert.getButtonTypes().setAll(closeButtonType, actionButtonType);
-        ((Button) alert.getDialogPane().lookupButton(closeButtonType)).setDefaultButton(false);
-        ((Button) alert.getDialogPane().lookupButton(actionButtonType)).setDefaultButton(true);
+        ButtonType reportButtonType = new ButtonType("Report Problem", ButtonBar.ButtonData.HELP_2);
+        alert.getButtonTypes().setAll(closeButtonType, reportButtonType);
+        if (action != null) {
+            alert.getButtonTypes().add(actionButtonType);
+            ((Button) alert.getDialogPane().lookupButton(closeButtonType)).setDefaultButton(false);
+            ((Button) alert.getDialogPane().lookupButton(reportButtonType)).setDefaultButton(false);
+            ((Button) alert.getDialogPane().lookupButton(actionButtonType)).setDefaultButton(true);
+        }
 
         Optional<ButtonType> result = alert.showAndWait();
+        while (result.isPresent() && result.get() == reportButtonType) {
+            rootController.reportProblem(null);
+            result = alert.showAndWait();
+        }
         return (result.isPresent() && result.get() == actionButtonType);
     }
 
