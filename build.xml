@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="archivo" default="archivo">
     <property name="title" value="Archivo"/>
-    <property name="version" value="1.0.4"/>
+    <property name="version" value="1.0.5"/>
     <property name="copyright" value="2016 Straylight Labs LLC"/>
 
     <property file="build.properties"/>
@@ -345,7 +345,7 @@
         <!-- Delete temporary files -->
         <delete dir="${artifacts.temp.dir}"/>
 
-        <property name="dmg.name" value="${title} ${version}"/>
+        <property name="dmg.name" value="${title}"/>
         <property name="dmg.path" value="${artifact.output.archivo}/${dmg.name}.dmg"/>
         <property name="dmg.path.tmp" value="${artifact.output.archivo}/${dmg.name}.tmp.dmg"/>
         <property name="mountdir" value="/tmp"/>
