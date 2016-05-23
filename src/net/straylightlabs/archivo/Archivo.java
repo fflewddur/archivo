@@ -37,6 +37,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import net.straylightlabs.archivo.controller.ArchiveQueueManager;
+import net.straylightlabs.archivo.controller.MAKManager;
 import net.straylightlabs.archivo.controller.TelemetryController;
 import net.straylightlabs.archivo.controller.UpdateCheckTask;
 import net.straylightlabs.archivo.model.*;
@@ -60,7 +61,7 @@ import java.util.concurrent.Executors;
 
 public class Archivo extends Application {
     private Stage primaryStage;
-    private String mak;
+    private final MAKManager maks;
     private final StringProperty statusText;
     private final ExecutorService rpcExecutor;
     private final UserPrefs prefs;
@@ -84,6 +85,8 @@ public class Archivo extends Application {
     public Archivo() {
         super();
         prefs = new UserPrefs();
+        maks = new MAKManager();
+        prefs.loadMAKs(maks);
         if (prefs.getShareTelemetry()) {
             telemetryController.enable();
         }
@@ -125,12 +128,13 @@ public class Archivo extends Application {
 
         initRootLayout();
 
-        mak = prefs.getMAK();
+        String mak = maks.currentMAK();
         if (mak == null) {
             try {
                 SetupDialog dialog = new SetupDialog(primaryStage);
                 mak = dialog.promptUser();
-                prefs.setMAK(mak);
+                maks.addMAK(mak);
+                prefs.saveMAKs(maks);
             } catch (IllegalStateException e) {
                 logger.error("Error getting MAK from user: ", e);
                 cleanShutdown();
@@ -508,9 +512,18 @@ public class Archivo extends Application {
         return (result.isPresent() && result.get() == actionButtonType);
     }
 
-    public void promptForMAK() {
-        logger.debug("mak = {}", mak);
-        ChangeMAKDialog dialog = new ChangeMAKDialog(primaryStage, mak);
+    public void tryNextMAK() {
+        String nextMak = maks.tryNextMAK();
+        if (nextMak == null) {
+            promptForMAK();
+        } else {
+            updateMAK(nextMak);
+        }
+    }
+
+    private void promptForMAK() {
+        logger.debug("mak = {}", maks.currentMAK());
+        ChangeMAKDialog dialog = new ChangeMAKDialog(primaryStage, maks.currentMAK());
         try {
             updateMAK(dialog.promptUser());
         } catch (IllegalStateException e) {
@@ -518,14 +531,12 @@ public class Archivo extends Application {
         }
     }
 
-    public void updateMAK(String newMak) {
-        if (newMak == null) {
+    private void updateMAK(String newMak) {
+        if (newMak == null || newMak.isEmpty()) {
             logger.error("MAK cannot be empty");
-        } else if (newMak.equals(this.mak)) {
-            logger.debug("MAK has not changed");
         } else {
-            this.mak = newMak;
-            prefs.setMAK(newMak);
+            maks.addMAK(newMak);
+            prefs.saveMAKs(maks);
             recordingListController.updateMak(newMak);
         }
     }
@@ -552,7 +563,7 @@ public class Archivo extends Application {
     }
 
     public String getMak() {
-        return mak;
+        return maks.currentMAK();
     }
 
     public void setLastDevice(Tivo tivo) {
@@ -560,7 +571,7 @@ public class Archivo extends Application {
     }
 
     public Tivo getLastDevice() {
-        return prefs.getLastDevice(mak);
+        return prefs.getLastDevice(maks.currentMAK());
     }
 
     public Path getLastFolder() {

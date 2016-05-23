@@ -197,7 +197,7 @@ public class RecordingListController implements Initializable {
             Throwable e = event.getSource().getException();
             if (e instanceof MindCommandAuthException) {
                 logger.error("Could not authenticate");
-                mainApp.promptForMAK();
+                mainApp.tryNextMAK();
             } else {
                 logger.error("Error fetching recordings from {}: ", tivo.getName(), e);
                 mainApp.showErrorMessage("Problem fetching list of recordings",
