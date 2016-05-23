@@ -21,8 +21,6 @@ package net.straylightlabs.archivo.controller;
 
 import java.util.*;
 
-import static net.straylightlabs.archivo.Archivo.logger;
-
 /**
  * Maintain a sorted list of MAKs this user has entered, sorted by most-recently used
  */
@@ -37,11 +35,15 @@ public class MAKManager {
         failedMaks = new HashSet<>();
     }
 
+    /**
+     * Returns the most-recently used MAK
+     * @return the most-recently used MAK
+     */
     public String currentMAK() {
         if (maks.size() > 0) {
             return maks.get(0);
         } else {
-            return "";
+            return null;
         }
     }
 
@@ -68,6 +70,9 @@ public class MAKManager {
     }
 
     public void addMAK(String mak) {
+        if (mak == null || mak.isEmpty()) {
+            return;
+        }
         if (maks.contains(mak)) {
             maks.remove(mak);
         }
@@ -81,11 +86,7 @@ public class MAKManager {
      */
     public void load(String makString) {
         maks.clear();
-        maks.addAll(Arrays.asList(makString.split(MAKManager.SEPARATOR)));
-        logger.debug("List of MAKS:");
-        for (String mak : maks) {
-            logger.debug("MAK: {}", mak);
-        }
+        Arrays.asList(makString.split(MAKManager.SEPARATOR)).stream().forEach(this::addMAK);
     }
 
     /**
