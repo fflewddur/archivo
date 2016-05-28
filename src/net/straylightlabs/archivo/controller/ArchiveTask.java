@@ -422,13 +422,15 @@ class ArchiveTask extends Task<Recording> {
         List<String> cmd = new ArrayList<>();
         cmd.add(ffmpegPath);
         cmd.add("-fflags");
-        cmd.add("+genpts+igndts");
+        cmd.add("+genpts+discardcorrupt+sortdts");
         cmd.add("-i");
         cmd.add(downloadPath.toString());
         cmd.add("-codec");
         cmd.add("copy");
         cmd.add("-avoid_negative_ts");
         cmd.add("make_zero");
+        cmd.add("-seek2any");
+        cmd.add("1");
         cmd.add("-f");
         cmd.add("mpegts");
         cmd.add(fixedPath.toString());
