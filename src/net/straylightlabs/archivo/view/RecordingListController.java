@@ -36,6 +36,7 @@ import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.controller.ArchiveQueueManager;
 import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.*;
+import net.straylightlabs.archivo.utilities.OSHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -137,16 +138,19 @@ public class RecordingListController implements Initializable {
             cancel.setOnAction(event -> mainApp.getRecordingDetailsController().cancel(event));
             MenuItem play = new MenuItem("Play");
             play.setOnAction(event -> mainApp.getRecordingDetailsController().play(event));
+            MenuItem openFolder = new MenuItem(String.format("Show in %s", OSHelper.getFileBrowserName()));
+            openFolder.setOnAction(event -> mainApp.getRecordingDetailsController().openFolder(event));
             MenuItem delete = new MenuItem("Remove from TiVo...");
 
             delete.setOnAction(event -> mainApp.deleteFromTivo(table.getSelectionModel().getSelectedItem().getValue()));
-            menu.getItems().addAll(archive, cancel, play, new SeparatorMenuItem(), delete);
+            menu.getItems().addAll(archive, cancel, play, openFolder, new SeparatorMenuItem(), delete);
 
             row.itemProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue != null) {
                     archive.disableProperty().bind(newValue.isArchivableProperty().not());
                     cancel.disableProperty().bind(newValue.isCancellableProperty().not());
                     play.disableProperty().bind(newValue.isPlayableProperty().not());
+                    openFolder.disableProperty().bind(newValue.isPlayableProperty().not());
                     delete.disableProperty().bind(newValue.isRemovableProperty().not());
                 }
             });

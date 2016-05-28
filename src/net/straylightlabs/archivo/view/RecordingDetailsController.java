@@ -136,6 +136,16 @@ public class RecordingDetailsController implements Initializable {
         }
     }
 
+    @FXML
+    public void openFolder(ActionEvent event) {
+        Archivo.logger.info("Opening folder containing recording {}...", recording.getDestination());
+        try {
+            Desktop.getDesktop().browse(recording.getDestination().getParent().toUri());
+        } catch (IOException e) {
+            Archivo.logger.error("Error playing '{}': ", recording.getDestination(), e);
+        }
+    }
+
     private Path showSaveDialog(Window parent) {
         FileChooser chooser = new FileChooser();
         setupFileTypes(chooser);

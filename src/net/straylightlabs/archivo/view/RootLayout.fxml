@@ -31,6 +31,7 @@
                 <MenuItem text="Archive..." fx:id="archiveMenuItem" onAction="#archive"/>
                 <MenuItem text="Cancel" fx:id="cancelMenuItem" onAction="#cancel"/>
                 <MenuItem text="Play" fx:id="playMenuItem" onAction="#play"/>
+                <MenuItem text="Show in File Browser" fx:id="openFolderMenuItem" onAction="#openFolder"/>
                 <MenuItem text="Remove from TiVo..." fx:id="deleteMenuItem" onAction="#delete"/>
                 <SeparatorMenuItem/>
                 <MenuItem text="Cancel All Tasks" fx:id="cancelAllMenuItem" onAction="#cancelAll"/>
