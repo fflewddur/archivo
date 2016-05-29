@@ -64,24 +64,6 @@ public class Recording {
     private final LocalDateTime expectedDeletion;
     private final Type collectionType;
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        Recording recording = (Recording) o;
-
-        return !(recordingId != null ? !recordingId.equals(recording.recordingId) : recording.recordingId != null) &&
-                !(seriesTitle != null ? !seriesTitle.equals(recording.seriesTitle) : recording.seriesTitle != null);
-    }
-
-    @Override
-    public int hashCode() {
-        int result = recordingId != null ? recordingId.hashCode() : 0;
-        result = 31 * result + (seriesTitle != null ? seriesTitle.hashCode() : 0);
-        return result;
-    }
-
     // Denotes Recordings that are child nodes in the RecordingListView
     private boolean isChildRecording;
     private final int numEpisodes;
@@ -469,6 +451,24 @@ public class Recording {
         if (this.isPlayable.get() != isPlayable) {
             this.isPlayable.set(isPlayable);
         }
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Recording recording = (Recording) o;
+
+        return !(recordingId != null ? !recordingId.equals(recording.recordingId) : recording.recordingId != null) &&
+                !(seriesTitle != null ? !seriesTitle.equals(recording.seriesTitle) : recording.seriesTitle != null);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = recordingId != null ? recordingId.hashCode() : 0;
+        result = 31 * result + (seriesTitle != null ? seriesTitle.hashCode() : 0);
+        return result;
     }
 
     @Override
