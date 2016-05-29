@@ -54,7 +54,7 @@ class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
         if (status != null && status.getStatus() != ArchiveStatus.TaskStatus.NONE && recording != null && !recording.isSeriesHeading()) {
             switch (status.getStatus()) {
                 case QUEUED:
-                    setText("Queued...");
+                    setText("Waiting to download...");
                     setGraphic(null);
                     updateTooltip(null);
                     break;
@@ -79,6 +79,11 @@ class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
                     setText(String.format("Downloading... (%s)", formatRemainingTime(status.getSecondsRemaining())));
                     setProgress(status.getProgress());
                     updateTooltip(String.format("Download speed: %s", formatSpeed(status.getKilobytesPerSecond())));
+                    break;
+                case DOWNLOADED:
+                    setText("Download ready, waiting to process...");
+                    setProgress(ArchiveStatus.INDETERMINATE);
+                    updateTooltip("We'll process this recording after the current archive has finished");
                     break;
                 case REMUXING:
                     setText(String.format("Repairing video file... (%s)", formatRemainingTime(status.getSecondsRemaining())));
@@ -161,6 +166,10 @@ class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
     private String formatRemainingTime(int seconds) {
         if (seconds == ArchiveStatus.TIME_UNKNOWN) {
             return "calculating time left";
+        } else if (seconds <= 5) {
+            return ("about 10 seconds left");
+        } else if (seconds <= 20) {
+            return ("about 20 seconds left");
         } else if (seconds <= 30) {
             return "about 30 seconds left";
         } else if (seconds <= 65) {

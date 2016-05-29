@@ -21,6 +21,8 @@ package net.straylightlabs.archivo.net;
 
 import net.straylightlabs.archivo.Archivo;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -52,6 +54,8 @@ public abstract class MindCommand {
     static final String STATE_DELETE = "deleted";
     static final String TYPE = "type";
     static final String TYPE_NAME = "typeName";
+
+    private final static Logger logger = LoggerFactory.getLogger(MindCommand.class);
 
     MindCommand() {
         this.commandType = MindCommandType.UNKNOWN;
@@ -142,6 +146,7 @@ public abstract class MindCommand {
         }
 
         if (response.get("type").equals("error")) {
+            logger.debug("Invalid response: {}", response.toString());
             throw new IOException(response.get("text").toString());
         }
     }

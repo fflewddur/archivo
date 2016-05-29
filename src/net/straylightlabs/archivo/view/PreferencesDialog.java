@@ -22,7 +22,6 @@ package net.straylightlabs.archivo.view;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
@@ -43,15 +42,17 @@ import java.util.List;
  */
 class PreferencesDialog {
     private final Dialog<String> dialog;
-    private final Archivo mainApp;
     private final UserPrefs userPrefs;
 
     private final ObservableList<VideoResolution> videoResolutions;
     private final ObservableList<AudioChannel> audioChannels;
 
+    private static final int HEADER_COL = 0;
+    private static final int LABEL_COL = 1;
+    private static final int CONTROL_COL = 2;
+
     public PreferencesDialog(Window parent, Archivo mainApp) {
         dialog = new Dialog<>();
-        this.mainApp = mainApp;
         userPrefs = mainApp.getUserPrefs();
         videoResolutions = buildVideoResolutionList();
         audioChannels = buildAudioChannelList();
@@ -83,72 +84,59 @@ class PreferencesDialog {
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPrefWidth(10);
         grid.getColumnConstraints().addAll(col1);
+        int row = 0;
 
-        Label header = createHeader("TiVo Settings");
-        grid.add(header, 0, 0, 3, 1);
-
-        Label label = createLabelWithTooltip("Media access key", "The media access key associated with your TiVo account");
-        grid.add(label, 1, 1);
-        TextField mak = new TextField();
-        mak.setText(userPrefs.getMAK());
-        grid.add(mak, 2, 1);
-
-        header = createHeader("Archive Preferences");
-        grid.add(header, 0, 2, 3, 1);
+        Label header = createHeader("Archive Preferences");
+        grid.add(header, HEADER_COL, row++, 3, 1);
 
         CheckBox comskip = new CheckBox("Try to remove commercials");
         comskip.setTooltip(new Tooltip("Try to determine when commercials start and end, and remove them from the final video. May not always be accurate."));
         comskip.setSelected(userPrefs.getSkipCommercials());
-        grid.add(comskip, 1, 3, 2, 1);
+        grid.add(comskip, LABEL_COL, row++, 2, 1);
 
         CheckBox qsv = new CheckBox("Use hardware acceleration");
         qsv.setTooltip(new Tooltip("Use Intel Quick Sync Video (if available) to accelerate video conversions. May result in large file sizes."));
         qsv.setSelected(userPrefs.getHardwareAcceleration());
-        grid.add(qsv, 1, 4, 2, 1);
+        grid.add(qsv, LABEL_COL, row++, 2, 1);
         if (!OSHelper.isWindows()) {
             // For now, QSV is only supported by the Windows version of Handbrake
             qsv.setSelected(false);
             qsv.setDisable(true);
         }
 
-        label = createLabelWithTooltip("Limit video resolution to", "If your selected file type has a larger resolution than this, archived recordings will be scaled down to this size");
-        grid.add(label, 1, 5);
+        Label label = createLabelWithTooltip("Limit video resolution to", "If your selected file type has a larger resolution than this, archived recordings will be scaled down to this size");
+        grid.add(label, LABEL_COL, row);
         ChoiceBox<VideoResolution> videoResolution = new ChoiceBox<>(videoResolutions);
         videoResolution.setValue(userPrefs.getVideoResolution());
-        grid.add(videoResolution, 2, 5);
+        grid.add(videoResolution, CONTROL_COL, row);
+        row++;
 
         label = createLabelWithTooltip("Limit audio channels to", "If your selected file type supports multiple audio channels, archived recordings will have their sound limited to these channels");
-        grid.add(label, 1, 6);
+        grid.add(label, LABEL_COL, row);
         ChoiceBox<AudioChannel> audioChannel = new ChoiceBox<>(audioChannels);
         audioChannel.setValue(userPrefs.getAudioChannels());
-        grid.add(audioChannel, 2, 6);
+        grid.add(audioChannel, CONTROL_COL, row);
+        row++;
 
         header = createHeader("Improve Archivo");
-        grid.add(header, 0, 7, 3, 1);
+        grid.add(header, HEADER_COL, row++, 3, 1);
 
         CheckBox telemetry = new CheckBox("Share anonymous data about feature usage");
         telemetry.setTooltip(new Tooltip("This helps the Archivo developers identify features that aren't working as intended"));
         telemetry.setSelected(userPrefs.getShareTelemetry());
-        grid.add(telemetry, 1, 8, 2, 1);
+        grid.add(telemetry, LABEL_COL, row++, 2, 1);
 
         CheckBox debugMode = new CheckBox("Save debugging files\n(May use significant disk space)");
         debugMode.setTooltip(new Tooltip("Only check this box if you're working with the Archivo developers to diagnose a specific problem.\nIt will make Archivo keep intermediate debugging files that are normally deleted, but which can use several gigabytes of disk space."));
         debugMode.setSelected(userPrefs.getDebugMode());
-        grid.add(debugMode, 1, 9, 2, 1);
+        grid.add(debugMode, LABEL_COL, row, 2, 1);
 
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-
-        // Disable the OK button if the user deletes their MAK
-        Node okButton = dialog.getDialogPane().lookupButton(ButtonType.OK);
-        mak.textProperty().addListener(((observable, oldValue, newValue) -> {
-            okButton.setDisable(newValue.trim().isEmpty());
-        }));
 
         dialog.getDialogPane().setContent(grid);
 
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
-                mainApp.updateMAK(mak.getText());
                 userPrefs.setSkipCommercials(comskip.isSelected());
                 if (OSHelper.isWindows()) {
                     userPrefs.setHardwareAcceleration(qsv.isSelected());

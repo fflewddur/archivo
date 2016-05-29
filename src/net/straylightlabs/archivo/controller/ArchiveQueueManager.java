@@ -30,6 +30,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.RejectedExecutionException;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Enqueue archive requests for processing via a background thread, and allow archive tasks to be canceled.
@@ -39,22 +41,25 @@ public class ArchiveQueueManager extends Observable {
     private final Archivo mainApp;
     private final ExecutorService executorService;
     private final ConcurrentHashMap<Recording, ArchiveTask> queuedTasks;
+    private final Lock downloadLock;
+    private final Lock processingLock;
+
+    private static final int POOL_SIZE = 2;
 
     public ArchiveQueueManager(Archivo mainApp) {
         this.mainApp = mainApp;
-        executorService = Executors.newSingleThreadExecutor();
+        executorService = Executors.newFixedThreadPool(POOL_SIZE);
+        downloadLock = new ReentrantLock();
+        processingLock = new ReentrantLock();
         queuedTasks = new ConcurrentHashMap<>();
     }
 
     public boolean enqueueArchiveTask(Recording recording, Tivo tivo, String mak) {
         try {
-            ArchiveTask task = new ArchiveTask(recording, tivo, mak, mainApp.getUserPrefs());
-            task.setOnRunning(event -> {
-                mainApp.setStatusText(String.format("Archiving %s...", recording.getFullTitle()));
-                recording.setStatus(ArchiveStatus.createDownloadingStatus(-1, ArchiveStatus.TIME_UNKNOWN, 0));
-            });
+            ArchiveTask task = new ArchiveTask(recording, tivo, mak, mainApp.getUserPrefs(), downloadLock, processingLock);
+            task.setOnRunning(event -> mainApp.setStatusText(String.format("Archiving %s...", recording.getFullTitle())));
             task.setOnSucceeded(event -> {
-                Archivo.logger.info("ArchiveTask succeeded for {}", recording.getFullTitle());
+                Archivo.logger.info("ArchiveTask credentialsRejected for {}", recording.getFullTitle());
                 updateArchiveHistory(recording);
                 removeTask(recording);
                 recording.setStatus(ArchiveStatus.FINISHED);

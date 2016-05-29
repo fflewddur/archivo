@@ -20,12 +20,17 @@
 package net.straylightlabs.archivo.net;
 
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Authorize ourselves using the TiVo's MAK. This needs to happen before any other RPC commands can be sent over
  * the socket.
  */
 class MindCommandAuth extends MindCommand {
+    @SuppressWarnings("unused")
+    private final static Logger logger = LoggerFactory.getLogger(MindCommandAuth.class);
+
     public MindCommandAuth(String mak) {
         super();
         commandType = MindCommandType.AUTH;
@@ -35,5 +40,9 @@ class MindCommandAuth extends MindCommand {
         credential.put("key", mak);
 
         bodyData.put("credential", credential);
+    }
+
+    public boolean credentialsRejected() {
+        return (response != null && response.get("status").equals("failure"));
     }
 }

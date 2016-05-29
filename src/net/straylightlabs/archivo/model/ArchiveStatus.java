@@ -39,6 +39,7 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
     public final static ArchiveStatus EMPTY = new ArchiveStatus(TaskStatus.NONE);
     public final static ArchiveStatus QUEUED = new ArchiveStatus(TaskStatus.QUEUED);
     public final static ArchiveStatus FINISHED = new ArchiveStatus(TaskStatus.FINISHED);
+    public final static ArchiveStatus DOWNLOADED = new ArchiveStatus(TaskStatus.DOWNLOADED);
 
     private ArchiveStatus(TaskStatus status) {
         this.status = status;
@@ -240,6 +241,7 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
         REMUXING,
         CONNECTING,
         DOWNLOADING,
+        DOWNLOADED,
         QUEUED,
         FINISHED,
         ERROR,
@@ -254,6 +256,7 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
                 case QUEUED:
                 case CONNECTING:
                 case DOWNLOADING:
+                case DOWNLOADED:
                 case TRANSCODING:
                 case REMOVING_COMMERCIALS:
                 case FINDING_COMMERCIALS:

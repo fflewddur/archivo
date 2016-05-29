@@ -68,6 +68,8 @@ public class RootLayoutController implements Initializable, Observer {
     @FXML
     private MenuItem playMenuItem;
     @FXML
+    private MenuItem openFolderMenuItem;
+    @FXML
     private MenuItem deleteMenuItem;
     @FXML
     private MenuItem cancelAllMenuItem;
@@ -101,6 +103,7 @@ public class RootLayoutController implements Initializable, Observer {
         menubar.setUseSystemMenuBar(true);
         statusIndicator.setVisible(false);
         setShortcutKeys();
+        tweakPlatformSpecificNames();
     }
 
     private void setShortcutKeys() {
@@ -116,6 +119,10 @@ public class RootLayoutController implements Initializable, Observer {
         collapseMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.OPEN_BRACKET, KeyCombination.SHORTCUT_DOWN));
     }
 
+    private void tweakPlatformSpecificNames() {
+        openFolderMenuItem.setText(String.format("Show in %s", OSHelper.getFileBrowserName()));
+    }
+
     @FXML
     public void archive(ActionEvent event) {
         mainApp.getRecordingDetailsController().archive(event);
@@ -129,6 +136,11 @@ public class RootLayoutController implements Initializable, Observer {
     @FXML
     public void play(ActionEvent event) {
         mainApp.getRecordingDetailsController().play(event);
+    }
+
+    @FXML
+    public void openFolder(ActionEvent event) {
+        mainApp.getRecordingDetailsController().openFolder(event);
     }
 
     @FXML
@@ -237,11 +249,13 @@ public class RootLayoutController implements Initializable, Observer {
             archiveMenuItem.disableProperty().bind(trueProperty);
             cancelMenuItem.disableProperty().bind(trueProperty);
             playMenuItem.disableProperty().bind(trueProperty);
+            openFolderMenuItem.disableProperty().bind(trueProperty);
             deleteMenuItem.disableProperty().bind(trueProperty);
         } else {
             archiveMenuItem.disableProperty().bind(Bindings.or(recording.isArchivableProperty().not(), recording.isCancellableProperty()));
             cancelMenuItem.disableProperty().bind(recording.isCancellableProperty().not());
             playMenuItem.disableProperty().bind(recording.isPlayableProperty().not());
+            openFolderMenuItem.disableProperty().bind(recording.isPlayableProperty().not());
             deleteMenuItem.disableProperty().bind(recording.isRemovableProperty().not());
         }
     }

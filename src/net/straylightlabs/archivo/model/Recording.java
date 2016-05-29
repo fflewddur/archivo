@@ -458,14 +458,14 @@ public class Recording {
     }
 
     private void updateIsCancellable() {
-        boolean isCancellable = status.getValue().getStatus().isCancelable();
+        boolean isCancellable = !isSeriesHeading.get() && status.getValue().getStatus().isCancelable();
         if (this.isCancellable.get() != isCancellable) {
             this.isCancellable.set(isCancellable);
         }
     }
 
     private void updateIsPlayable() {
-        boolean isPlayable = status.getValue().getStatus() == ArchiveStatus.TaskStatus.FINISHED;
+        boolean isPlayable = !isSeriesHeading.get() && status.getValue().getStatus() == ArchiveStatus.TaskStatus.FINISHED;
         if (this.isPlayable.get() != isPlayable) {
             this.isPlayable.set(isPlayable);
         }

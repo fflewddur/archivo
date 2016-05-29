@@ -21,6 +21,7 @@ package net.straylightlabs.archivo.model;
 
 import javafx.application.Application;
 import net.straylightlabs.archivo.Archivo;
+import net.straylightlabs.archivo.controller.MAKManager;
 import net.straylightlabs.archivo.utilities.OSHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,9 +29,7 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.prefs.Preferences;
 
 public class UserPrefs {
@@ -94,12 +93,13 @@ public class UserPrefs {
         return allParsed;
     }
 
-    public synchronized String getMAK() {
-        return prefs.get(MAK, null);
+    public synchronized void loadMAKs(MAKManager manager) {
+        String maks = prefs.get(MAK, "");
+        manager.load(maks);
     }
 
-    public synchronized void setMAK(String val) {
-        prefs.put(MAK, val);
+    public synchronized void saveMAKs(MAKManager manager) {
+        prefs.put(MAK, manager.getAsString());
     }
 
     public synchronized boolean getSkipCommercials() {

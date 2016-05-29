@@ -34,18 +34,19 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * This dialog is for capturing necessary first-run setup information.
- * Currently this only includes the media access key (MAK) needed to
- * interact with the user's TiVo devices.
+ * Tell the user their MAK was unable to authenticate with TiVo and prompt them to change it.
  */
-public class SetupDialog extends FormattedDialog {
-    public SetupDialog(Window parent) {
+public class ChangeMAKDialog extends FormattedDialog {
+    private String mak;
+
+    public ChangeMAKDialog(Window parent, String currentMak) {
         super(parent);
+        this.mak = currentMak;
         initDialog();
     }
 
     private void initDialog() {
-        dialog.setHeaderText("Welcome to Archivo");
+        dialog.setHeaderText("Could not authenticate with TiVo");
 
         GridPane grid = new GridPane();
         grid.setHgap(10);
@@ -58,25 +59,28 @@ public class SetupDialog extends FormattedDialog {
         grid.add(explanation, 0, 0, 2, 1);
 
         grid.add(new Label("Media access key"), 0, 1);
-        TextField mak = new TextField();
-        grid.add(mak, 1, 1);
+        TextField makField = new TextField();
+        if (mak != null) {
+            makField.setText(mak);
+        }
+        grid.add(makField, 1, 1);
 
-        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK);
 
         // Only enable the OK button after the user has entered the MAK
         Node okButton = dialog.getDialogPane().lookupButton(ButtonType.OK);
         okButton.setDisable(true);
-        mak.textProperty().addListener(((observable, oldValue, newValue) -> {
+        makField.textProperty().addListener(((observable, oldValue, newValue) -> {
             okButton.setDisable(newValue.trim().isEmpty());
         }));
 
         dialog.getDialogPane().setContent(grid);
 
-        Platform.runLater(mak::requestFocus);
+        Platform.runLater(makField::requestFocus);
 
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
-                return mak.getText().trim();
+                return makField.getText().trim();
             }
             return null;
         });
@@ -85,9 +89,8 @@ public class SetupDialog extends FormattedDialog {
     private List<Text> buildExplanationText() {
         List<Text> textList = new ArrayList<>();
 
-        textList.add(createText("Before transferring recordings from TiVo to your computer, you'll need to provide the "));
-        textList.add(createItalicsText("media access key (MAK)"));
-        textList.add(createText(" associated with your TiVo account. You can find your MAK by viewing "));
+        textList.add(createText("We could not connect to this TiVo using the media access key (MAK) you provided. " +
+                                "You can find your MAK by viewing "));
         textList.add(createBoldText("My Account"));
         textList.add(createText(" on tivo.com or from the "));
         textList.add(createBoldText("Account & System Information"));

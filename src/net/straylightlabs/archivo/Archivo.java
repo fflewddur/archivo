@@ -37,16 +37,14 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import net.straylightlabs.archivo.controller.ArchiveQueueManager;
+import net.straylightlabs.archivo.controller.MAKManager;
 import net.straylightlabs.archivo.controller.TelemetryController;
 import net.straylightlabs.archivo.controller.UpdateCheckTask;
 import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.MindCommandRecordingUpdate;
 import net.straylightlabs.archivo.net.MindTask;
 import net.straylightlabs.archivo.utilities.OSHelper;
-import net.straylightlabs.archivo.view.RecordingDetailsController;
-import net.straylightlabs.archivo.view.RecordingListController;
-import net.straylightlabs.archivo.view.RootLayoutController;
-import net.straylightlabs.archivo.view.SetupDialog;
+import net.straylightlabs.archivo.view.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -63,7 +61,7 @@ import java.util.concurrent.Executors;
 
 public class Archivo extends Application {
     private Stage primaryStage;
-    private String mak;
+    private final MAKManager maks;
     private final StringProperty statusText;
     private final ExecutorService rpcExecutor;
     private final UserPrefs prefs;
@@ -78,7 +76,7 @@ public class Archivo extends Application {
 
     public static final String APPLICATION_NAME = "Archivo";
     public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
-    public static final String APPLICATION_VERSION = "1.0.5";
+    public static final String APPLICATION_VERSION = "1.0.90";
     public static final String USER_AGENT = String.format("%s/%s", APPLICATION_NAME, APPLICATION_VERSION);
     private static final int WINDOW_MIN_HEIGHT = 400;
     private static final int WINDOW_MIN_WIDTH = 555;
@@ -87,6 +85,8 @@ public class Archivo extends Application {
     public Archivo() {
         super();
         prefs = new UserPrefs();
+        maks = new MAKManager();
+        prefs.loadMAKs(maks);
         if (prefs.getShareTelemetry()) {
             telemetryController.enable();
         }
@@ -128,12 +128,13 @@ public class Archivo extends Application {
 
         initRootLayout();
 
-        mak = prefs.getMAK();
+        String mak = maks.currentMAK();
         if (mak == null) {
             try {
                 SetupDialog dialog = new SetupDialog(primaryStage);
                 mak = dialog.promptUser();
-                prefs.setMAK(mak);
+                maks.addMAK(mak);
+                prefs.saveMAKs(maks);
             } catch (IllegalStateException e) {
                 logger.error("Error getting MAK from user: ", e);
                 cleanShutdown();
@@ -511,14 +512,31 @@ public class Archivo extends Application {
         return (result.isPresent() && result.get() == actionButtonType);
     }
 
-    public void updateMAK(String newMak) {
-        if (newMak == null) {
-            logger.error("MAK cannot be empty");
-        } else if (newMak.equals(this.mak)) {
-            logger.debug("MAK has not changed");
+    public void tryNextMAK() {
+        String nextMak = maks.tryNextMAK();
+        if (nextMak == null) {
+            promptForMAK();
         } else {
-            this.mak = newMak;
-            prefs.setMAK(newMak);
+            updateMAK(nextMak);
+        }
+    }
+
+    private void promptForMAK() {
+        logger.debug("mak = {}", maks.currentMAK());
+        ChangeMAKDialog dialog = new ChangeMAKDialog(primaryStage, maks.currentMAK());
+        try {
+            updateMAK(dialog.promptUser());
+        } catch (IllegalStateException e) {
+            cleanShutdown();
+        }
+    }
+
+    private void updateMAK(String newMak) {
+        if (newMak == null || newMak.isEmpty()) {
+            logger.error("MAK cannot be empty");
+        } else {
+            maks.addMAK(newMak);
+            prefs.saveMAKs(maks);
             recordingListController.updateMak(newMak);
         }
     }
@@ -545,7 +563,7 @@ public class Archivo extends Application {
     }
 
     public String getMak() {
-        return mak;
+        return maks.currentMAK();
     }
 
     public void setLastDevice(Tivo tivo) {
@@ -553,7 +571,7 @@ public class Archivo extends Application {
     }
 
     public Tivo getLastDevice() {
-        return prefs.getLastDevice(mak);
+        return prefs.getLastDevice(maks.currentMAK());
     }
 
     public Path getLastFolder() {

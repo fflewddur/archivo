@@ -78,4 +78,14 @@ public class OSHelper {
 
         return dataDir;
     }
+
+    public static String getFileBrowserName() {
+        if (isWindows()) {
+            return "File Explorer";
+        } else if (isMacOS()) {
+            return "Finder";
+        } else {
+            return "File Browser";
+        }
+    }
 }

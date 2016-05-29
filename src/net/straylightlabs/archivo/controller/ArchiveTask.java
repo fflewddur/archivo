@@ -50,6 +50,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.locks.Lock;
 import java.util.stream.Collectors;
 
 /**
@@ -60,6 +61,8 @@ class ArchiveTask extends Task<Recording> {
     private final Tivo tivo;
     private final String mak;
     private final UserPrefs prefs;
+    private final Lock downloadLock;
+    private final Lock processingLock;
     private Path downloadPath; // downloaded file
     private Path encryptedPath; // for debugging, the original encrypted file
     private Path fixedPath; // re-muxed file
@@ -80,12 +83,16 @@ class ArchiveTask extends Task<Recording> {
     private static final double ESTIMATED_SIZE_THRESHOLD = 0.8; // Need to download this % of a file to consider it successful
 
     private static final int MS_PER_SECOND = 1000;
+    private static final int PAUSE_AFTER_DOWNLOAD = 5 * MS_PER_SECOND;
 
-    ArchiveTask(Recording recording, Tivo tivo, String mak, final UserPrefs prefs) {
+    ArchiveTask(Recording recording, Tivo tivo, String mak, final UserPrefs prefs,
+                final Lock downloadLock, final Lock processingLock) {
         this.recording = recording;
         this.tivo = tivo;
         this.mak = mak;
         this.prefs = prefs;
+        this.downloadLock = downloadLock;
+        this.processingLock = processingLock;
     }
 
     public Recording getRecording() {
@@ -95,23 +102,25 @@ class ArchiveTask extends Task<Recording> {
     @Override
     protected Recording call() throws ArchiveTaskException {
         archive();
-        int downloadMins = (int)(downloadDurationMS / 1000 / 60);
-        int processingMins = (int)(processingDurationMS / 1000 / 60);
+        int downloadMins = (int) (downloadDurationMS / 1000 / 60);
+        int processingMins = (int) (processingDurationMS / 1000 / 60);
         Archivo.telemetryController.sendArchivedEvent(downloadMins, processingMins, isCancelled());
         return recording;
     }
 
     private void archive() throws ArchiveTaskException {
-        if (isCancelled()) {
-            logger.info("ArchiveTask canceled by user.");
-            return;
-        } else if (!Files.isDirectory(recording.getDestination().getParent())) {
-            logger.error("Destination folder ({}) no longer exists", recording.getDestination().getParent());
-            throw new ArchiveTaskException("Destination folder no longer exists");
-        }
-
-        logger.info("Starting archive task for {}", recording.getTitle());
         try {
+            logger.debug("LOCKING DOWNLOAD");
+            downloadLock.lock();
+            logger.debug("DOWNLOAD LOCKED");
+            if (isCancelled()) {
+                logger.info("ArchiveTask canceled by user.");
+                return;
+            } else if (!Files.isDirectory(recording.getDestination().getParent())) {
+                logger.error("Destination folder ({}) no longer exists", recording.getDestination().getParent());
+                throw new ArchiveTaskException("Destination folder no longer exists");
+            }
+            logger.info("Starting archive task for {}", recording.getTitle());
             Platform.runLater(() -> recording.setStatus(
                     ArchiveStatus.createConnectingStatus(0, 0, NUM_RETRIES)
             ));
@@ -120,13 +129,31 @@ class ArchiveTask extends Task<Recording> {
             command.executeOn(tivo.getClient());
             URL url = command.getDownloadUrl();
             logger.info("URL: {}", url);
-            downloadPath = buildPath(recording.getDestination(), "download.ts");
-            encryptedPath = buildPath(recording.getDestination(), "TiVo");
-            fixedPath = buildPath(recording.getDestination(), "fixed.ts");
-            cutPath = buildPath(recording.getDestination(), "cut.ts");
-            metadataPath = buildPath(recording.getDestination(), "ts.txt");
-            logger.info("Saving file to {}", downloadPath);
-            getRecording(recording, url);
+            setupPaths();
+            getRecording(url);
+            try {
+                // Give TiVo's HTTP server a chance to get ready for the next request, otherwise it will usually fail
+                Thread.sleep(PAUSE_AFTER_DOWNLOAD);
+            } catch (InterruptedException e) {
+                // Ignore this
+            }
+        } catch (IOException e) {
+            logger.error("Error fetching recording information: ", e);
+            throw new ArchiveTaskException("Problem fetching recording information");
+        } finally {
+            downloadLock.unlock();
+        }
+        try {
+            Platform.runLater(() -> recording.setStatus(
+                    ArchiveStatus.DOWNLOADED
+            ));
+            logger.debug("LOCKING PROCESS");
+            processingLock.lock();
+            logger.debug("PROCESS LOCKED");
+            if (isCancelled()) {
+                logger.info("ArchiveTask canceled by user.");
+                return;
+            }
             long processingStartTime = System.currentTimeMillis();
             if (shouldDecrypt(recording)) {
                 remux();
@@ -153,10 +180,21 @@ class ArchiveTask extends Task<Recording> {
         } catch (IOException e) {
             logger.error("Error fetching recording information: ", e);
             throw new ArchiveTaskException("Problem fetching recording information");
+        } finally {
+            processingLock.unlock();
         }
     }
 
-    private void getRecording(Recording recording, URL url) throws ArchiveTaskException {
+    private void setupPaths() {
+        downloadPath = buildPath(recording.getDestination(), "download.ts");
+        encryptedPath = buildPath(recording.getDestination(), "TiVo");
+        fixedPath = buildPath(recording.getDestination(), "fixed.ts");
+        cutPath = buildPath(recording.getDestination(), "cut.ts");
+        metadataPath = buildPath(recording.getDestination(), "ts.txt");
+        logger.info("Saving file to {}", downloadPath);
+    }
+
+    private void getRecording(URL url) throws ArchiveTaskException {
         if (isCancelled()) {
             logger.info("ArchiveTask canceled by user.");
             return;
@@ -384,13 +422,15 @@ class ArchiveTask extends Task<Recording> {
         List<String> cmd = new ArrayList<>();
         cmd.add(ffmpegPath);
         cmd.add("-fflags");
-        cmd.add("+genpts+igndts");
+        cmd.add("+genpts+discardcorrupt+sortdts");
         cmd.add("-i");
         cmd.add(downloadPath.toString());
         cmd.add("-codec");
         cmd.add("copy");
         cmd.add("-avoid_negative_ts");
         cmd.add("make_zero");
+        cmd.add("-seek2any");
+        cmd.add("1");
         cmd.add("-f");
         cmd.add("mpegts");
         cmd.add(fixedPath.toString());
