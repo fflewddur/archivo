@@ -29,7 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -44,6 +43,10 @@ class RecordingSelection {
     private final BooleanProperty isCancellable;
     private final BooleanProperty isPlayable;
     private final BooleanProperty isRemovable;
+    private final BooleanAndBinding archivableBinding;
+    private final BooleanAndBinding cancellableBinding;
+    private final BooleanAndBinding playableBinding;
+    private final BooleanAndBinding removableBinding;
 
     // Properties for displaying recording information
     private final StringProperty showTitle;
@@ -71,6 +74,10 @@ class RecordingSelection {
         isCancellable = new SimpleBooleanProperty();
         isPlayable = new SimpleBooleanProperty();
         isRemovable = new SimpleBooleanProperty();
+        archivableBinding = new BooleanAndBinding();
+        cancellableBinding = new BooleanAndBinding();
+        playableBinding = new BooleanAndBinding();
+        removableBinding = new BooleanAndBinding();
 
         showTitle = new SimpleStringProperty();
         episodeTitle = new SimpleStringProperty();
@@ -95,14 +102,9 @@ class RecordingSelection {
     public void selectionChanged(ListChangeListener.Change<? extends TreeItem<Recording>> change) {
         ObservableList<? extends TreeItem<Recording>> selectedRecordings = change.getList();
 
-        BooleanAndBinding archivableBinding = new BooleanAndBinding();
-        BooleanAndBinding cancellableBinding = new BooleanAndBinding();
-        BooleanAndBinding playableBinding = new BooleanAndBinding();
-        BooleanAndBinding removableBinding = new BooleanAndBinding();
+        clearFields();
         boolean isAnyRecordingCopyProtected = false;
         boolean isAnyRecordingInProgress = false;
-        showTitles.clear();
-        recordings.clear();
 
         Recording lastRecording = null;
         for (TreeItem<Recording> item : selectedRecordings) {
@@ -129,6 +131,23 @@ class RecordingSelection {
             }
         }
 
+        rebindProperties();
+        clearLabelProperties();
+        updateLabelProperties(
+                lastRecording, selectedRecordings.size(), isAnyRecordingCopyProtected, isAnyRecordingInProgress
+        );
+    }
+
+    private void clearFields() {
+        archivableBinding.clear();
+        cancellableBinding.clear();
+        playableBinding.clear();
+        removableBinding.clear();
+        showTitles.clear();
+        recordings.clear();
+    }
+
+    private void rebindProperties() {
         isArchivable.unbind();
         isCancellable.unbind();
         isPlayable.unbind();
@@ -138,9 +157,12 @@ class RecordingSelection {
         isCancellable.bind(cancellableBinding);
         isPlayable.bind(playableBinding);
         isRemovable.bind(removableBinding);
+    }
 
+    private void updateLabelProperties(Recording lastRecording, int numRecordings, boolean isAnyRecordingCopyProtected,
+                                       boolean isAnyRecordingInProgress) {
         clearLabelProperties();
-        int numRecordings = selectedRecordings.size();
+
         if (numRecordings == 1 && lastRecording != null) {
             // Only one recording is selected, show all of its details
             showTitle.setValue(lastRecording.getSeriesTitle());
@@ -290,6 +312,13 @@ class RecordingSelection {
         public void add(BooleanProperty property) {
             properties.add(property);
             bind(property);
+            invalidate();
+        }
+
+        public void clear() {
+            properties.forEach(this::unbind);
+            properties.clear();
+            invalidate();
         }
 
         @Override
