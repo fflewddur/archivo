@@ -4,6 +4,7 @@
     -light: rgb(205, 210, 215);
     -dark: rgb(47.0, 52.0, 57.0);
     -light-text: rgb(180, 185, 190);
+    -medium-text: rgb(130, 135, 140);
 }
 
 .text {
@@ -24,6 +25,22 @@
     -fx-text-fill: -light-text;
 }
 
+.status-unavailable .tree-table-cell {
+    -fx-text-fill: -medium-text;
+}
+
+.status-unavailable:selected .tree-table-cell {
+    -fx-text-fill: white;
+}
+
+.status-finished .tree-table-cell {
+    -fx-text-fill: -medium-text;
+}
+
+.status-finished:selected .tree-table-cell {
+    -fx-text-fill: white;
+}
+
 .preference-header {
     -fx-font-weight: bold;
     -fx-padding: 10 0 0 0;
@@ -38,25 +55,3 @@
     -fx-font-weight: bold;
     -fx-text-fill: darkred;
 }
-
-/*******************************************************************************
- *                                                                             *
- * ProgressIndicator                                                           *
- *                                                                             *
- ******************************************************************************/
-
-.recording-progress-indicator {
-/*    -fx-background-color: green; */
-}
-/*
-.recording-progress-indicator > .determinate-indicator > .indicator {
-    -fx-background-color: -light;
-    -fx-padding: 0.0;
-}
-
-.recording-progress-indicator > .determinate-indicator > .progress {
-    -fx-background-color:  -dark,  derive(-dark, 50.0%);
-    -fx-background-insets: 0.0, 0.4em;
-    -fx-padding: 1.0em;
-}
-*/

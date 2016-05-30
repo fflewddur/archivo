@@ -19,14 +19,19 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.scene.Node;
 import javafx.scene.control.ProgressIndicator;
 import javafx.scene.control.Tooltip;
 import javafx.scene.control.TreeTableCell;
+import javafx.scene.control.TreeTableRow;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 
 class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
     private ProgressIndicator progressIndicator;
+
+    private static final String STYLE_FINISHED = "status-finished";
+    private static final String STYLE_UNAVAILABLE = "status-unavailable";
 
     public StatusCellFactory() {
         super();
@@ -48,10 +53,16 @@ class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
         super.updateItem(status, isEmpty);
 
         Recording recording = null;
-        if (getTreeTableRow() != null && getTreeTableRow().getTreeItem() != null) {
-            recording = getTreeTableRow().getTreeItem().getValue();
+        TreeTableRow<Recording> row = getTreeTableRow();
+        if (row != null && row.getTreeItem() != null) {
+            recording = row.getTreeItem().getValue();
+            clearCustomClasses(row);
+            if (!recording.isSeriesHeading() && (recording.isCopyProtected() || recording.isInProgress())) {
+                row.getStyleClass().add(STYLE_UNAVAILABLE);
+            }
         }
         if (status != null && status.getStatus() != ArchiveStatus.TaskStatus.NONE && recording != null && !recording.isSeriesHeading()) {
+
             switch (status.getStatus()) {
                 case QUEUED:
                     setText("Waiting to download...");
@@ -108,6 +119,7 @@ class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
                 case FINISHED:
                     setText("Archived");
                     setProgress(1.0);
+                    row.getStyleClass().add(STYLE_FINISHED);
                     updateTooltip(null);
                     break;
                 case ERROR:
@@ -127,6 +139,10 @@ class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
             updateTooltip(null);
             setStyle("");
         }
+    }
+
+    private void clearCustomClasses(Node node) {
+        node.getStyleClass().removeAll(STYLE_FINISHED, STYLE_UNAVAILABLE);
     }
 
     private void updateTooltip(String tip) {

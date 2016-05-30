@@ -41,9 +41,10 @@
         </HBox>
         <TreeTableView fx:id="recordingTreeTable" VBox.vgrow="ALWAYS">
             <columns>
-                <TreeTableColumn fx:id="showColumn" minWidth="400" text="Show"/>
-                <TreeTableColumn fx:id="dateColumn" minWidth="100" text="Recorded"/>
-                <TreeTableColumn fx:id="statusColumn" minWidth="350" text="Status"/>
+                <TreeTableColumn fx:id="showColumn" minWidth="100"  prefWidth="400" text="Show"/>
+                <TreeTableColumn fx:id="durationColumn" minWidth="100" prefWidth="100" text="Duration" visible="false"/>
+                <TreeTableColumn fx:id="dateColumn" minWidth="100" prefWidth="100" text="Recorded"/>
+                <TreeTableColumn fx:id="statusColumn" minWidth="100" prefWidth="350" text="Status"/>
             </columns>
         </TreeTableView>
     </VBox>

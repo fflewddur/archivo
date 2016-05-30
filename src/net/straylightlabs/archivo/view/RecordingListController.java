@@ -42,6 +42,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -75,6 +76,8 @@ public class RecordingListController implements Initializable {
     @FXML
     private TreeTableColumn<Recording, String> showColumn;
     @FXML
+    private TreeTableColumn<Recording, Duration> durationColumn;
+    @FXML
     private TreeTableColumn<Recording, LocalDateTime> dateColumn;
     @FXML
     private TreeTableColumn<Recording, ArchiveStatus> statusColumn;
@@ -107,11 +110,14 @@ public class RecordingListController implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         recordingTreeTable.setShowRoot(false);
         recordingTreeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        recordingTreeTable.setTableMenuButtonVisible(true);
         recordingTreeTable.setPlaceholder(tablePlaceholderMessage);
         recordingTreeTable.setOnSort(event ->
                 updateGroupStatus(recordingTreeTable.getRoot(), recordingTreeTable.getRoot().getChildren())
         );
         showColumn.setCellValueFactory(data -> data.getValue().getValue().titleProperty());
+        durationColumn.setCellValueFactory(data -> data.getValue().getValue().durationProperty());
+        durationColumn.setCellFactory(col -> new DurationCellFactory());
         dateColumn.setCellValueFactory(data -> data.getValue().getValue().dateRecordedProperty());
         dateColumn.setCellFactory(col -> new RecordedOnCellFactory());
         dateColumn.setSortType(TreeTableColumn.SortType.DESCENDING);
@@ -236,15 +242,22 @@ public class RecordingListController implements Initializable {
                 // Create a new tree node with children
                 List<TreeItem<Recording>> childItems = new ArrayList<>();
                 boolean allAreCopyable = true;
+                boolean allAreComplete = true;
                 for (Recording recording : s.getEpisodes()) {
                     allAreSuggestions &= recording.isSuggestion();
                     allAreCopyable &= !recording.isCopyProtected();
+                    allAreComplete &= !recording.isInProgress();
                     recording.isChildRecording(true);
                     childItems.add(new TreeItem<>(recording));
                 }
+                RecordingState state = RecordingState.IN_PROGRESS;
+                if (allAreComplete) {
+                    state = RecordingState.COMPLETE;
+                }
                 item = new TreeItem<>(new Recording.Builder().seriesTitle(s.getTitle())
                         .numEpisodes(s.getEpisodes().size()).recordedOn(recordings.get(0).getDateRecorded())
-                        .isSeriesHeading(true).copyable(allAreCopyable).image(recordings.get(0).getImageURL()).build());
+                        .isSeriesHeading(true).copyable(allAreCopyable).state(state)
+                        .image(recordings.get(0).getImageURL()).build());
                 item.getChildren().addAll(childItems);
                 item.setExpanded(true);
             } else {

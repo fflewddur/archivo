@@ -38,6 +38,7 @@ import java.util.stream.Collectors;
 public class Recording {
     // Items displayed in the RecordingListView need to be observable properties
     private final StringProperty title;
+    private final ObjectProperty<Duration> duration;
     private final ObjectProperty<LocalDateTime> dateRecorded;
     private final ObjectProperty<ArchiveStatus> status;
     // Denotes Recordings used as the header line for the series in RecordingListView
@@ -51,7 +52,6 @@ public class Recording {
     private final String bodyId;
     private final String seriesTitle;
     private final String episodeTitle;
-    private final Duration duration;
     private final int seriesNumber;
     private final List<Integer> episodeNumbers;
     private final Channel channel;
@@ -82,7 +82,6 @@ public class Recording {
         bodyId = builder.bodyId;
         seriesTitle = builder.seriesTitle;
         episodeTitle = builder.episodeTitle;
-        duration = Duration.ofSeconds(builder.secondsLong);
         seriesNumber = builder.seriesNumber;
         episodeNumbers = builder.episodeNumbers;
         channel = builder.channel;
@@ -101,6 +100,7 @@ public class Recording {
 
         isSeriesHeading = new SimpleBooleanProperty(builder.isSeriesHeading);
         title = new SimpleStringProperty(buildTitle());
+        duration = new SimpleObjectProperty<>(Duration.ofSeconds(builder.secondsLong));
         dateRecorded = new SimpleObjectProperty<>(builder.dateRecorded);
         status = new SimpleObjectProperty<>(ArchiveStatus.EMPTY);
         isArchivable = new SimpleBooleanProperty(isArchivable());
@@ -205,10 +205,6 @@ public class Recording {
 
     public String getEpisodeTitle() {
         return episodeTitle;
-    }
-
-    public Duration getDuration() {
-        return duration;
     }
 
     private boolean hasSeasonAndEpisode() {
@@ -385,6 +381,14 @@ public class Recording {
 
     public StringProperty titleProperty() {
         return title;
+    }
+
+    public Duration getDuration() {
+        return duration.get();
+    }
+
+    public ObjectProperty<Duration> durationProperty() {
+        return duration;
     }
 
     public LocalDateTime getDateRecorded() {

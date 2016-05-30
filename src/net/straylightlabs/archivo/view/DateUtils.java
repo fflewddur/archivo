@@ -19,6 +19,7 @@
 
 package net.straylightlabs.archivo.view;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -79,5 +80,36 @@ class DateUtils {
         } else {
             return dateTime.format(DATE_RECORDED_LONG_DATE_FORMATTER);
         }
+    }
+
+    public static String formatDuration(Duration duration, boolean inProgress) {
+        int hours = (int) duration.toHours();
+        int minutes = (int) duration.toMinutes() - (hours * 60);
+        int seconds = (int) (duration.getSeconds() % 60);
+
+        // Round so that we're only displaying hours and minutes
+        if (seconds >= 30) {
+            minutes++;
+        }
+        if (minutes >= 60) {
+            hours++;
+            minutes = 0;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        if (hours > 0) {
+            sb.append(String.format("%d:%02d hour", hours, minutes));
+            if (hours > 1 || minutes > 0)
+                sb.append("s");
+        } else {
+            sb.append(String.format("%d minute", minutes));
+            if (minutes != 1) {
+                sb.append("s");
+            }
+        }
+        if (inProgress)
+            sb.append(" (still recording)");
+
+        return sb.toString();
     }
 }
