@@ -19,7 +19,6 @@
 
 package net.straylightlabs.archivo.net;
 
-import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Tivo;
 import org.json.JSONArray;
 import org.json.JSONObject;

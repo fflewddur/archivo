@@ -19,7 +19,6 @@
 
 package net.straylightlabs.archivo.net;
 
-import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Series;
 import net.straylightlabs.archivo.model.Tivo;

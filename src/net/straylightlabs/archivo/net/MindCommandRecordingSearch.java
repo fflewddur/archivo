@@ -19,7 +19,6 @@
 
 package net.straylightlabs.archivo.net;
 
-import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Channel;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.RecordingReason;

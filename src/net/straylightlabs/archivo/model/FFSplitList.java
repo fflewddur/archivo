@@ -19,7 +19,6 @@
 
 package net.straylightlabs.archivo.model;
 
-import net.straylightlabs.archivo.Archivo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -20,7 +20,6 @@
 package net.straylightlabs.archivo.net;
 
 import javafx.concurrent.Task;
-import net.straylightlabs.archivo.Archivo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -19,7 +19,6 @@
 
 package net.straylightlabs.archivo.controller;
 
-import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Recording;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
