@@ -169,6 +169,8 @@ public class Archivo extends Application {
                 FileStore store = Files.getFileStore(root);
                 logger.info("Volume {} has {} MB free of {} MB", root,
                         store.getUsableSpace() / 1024 / 1024, store.getTotalSpace() / 1024 / 1024);
+            } catch (FileSystemException e) {
+                // Ignore these
             } catch (IOException e) {
                 logger.error("Error getting available disk space for volume {}: ", root, e);
             }
