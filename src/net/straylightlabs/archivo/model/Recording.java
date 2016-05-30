@@ -21,12 +21,15 @@ package net.straylightlabs.archivo.model;
 
 import javafx.beans.property.*;
 
+import java.io.File;
 import java.net.URL;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.StringJoiner;
@@ -298,14 +301,18 @@ public class Recording {
         return buildSingleRecordingTitle();
     }
 
-    public String getDefaultFilename() {
-        return buildDefaultFilename();
+    public String getDefaultFlatFilename() {
+        return buildDefaultFlatFilename();
+    }
+
+    public Path getDefaultNestedPath() {
+        return buildDefaultNestedPath();
     }
 
     /**
      * Build a sensible default filename that includes as much relevant available information as possible.
      */
-    private String buildDefaultFilename() {
+    private String buildDefaultFlatFilename() {
         StringJoiner components = new StringJoiner(" - ");
         int numComponents = 1; // We always add a title
 
@@ -338,6 +345,42 @@ public class Recording {
 
 
         return filterUnsafeChars(components.toString());
+    }
+
+    /**
+     * Build a sensible default nested filename.
+     */
+    private Path buildDefaultNestedPath() {
+        List<String> nestedComponents = new ArrayList<>();
+
+        if (seriesTitle != null && !seriesTitle.isEmpty()) {
+            nestedComponents.add(filterUnsafeChars(seriesTitle));
+        }
+
+        if (seriesNumber > 0) {
+            nestedComponents.add(String.format("Season %d", seriesNumber));
+        }
+
+        StringJoiner joiner = new StringJoiner(" - ");
+        if (episodeNumbers.size() > 0) {
+            joiner.add(getEpisodeNumberRange());
+        }
+        if (episodeTitle != null && !episodeTitle.isEmpty()) {
+            joiner.add(episodeTitle);
+        } else if (originalAirDate != null) {
+            joiner.add(originalAirDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        } else {
+            joiner.add(getDateRecorded().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        }
+        nestedComponents.add(filterUnsafeChars(joiner.toString()));
+
+        if (nestedComponents.size() == 3) {
+            return Paths.get(nestedComponents.get(0), nestedComponents.get(1), nestedComponents.get(2));
+        } else if (nestedComponents.size() == 2) {
+            return Paths.get(nestedComponents.get(0), nestedComponents.get(1));
+        } else {
+            return Paths.get(nestedComponents.get(0));
+        }
     }
 
     private String getEpisodeNumberRange() {

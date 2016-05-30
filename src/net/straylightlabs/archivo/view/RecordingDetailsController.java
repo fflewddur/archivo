@@ -42,7 +42,10 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.DirectoryStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
@@ -193,7 +196,6 @@ public class RecordingDetailsController implements Initializable {
                 );
                 recording.setStatus(ArchiveStatus.QUEUED);
                 mainApp.enqueueRecordingForArchiving(recording);
-                mainApp.setLastFolder(destination.getParent());
             } else {
                 break;
             }
@@ -244,18 +246,66 @@ public class RecordingDetailsController implements Initializable {
     private Path showSaveDialog(Window parent, Recording recording) {
         FileChooser chooser = new FileChooser();
         setupFileTypes(chooser);
-        chooser.setInitialFileName(recording.getDefaultFilename());
+        String defaultFilename;
+        Path partialNestedPath = null;
+        Path completeNestedPath = null;
+        if (mainApp.getUserPrefs().getOrganizeArchivedShows()) {
+            partialNestedPath = recording.getDefaultNestedPath();
+            defaultFilename = partialNestedPath.toString();
+            partialNestedPath = partialNestedPath.getParent(); // remove the filename
+            completeNestedPath = Paths.get(mainApp.getLastFolder().toString(), defaultFilename);
+            try {
+                Files.createDirectories(completeNestedPath.getParent());
+            } catch (IOException e) {
+                logger.error("Error creating directory '{}': ", completeNestedPath.getParent(), e);
+            }
+        } else {
+            defaultFilename = recording.getDefaultFlatFilename();
+        }
+        chooser.setInitialFileName(defaultFilename);
         chooser.setInitialDirectory(mainApp.getLastFolder().toFile());
 
         ObjectProperty<FileChooser.ExtensionFilter> selectedExtensionFilterProperty = chooser.selectedExtensionFilterProperty();
         File destination = chooser.showSaveDialog(parent);
+
         FileType type = saveFileType(selectedExtensionFilterProperty);
         if (destination != null) {
+            Path lastFolder = destination.toPath();
+            while (partialNestedPath != null) {
+                partialNestedPath = partialNestedPath.getParent();
+                lastFolder = lastFolder.getParent();
+            }
             recording.setDestination(destination.toPath());
             recording.setDestinationType(type);
+            mainApp.setLastFolder(lastFolder.getParent());
             return destination.toPath();
+        } else if (completeNestedPath != null) {
+            cleanupEmptyFolders(partialNestedPath, completeNestedPath);
         }
         return null;
+    }
+
+    private void cleanupEmptyFolders(Path partialNestedPath, Path completeNestedPath) {
+        while (partialNestedPath != null) {
+            try {
+                completeNestedPath = completeNestedPath.getParent();
+                DirectoryStream<Path> ds = Files.newDirectoryStream(completeNestedPath);
+                int count = 0;
+                for (Path p : ds) {
+                    if (Files.exists(p)) {
+                        count++;
+                    }
+                }
+                ds.close();
+                if (count == 0) {
+                    logger.debug("Deleting {}", completeNestedPath);
+                    Files.delete(completeNestedPath);
+                }
+            } catch (IOException e) {
+                logger.error("Error cleaning up empty folders: {} ", e.getLocalizedMessage(), e);
+            }
+            partialNestedPath = partialNestedPath.getParent();
+        }
     }
 
     private void setupFileTypes(FileChooser chooser) {

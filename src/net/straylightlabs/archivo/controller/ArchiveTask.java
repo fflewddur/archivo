@@ -117,8 +117,12 @@ class ArchiveTask extends Task<Recording> {
                 logger.info("ArchiveTask canceled by user.");
                 return;
             } else if (!Files.isDirectory(recording.getDestination().getParent())) {
-                logger.error("Destination folder ({}) no longer exists", recording.getDestination().getParent());
-                throw new ArchiveTaskException("Destination folder no longer exists");
+                try {
+                    Files.createDirectories(recording.getDestination().getParent());
+                } catch (IOException e) {
+                    logger.error("Destination folder ({}) no longer exists", recording.getDestination().getParent());
+                    throw new ArchiveTaskException("Destination folder no longer exists");
+                }
             }
             logger.info("Starting archive task for {}", recording.getTitle());
             Platform.runLater(() -> recording.setStatus(

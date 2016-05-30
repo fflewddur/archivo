@@ -49,6 +49,7 @@ public class UserPrefs {
     private static final String HARDWARE_ACCELERATION = "hardwareAcceleration";
     private static final String VIDEO_LIMIT = "maxVideoResolution";
     private static final String AUDIO_LIMIT = "maxAudioChannels";
+    private static final String ORGANIZE_SHOWS = "organizeArchivedShows";
     private static final String WINDOW_MAXIMIZED = "windowMaximized";
     private static final String WINDOW_HEIGHT = "windowHeight";
     private static final String WINDOW_WIDTH = "windowWidth";
@@ -140,9 +141,16 @@ public class UserPrefs {
         return AudioChannel.fromChannels(channel);
     }
 
-    @SuppressWarnings("unused")
     public synchronized void setAudioChannels(AudioChannel limit) {
         prefs.put(AUDIO_LIMIT, limit.getChannels());
+    }
+
+    public synchronized boolean getOrganizeArchivedShows() {
+        return prefs.getBoolean(ORGANIZE_SHOWS, false);
+    }
+
+    public synchronized void setOrganizeArchivedShows(boolean value) {
+        prefs.putBoolean(ORGANIZE_SHOWS, value);
     }
 
     public Tivo getLastDevice(final String mak) {

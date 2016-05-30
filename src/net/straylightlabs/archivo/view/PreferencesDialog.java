@@ -74,7 +74,7 @@ class PreferencesDialog {
     private void initDialog(Window parent) {
         dialog.initOwner(parent);
         dialog.initModality(Modality.NONE);
-
+        dialog.getDialogPane().setPrefWidth(350);
         dialog.setTitle("Preferences");
 
         GridPane grid = new GridPane();
@@ -93,6 +93,11 @@ class PreferencesDialog {
         comskip.setTooltip(new Tooltip("Try to determine when commercials start and end, and remove them from the final video. May not always be accurate."));
         comskip.setSelected(userPrefs.getSkipCommercials());
         grid.add(comskip, LABEL_COL, row++, 2, 1);
+
+        CheckBox organize = new CheckBox("Organize recordings by show and season");
+        organize.setTooltip(new Tooltip("Automatically create a folder for each show and season of the recordings you archive."));
+        organize.setSelected(userPrefs.getOrganizeArchivedShows());
+        grid.add(organize, LABEL_COL, row++, 2, 1);
 
         CheckBox qsv = new CheckBox("Use hardware acceleration");
         qsv.setTooltip(new Tooltip("Use Intel Quick Sync Video (if available) to accelerate video conversions. May result in large file sizes."));
@@ -138,10 +143,12 @@ class PreferencesDialog {
         dialog.setResultConverter(button -> {
             if (button == ButtonType.OK) {
                 userPrefs.setSkipCommercials(comskip.isSelected());
+                userPrefs.setOrganizeArchivedShows(organize.isSelected());
                 if (OSHelper.isWindows()) {
                     userPrefs.setHardwareAcceleration(qsv.isSelected());
                 }
                 userPrefs.setVideoResolution(videoResolution.getValue());
+                userPrefs.setAudioChannels(audioChannel.getValue());
                 userPrefs.setShareTelemetry(telemetry.isSelected());
                 userPrefs.setDebugMode(debugMode.isSelected());
             }
