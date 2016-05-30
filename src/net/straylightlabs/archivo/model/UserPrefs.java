@@ -59,6 +59,12 @@ public class UserPrefs {
     private static final String SHARE_TELEMETRY = "shareTelemetry";
     private static final String DEBUG_MODE = "debugMode";
     private static final String USER_ID = "userId";
+    private static final String SHOW_DURATION_COL = "showDurationColumn";
+    private static final String SHOW_DATE_COL = "showDateColumn";
+    private static final String TITLE_COL_WIDTH = "titleColumnWidth";
+    private static final String DURATION_COL_WIDTH = "durationColumnWidth";
+    private static final String DATE_COL_WIDTH = "dateColumnWidth";
+    private static final String STATUS_COL_WIDTH = "statusColumnWidth";
 
     private static final String DEFAULT_TOOLDIR = ".";
 
@@ -204,6 +210,54 @@ public class UserPrefs {
 
     public void setWindowWidth(int value) {
         prefs.putInt(WINDOW_WIDTH, value);
+    }
+
+    public boolean getShowDurationColumn() {
+        return prefs.getBoolean(SHOW_DURATION_COL, false);
+    }
+
+    public void setShowDurationColumn(boolean value) {
+        prefs.putBoolean(SHOW_DURATION_COL, value);
+    }
+
+    public boolean getShowDateColumn() {
+        return prefs.getBoolean(SHOW_DATE_COL, true);
+    }
+
+    public void setShowDateColumn(boolean value) {
+        prefs.putBoolean(SHOW_DATE_COL, value);
+    }
+
+    public int getTitleColumnWidth() {
+        return prefs.getInt(TITLE_COL_WIDTH, 400);
+    }
+
+    public void setTitleColumnWidth(int value) {
+        prefs.putInt(TITLE_COL_WIDTH, value);
+    }
+
+    public int getDurationColumnWidth() {
+        return prefs.getInt(DURATION_COL_WIDTH, 100);
+    }
+
+    public void setDurationColumnWidth(int value) {
+        prefs.putInt(DURATION_COL_WIDTH, value);
+    }
+
+    public int getDateColumnWidth() {
+        return prefs.getInt(DATE_COL_WIDTH, 100);
+    }
+
+    public void setDateColumnWidth(int value) {
+        prefs.putInt(DATE_COL_WIDTH, value);
+    }
+
+    public int getStatusColumnWidth() {
+        return prefs.getInt(STATUS_COL_WIDTH, 350);
+    }
+
+    public void setStatusColumnWidth(int value) {
+        prefs.putInt(STATUS_COL_WIDTH, value);
     }
 
     public synchronized String getComskipPath() {

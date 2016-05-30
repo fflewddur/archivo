@@ -116,13 +116,37 @@ public class RecordingListController implements Initializable {
                 updateGroupStatus(recordingTreeTable.getRoot(), recordingTreeTable.getRoot().getChildren())
         );
         showColumn.setCellValueFactory(data -> data.getValue().getValue().titleProperty());
+        showColumn.setPrefWidth(mainApp.getUserPrefs().getTitleColumnWidth());
+        showColumn.widthProperty().addListener(
+                (observable, oldValue, newValue) -> mainApp.getUserPrefs().setTitleColumnWidth(newValue.intValue())
+        );
         durationColumn.setCellValueFactory(data -> data.getValue().getValue().durationProperty());
         durationColumn.setCellFactory(col -> new DurationCellFactory());
+        durationColumn.setVisible(mainApp.getUserPrefs().getShowDurationColumn());
+        durationColumn.setPrefWidth(mainApp.getUserPrefs().getDurationColumnWidth());
+        durationColumn.visibleProperty().addListener(
+                (observable, oldValue, newValue) -> mainApp.getUserPrefs().setShowDurationColumn(newValue)
+        );
+        durationColumn.widthProperty().addListener(
+                (observable, oldValue, newValue) -> mainApp.getUserPrefs().setDurationColumnWidth(newValue.intValue())
+        );
         dateColumn.setCellValueFactory(data -> data.getValue().getValue().dateRecordedProperty());
         dateColumn.setCellFactory(col -> new RecordedOnCellFactory());
         dateColumn.setSortType(TreeTableColumn.SortType.DESCENDING);
+        dateColumn.setVisible(mainApp.getUserPrefs().getShowDateColumn());
+        dateColumn.setPrefWidth(mainApp.getUserPrefs().getDateColumnWidth());
+        dateColumn.visibleProperty().addListener(
+                (observable, oldValue, newValue) -> mainApp.getUserPrefs().setShowDateColumn(newValue)
+        );
+        dateColumn.widthProperty().addListener(
+                (observable, oldValue, newValue) -> mainApp.getUserPrefs().setDateColumnWidth(newValue.intValue())
+        );
         statusColumn.setCellValueFactory(data -> data.getValue().getValue().statusProperty());
         statusColumn.setCellFactory(col -> new StatusCellFactory());
+        statusColumn.setPrefWidth(mainApp.getUserPrefs().getStatusColumnWidth());
+        statusColumn.widthProperty().addListener(
+                (observable, oldValue, newValue) -> mainApp.getUserPrefs().setStatusColumnWidth(newValue.intValue())
+        );
 
         setupContextMenu();
 
