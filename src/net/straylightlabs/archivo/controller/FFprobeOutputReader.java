@@ -21,6 +21,8 @@ package net.straylightlabs.archivo.controller;
 
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Recording;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +38,8 @@ public class FFprobeOutputReader extends ProcessOutputReader {
 
     private final static Pattern STREAM_VIDEO = Pattern.compile("\\[STREAM].*?codec_type=video.*?start_time=([\\d\\.]+).*?\\[/STREAM]");
     private final static Pattern STREAM_AUDIO = Pattern.compile("\\[STREAM].*?codec_type=audio.*?start_time=([\\d\\.]+).*?\\[/STREAM]");
+
+    private final static Logger logger = LoggerFactory.getLogger(FFprobeOutputReader.class);
 
     public FFprobeOutputReader(Recording recording) {
         super(recording);
@@ -73,13 +77,13 @@ public class FFprobeOutputReader extends ProcessOutputReader {
 
     private void findStartTimes() {
         streamOutput = lines.stream().collect(Collectors.joining(" "));
-        Archivo.logger.debug("Stream output: {}", streamOutput);
+        logger.debug("Stream output: {}", streamOutput);
         if (!parseFirstVideoStartTime()) {
             // No video
-            Archivo.logger.debug("No video stream found");
+            logger.debug("No video stream found");
         } else if (!parseFirstAudioStartTime()) {
             // No audio
-            Archivo.logger.debug("No audio stream found");
+            logger.debug("No audio stream found");
         }
     }
 
@@ -87,7 +91,7 @@ public class FFprobeOutputReader extends ProcessOutputReader {
         Matcher matcher = STREAM_VIDEO.matcher(streamOutput);
         if (matcher.find()) {
             videoStartTime = Double.parseDouble(matcher.group(1));
-            Archivo.logger.debug("Video start time: {}", videoStartTime);
+            logger.debug("Video start time: {}", videoStartTime);
             return true;
         }
         return false;
@@ -97,7 +101,7 @@ public class FFprobeOutputReader extends ProcessOutputReader {
         Matcher matcher = STREAM_AUDIO.matcher(streamOutput);
         if (matcher.find()) {
             audioStartTime = Double.parseDouble(matcher.group(1));
-            Archivo.logger.debug("Audio start time: {}", audioStartTime);
+            logger.debug("Audio start time: {}", audioStartTime);
             return true;
         }
         return false;

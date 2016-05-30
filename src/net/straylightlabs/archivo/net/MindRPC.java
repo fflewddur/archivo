@@ -21,6 +21,8 @@ package net.straylightlabs.archivo.net;
 
 import net.straylightlabs.archivo.Archivo;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.net.ssl.*;
 import java.io.BufferedInputStream;
@@ -61,6 +63,8 @@ public class MindRPC {
     private static final String KEY_PASSWORD = "LwrbLEFYvG";
     private static final int MAX_SESSION_ID_VAL = 0x27dc20;
     private static final String ENCODING = "UTF-8";
+
+    private final static Logger logger = LoggerFactory.getLogger(MindRPC.class);
 
     public MindRPC(InetAddress address, int port, String mak) {
         this.address = address;
@@ -117,7 +121,7 @@ public class MindRPC {
             context.init(keyManagerFactory.getKeyManagers(), trustManagers, null);
             return context.getSocketFactory();
         } catch (GeneralSecurityException e) {
-            Archivo.logger.error("Error creating custom SSLSocketFactory: ", e);
+            logger.error("Error creating custom SSLSocketFactory: ", e);
         }
         throw new AssertionError();
     }
@@ -128,13 +132,13 @@ public class MindRPC {
             assert (key != null);
             store.load(key, KEY_PASSWORD.toCharArray());
         } catch (IOException e) {
-            Archivo.logger.error("Error accessing key file: ", e);
+            logger.error("Error accessing key file: ", e);
         }
         return store;
     }
 
     public JSONObject send(String request) throws IOException {
-        Archivo.logger.info("Request to send:{}\n ", request);
+        logger.info("Request to send:{}\n ", request);
 
         connectAndAuthenticate();
         socketWriter.print(request);

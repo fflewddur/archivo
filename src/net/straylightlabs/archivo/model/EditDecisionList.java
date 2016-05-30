@@ -20,6 +20,8 @@
 package net.straylightlabs.archivo.model;
 
 import net.straylightlabs.archivo.Archivo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -39,6 +41,8 @@ import java.util.regex.Pattern;
 public class EditDecisionList {
     private final List<Segment> segmentsToKeep;
     private final List<Segment> segmentsToCut;
+
+    private final static Logger logger = LoggerFactory.getLogger(EditDecisionList.class);
 
     /**
      * Create a new EditDecisionList from a standard EDL file.
@@ -62,7 +66,7 @@ public class EditDecisionList {
                     Segment segment = Segment.fromString(line, offset);
                     segments.add(segment);
                 } catch (IllegalArgumentException e) {
-                    Archivo.logger.error("Error parsing EDL line '{}': invalid format", line);
+                    logger.error("Error parsing EDL line '{}': invalid format", line);
                 }
             }
         }

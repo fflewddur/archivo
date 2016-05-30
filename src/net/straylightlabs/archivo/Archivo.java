@@ -72,7 +72,7 @@ public class Archivo extends Application {
     private final ArchiveQueueManager archiveQueueManager;
     private ArchiveHistory archiveHistory;
 
-    public final static Logger logger = LoggerFactory.getLogger(Archivo.class);
+    private final static Logger logger = LoggerFactory.getLogger(Archivo.class);
     public final static TelemetryController telemetryController = new TelemetryController();
 
     public static final String APPLICATION_NAME = "Archivo";

@@ -26,6 +26,8 @@ import net.straylightlabs.archivo.model.RecordingReason;
 import net.straylightlabs.archivo.model.RecordingState;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -41,6 +43,8 @@ import java.util.List;
 
 class MindCommandRecordingSearch extends MindCommand {
     private final static JSONArray templateList;
+
+    private final static Logger logger = LoggerFactory.getLogger(MindCommandRecordingSearch.class);
 
     static {
         templateList = buildTemplate();
@@ -58,7 +62,7 @@ class MindCommandRecordingSearch extends MindCommand {
     public Recording getRecording() {
         failOnInvalidState();
         Recording.Builder builder = new Recording.Builder();
-        Archivo.logger.info("Response: {}", response);
+        logger.info("Response: {}", response);
         if (response.has("recording")) {
             JSONArray recordingsJSON = response.getJSONArray("recording");
             for (Object obj : recordingsJSON) {
@@ -139,7 +143,7 @@ class MindCommandRecordingSearch extends MindCommand {
                         imageURL = new URL(imageJSON.getString("imageUrl"));
                         break;
                     } catch (MalformedURLException e) {
-                        Archivo.logger.error("Error parsing image URL: ", e);
+                        logger.error("Error parsing image URL: ", e);
                     }
                 } else {
                     int diff = Math.abs(height - Recording.DESIRED_IMAGE_HEIGHT);
@@ -149,7 +153,7 @@ class MindCommandRecordingSearch extends MindCommand {
                             imageURL = new URL(imageJSON.getString("imageUrl"));
                             smallestHeightDiff = diff;
                         } catch (MalformedURLException e) {
-                            Archivo.logger.error("Error parsing image URL: ", e);
+                            logger.error("Error parsing image URL: ", e);
                         }
                     }
                 }
@@ -169,7 +173,7 @@ class MindCommandRecordingSearch extends MindCommand {
                 try {
                     logoURL = new URL(logoURLString);
                 } catch (MalformedURLException e) {
-                    Archivo.logger.error("Error building channel logo URL: ", e);
+                    logger.error("Error building channel logo URL: ", e);
                 }
             }
             return new Channel(channel.getString("name"), channel.getString("channelNumber"), logoURL);

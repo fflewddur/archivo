@@ -21,12 +21,16 @@ package net.straylightlabs.archivo.net;
 
 import javafx.concurrent.Task;
 import net.straylightlabs.archivo.Archivo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 
 public class MindTask extends Task<Void> {
     private final MindCommand command;
     private final MindRPC client;
+
+    private final static Logger logger = LoggerFactory.getLogger(MindTask.class);
 
     public MindTask(MindRPC client, MindCommand command) {
         this.client = client;
@@ -38,7 +42,7 @@ public class MindTask extends Task<Void> {
         try {
             command.executeOn(client);
         } catch (IOException e) {
-            Archivo.logger.error("Error executing MindTask: ", e);
+            logger.error("Error executing MindTask: ", e);
             throw e;
         }
         return null;

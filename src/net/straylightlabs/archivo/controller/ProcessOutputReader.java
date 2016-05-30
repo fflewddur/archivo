@@ -22,6 +22,8 @@ package net.straylightlabs.archivo.controller;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -45,6 +47,8 @@ abstract class ProcessOutputReader implements Runnable {
 
     private final static int MIN_END_TIME_ESTIMATES = 5;
     private final static int MAX_END_TIME_ESTIMATES = 10;
+
+    private final static Logger logger = LoggerFactory.getLogger(ProcessOutputReader.class);
 
     ProcessOutputReader(Recording recording) {
         this.recording = recording;
@@ -82,13 +86,13 @@ abstract class ProcessOutputReader implements Runnable {
         try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
             for (String line = reader.readLine(); line != null; line = reader.readLine()) {
                 if (Thread.interrupted()) {
-                    Archivo.logger.info("ProcessOutputReader interrupted");
+                    logger.info("ProcessOutputReader interrupted");
                     return;
                 }
                 processLine(line);
             }
         } catch (IOException e) {
-            Archivo.logger.error("IOException in ProcessOutputReader: ", e);
+            logger.error("IOException in ProcessOutputReader: ", e);
         }
     }
 
@@ -128,9 +132,9 @@ abstract class ProcessOutputReader implements Runnable {
             long elapsedSeconds = Duration.between(startTime, LocalDateTime.now()).getSeconds();
             double progressPerSecond = progress / elapsedSeconds;
             return (int) ((1.0 - progress) / progressPerSecond);
-//            Archivo.logger.info("Elapsed seconds = {}, progressPerSecond = {}, secondsRemaining", elapsedSeconds, progressPerSecond);
+//            logger.info("Elapsed seconds = {}, progressPerSecond = {}, secondsRemaining", elapsedSeconds, progressPerSecond);
         } else {
-            Archivo.logger.warn("Progress <= 0");
+            logger.warn("Progress <= 0");
             return ArchiveStatus.TIME_UNKNOWN;
         }
     }

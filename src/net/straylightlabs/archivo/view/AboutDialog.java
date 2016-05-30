@@ -32,6 +32,8 @@ import javafx.stage.Modality;
 import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import net.straylightlabs.archivo.Archivo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.io.IOException;
@@ -46,6 +48,8 @@ class AboutDialog {
 
     private static final String HOMEPAGE = "http://straylightlabs.net/archivo";
     private static final int DIALOG_WIDTH = 400;
+
+    private final static Logger logger = LoggerFactory.getLogger(AboutDialog.class);
 
     public AboutDialog(Window parent) {
         dialog = new Dialog();
@@ -72,14 +76,11 @@ class AboutDialog {
             try {
                 Desktop.getDesktop().browse(new URI(HOMEPAGE));
             } catch (URISyntaxException | IOException e) {
-                Archivo.logger.error("Error opening web browser: ", e);
+                logger.error("Error opening web browser: ", e);
             }
         });
         nestedPane.getChildren().addAll(text, link);
         pane.getChildren().add(nestedPane);
-
-//        addWrappedLabel(String.format("Running on Java %s from %s", System.getProperty("java.version"),
-//                System.getProperty("java.vendor")), pane);
 
         addWrappedLabel("Archivo is free software: you can redistribute it and/or modify " +
                 "it under the terms of the GNU General Public License as published by " +

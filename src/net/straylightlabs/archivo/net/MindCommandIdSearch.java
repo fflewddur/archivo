@@ -23,6 +23,8 @@ import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
 import org.json.JSONArray;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -37,6 +39,8 @@ public class MindCommandIdSearch extends MindCommand {
     private final Recording recording;
     private final Tivo tivo;
     private boolean compatibilityMode;
+
+    private final static Logger logger = LoggerFactory.getLogger(MindCommandIdSearch.class);
 
     public MindCommandIdSearch(Recording recording, Tivo tivo) {
         super();
@@ -77,7 +81,7 @@ public class MindCommandIdSearch extends MindCommand {
                 return new URL(url);
             }
         } catch (UnsupportedEncodingException | MalformedURLException e) {
-            Archivo.logger.error("Error building download URL: ", e);
+            logger.error("Error building download URL: ", e);
         }
         throw new IllegalStateException("No URL for recording");
     }

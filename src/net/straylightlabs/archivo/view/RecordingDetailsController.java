@@ -216,7 +216,7 @@ public class RecordingDetailsController implements Initializable {
             try {
                 Desktop.getDesktop().open(recording.getDestination().toFile());
             } catch (IOException e) {
-                Archivo.logger.error("Error playing '{}': ", recording.getDestination(), e);
+                logger.error("Error playing '{}': ", recording.getDestination(), e);
             }
         }
     }
@@ -228,7 +228,7 @@ public class RecordingDetailsController implements Initializable {
             try {
                 Desktop.getDesktop().browse(recording.getDestination().getParent().toUri());
             } catch (IOException e) {
-                Archivo.logger.error("Error playing '{}': ", recording.getDestination(), e);
+                logger.error("Error playing '{}': ", recording.getDestination(), e);
             }
         }
     }
@@ -266,7 +266,7 @@ public class RecordingDetailsController implements Initializable {
             FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter(type.getDescription(), type.getExtension());
             fileTypes.add(filter);
             if (type.getDescription().equalsIgnoreCase(previousFileType)) {
-                Archivo.logger.info("Setting extension filter: {}", previousFileType);
+                logger.info("Setting extension filter: {}", previousFileType);
                 selected = filter;
             }
         }
@@ -281,7 +281,7 @@ public class RecordingDetailsController implements Initializable {
         FileType fileType = null;
         if (filter != null) {
             String description = filter.getDescription();
-            Archivo.logger.info("Selected extension filter: {}", description);
+            logger.info("Selected extension filter: {}", description);
             fileType = FileType.fromDescription(description);
             mainApp.getUserPrefs().setMostRecentType(fileType);
         }

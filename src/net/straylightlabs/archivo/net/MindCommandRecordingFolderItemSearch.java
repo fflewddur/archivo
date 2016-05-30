@@ -87,7 +87,7 @@ public class MindCommandRecordingFolderItemSearch extends MindCommand {
                     seriesToRecordings.put(seriesTitle, recordings);
                 }
             } catch (IOException e) {
-                Archivo.logger.error("Error: ", e);
+                logger.error("Error: ", e);
             }
         }
         return seriesToRecordings;

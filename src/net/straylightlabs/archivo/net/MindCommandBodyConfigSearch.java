@@ -23,6 +23,8 @@ import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Tivo;
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,6 +33,8 @@ public class MindCommandBodyConfigSearch extends MindCommand {
     private final Tivo tivo;
 
     private final static JSONArray templateList;
+
+    private final static Logger logger = LoggerFactory.getLogger(MindCommandBodyConfigSearch.class);
 
     static {
         templateList = buildTemplate();
@@ -47,7 +51,7 @@ public class MindCommandBodyConfigSearch extends MindCommand {
 
     @Override
     protected void afterExecute() {
-        Archivo.logger.info("Response: {}", response.toString());
+        logger.info("Response: {}", response.toString());
         JSONArray configs = response.getJSONArray("bodyConfig");
         // There should only be one config in the array
         JSONObject config = configs.getJSONObject(0);

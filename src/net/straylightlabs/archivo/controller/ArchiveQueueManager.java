@@ -24,6 +24,8 @@ import net.straylightlabs.archivo.model.ArchiveHistory;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.Tivo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Observable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -46,6 +48,8 @@ public class ArchiveQueueManager extends Observable {
 
     private static final int POOL_SIZE = 2;
 
+    private final static Logger logger = LoggerFactory.getLogger(ArchiveQueueManager.class);
+
     public ArchiveQueueManager(Archivo mainApp) {
         this.mainApp = mainApp;
         executorService = Executors.newFixedThreadPool(POOL_SIZE);
@@ -59,25 +63,25 @@ public class ArchiveQueueManager extends Observable {
             ArchiveTask task = new ArchiveTask(recording, tivo, mak, mainApp.getUserPrefs(), downloadLock, processingLock);
             task.setOnRunning(event -> mainApp.setStatusText(String.format("Archiving %s...", recording.getFullTitle())));
             task.setOnSucceeded(event -> {
-                Archivo.logger.info("ArchiveTask credentialsRejected for {}", recording.getFullTitle());
+                logger.info("ArchiveTask credentialsRejected for {}", recording.getFullTitle());
                 updateArchiveHistory(recording);
                 removeTask(recording);
                 recording.setStatus(ArchiveStatus.FINISHED);
             });
             task.setOnFailed(event -> {
                 Throwable e = event.getSource().getException();
-                Archivo.logger.error("ArchiveTask failed for {}: ", recording.getFullTitle(), e);
+                logger.error("ArchiveTask failed for {}: ", recording.getFullTitle(), e);
                 e.printStackTrace();
                 removeTask(recording);
                 recording.setStatus(ArchiveStatus.createErrorStatus(e));
                 Archivo.telemetryController.sendArchiveFailedEvent(e);
             });
             task.setOnCancelled(event -> {
-                Archivo.logger.info("ArchiveTask canceled for {}", recording.getFullTitle());
+                logger.info("ArchiveTask canceled for {}", recording.getFullTitle());
                 removeTask(recording);
                 recording.setStatus(ArchiveStatus.EMPTY);
             });
-            Archivo.logger.info("Submitting task to executor service: {}", executorService);
+            logger.info("Submitting task to executor service: {}", executorService);
             if (!hasTasks()) {
                 setChanged();
                 notifyObservers(true);
@@ -85,7 +89,7 @@ public class ArchiveQueueManager extends Observable {
             queuedTasks.put(recording, task);
             executorService.submit(task);
         } catch (RejectedExecutionException e) {
-            Archivo.logger.error("Could not schedule archive task: ", e);
+            logger.error("Could not schedule archive task: ", e);
             return false;
         }
         return true;
