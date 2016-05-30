@@ -56,6 +56,7 @@ import java.nio.file.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
 import java.util.Optional;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -140,8 +141,9 @@ public class Archivo extends Application {
                 cleanShutdown();
             }
         }
-        initRecordingDetails();
+
         initRecordingList();
+        initRecordingDetails();
 
         archiveQueueManager.addObserver(rootController);
 
@@ -322,8 +324,29 @@ public class Archivo extends Application {
         }
     }
 
+    private void initRecordingList() {
+        assert (rootController != null);
+
+        try {
+            FXMLLoader loader = new FXMLLoader();
+            loader.setLocation(Archivo.class.getResource("view/RecordingList.fxml"));
+
+            recordingListController = new RecordingListController(this);
+            loader.setController(recordingListController);
+
+            Pane recordingList = loader.load();
+            rootController.getMainGrid().add(recordingList, 0, 0);
+            rootController.setMenuBindings(recordingListController);
+
+            recordingListController.startTivoSearch();
+        } catch (IOException e) {
+            logger.error("Error initializing recording list: ", e);
+        }
+    }
+
     private void initRecordingDetails() {
         assert (rootController != null);
+        assert (recordingListController != null);
 
         try {
             FXMLLoader loader = new FXMLLoader();
@@ -336,35 +359,6 @@ public class Archivo extends Application {
             rootController.getMainGrid().add(recordingDetails, 0, 1);
         } catch (IOException e) {
             logger.error("Error initializing recording details: ", e);
-        }
-    }
-
-    private void initRecordingList() {
-        assert (rootController != null);
-        assert (recordingDetailsController != null);
-
-        try {
-            FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(Archivo.class.getResource("view/RecordingList.fxml"));
-
-            recordingListController = new RecordingListController(this);
-            loader.setController(recordingListController);
-
-            Pane recordingList = loader.load();
-            rootController.getMainGrid().add(recordingList, 0, 0);
-
-            recordingListController.addRecordingChangedListener(
-                    (observable, oldValue, newValue) -> recordingDetailsController.showRecording(newValue)
-            );
-            recordingListController.addRecordingChangedListener(
-                    (observable, oldValue, newValue) -> rootController.recordingSelected(newValue)
-            );
-
-            rootController.setMenuBindings(recordingListController);
-
-            recordingListController.startTivoSearch();
-        } catch (IOException e) {
-            logger.error("Error initializing recording list: ", e);
         }
     }
 
@@ -385,15 +379,17 @@ public class Archivo extends Application {
         archiveQueueManager.cancelAllArchiveTasks();
     }
 
-    public void deleteFromTivo(Recording recording) {
-        Archivo.logger.info("User requested we delete {}", recording.getFullTitle());
-        Tivo tivo = getActiveTivo();
-        if (tivo != null) {
-            if (confirmDelete(recording, tivo)) {
-                sendDeleteCommand(recording, tivo);
+    public void deleteFromTivo(List<Recording> recordings) {
+        for (Recording recording : recordings) {
+            Archivo.logger.info("User requested we delete {}", recording.getFullTitle());
+            Tivo tivo = getActiveTivo();
+            if (tivo != null) {
+                if (confirmDelete(recording, tivo)) {
+                    sendDeleteCommand(recording, tivo);
+                }
+            } else {
+                Archivo.logger.error("No TiVo is selected to delete from");
             }
-        } else {
-            Archivo.logger.error("No TiVo is selected to delete from");
         }
     }
 

@@ -38,10 +38,13 @@
         <Label fx:id="subtitle" text="Subtitle" style="-fx-font-size: 12pt;"/>
         <Label fx:id="description" text="Description" wrapText="true">
             <VBox.margin>
-                <Insets top="8" bottom="8"/>
+                <Insets top="8"/>
             </VBox.margin>
         </Label>
         <HBox spacing="30">
+            <VBox.margin>
+                <Insets top="8"/>
+            </VBox.margin>
             <VBox spacing="5">
                 <Button fx:id="archiveButton" onAction="#archive" minWidth="80">Archive...</Button>
                 <Button fx:id="cancelButton" onAction="#cancel" minWidth="80">Cancel</Button>

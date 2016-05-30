@@ -103,10 +103,10 @@ public class Recording {
         title = new SimpleStringProperty(buildTitle());
         dateRecorded = new SimpleObjectProperty<>(builder.dateRecorded);
         status = new SimpleObjectProperty<>(ArchiveStatus.EMPTY);
-        isRemovable = new SimpleBooleanProperty(!builder.isSeriesHeading);
         isArchivable = new SimpleBooleanProperty(isArchivable());
         isCancellable = new SimpleBooleanProperty(false);
         isPlayable = new SimpleBooleanProperty(false);
+        isRemovable = new SimpleBooleanProperty(isRemovable());
     }
 
     /**
@@ -188,6 +188,9 @@ public class Recording {
         return isCopyable && !isSeriesHeading.get() && !isInProgress() && !status.get().getStatus().isCancelable();
     }
 
+    private boolean isRemovable() {
+        return !isSeriesHeading() && status.get().getStatus().isRemovable();
+    }
     public String getRecordingId() {
         return recordingId;
     }

@@ -266,5 +266,25 @@ public class ArchiveStatus implements Comparable<ArchiveStatus> {
                     throw new AssertionError("Unknown TaskStatus");
             }
         }
+
+        public boolean isRemovable() {
+            switch (this) {
+                case NONE:
+                case FINISHED:
+                case ERROR:
+                    return true;
+                case QUEUED:
+                case CONNECTING:
+                case DOWNLOADING:
+                case DOWNLOADED:
+                case TRANSCODING:
+                case REMOVING_COMMERCIALS:
+                case FINDING_COMMERCIALS:
+                case REMUXING:
+                    return false;
+                default:
+                    throw new AssertionError("Unknown TaskStatus");
+            }
+        }
     }
 }

@@ -20,12 +20,10 @@
 package net.straylightlabs.archivo.view;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.ObjectProperty;
-import javafx.beans.value.ChangeListener;
+import javafx.beans.property.*;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.image.Image;
@@ -37,23 +35,26 @@ import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.FileType;
 import net.straylightlabs.archivo.model.Recording;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
-import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.*;
 import java.util.List;
 
 public class RecordingDetailsController implements Initializable {
     private final Archivo mainApp;
+    private final RecordingSelection recordingSelection;
     private final Map<URL, Image> imageCache;
-    private Recording recording;
-    private final ChangeListener<ArchiveStatus> statusChangeListener;
+    private final BooleanProperty showPoster;
+    private final StringProperty expectedRemovalText;
 
     @FXML
     private Label title;
@@ -88,65 +89,143 @@ public class RecordingDetailsController implements Initializable {
     @FXML
     private Button playButton;
 
+    public final static Logger logger = LoggerFactory.getLogger(RecordingDetailsController.class);
+
     public RecordingDetailsController(Archivo mainApp) {
         this.mainApp = mainApp;
+        this.recordingSelection = mainApp.getRecordingListController().getRecordingSelection();
         imageCache = new HashMap<>();
-        statusChangeListener = (observable, oldStatus, newStatus) -> {
-            if (oldStatus != newStatus) {
-                updateControls();
-            }
-        };
+        showPoster = new SimpleBooleanProperty(false);
+        expectedRemovalText = new SimpleStringProperty();
     }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        clearRecording();
-
         // Only set the preferred height; the width will scale appropriately
         poster.setFitHeight(Recording.DESIRED_IMAGE_HEIGHT);
+
+        setupLabelBindings();
+        setupControlBindings();
+        recordingSelection.posterUrlProperty().addListener((observable, oldValue, newValue) -> {
+            setPosterFromURL(newValue);
+        });
+        recordingSelection.expectedRemovalDateProperty().addListener(((observable, oldValue, newValue) -> {
+            updateExpectedDeletion(newValue);
+        }));
+    }
+
+    private void setupLabelBindings() {
+        title.textProperty().bind(recordingSelection.showTitleProperty());
+        title.visibleProperty().bind(recordingSelection.showTitleProperty().isEmpty().not());
+        title.managedProperty().bind(recordingSelection.showTitleProperty().isEmpty().not());
+
+        subtitle.textProperty().bind(recordingSelection.episodeTitleProperty());
+        subtitle.visibleProperty().bind(recordingSelection.episodeTitleProperty().isEmpty().not());
+        subtitle.managedProperty().bind(recordingSelection.episodeTitleProperty().isEmpty().not());
+
+        description.textProperty().bind(recordingSelection.descriptionProperty());
+        description.visibleProperty().bind(recordingSelection.descriptionProperty().isEmpty().not());
+        description.managedProperty().bind(recordingSelection.descriptionProperty().isEmpty().not());
+
+        episode.textProperty().bind(recordingSelection.episodeNumberProperty());
+        episode.visibleProperty().bind(recordingSelection.episodeNumberProperty().isEmpty().not());
+        episode.managedProperty().bind(recordingSelection.episodeNumberProperty().isEmpty().not());
+
+        date.textProperty().bind(recordingSelection.dateRecordedProperty());
+        date.visibleProperty().bind(recordingSelection.dateRecordedProperty().isEmpty().not());
+        date.managedProperty().bind(recordingSelection.dateRecordedProperty().isEmpty().not());
+
+        originalAirDate.textProperty().bind(recordingSelection.dateFirstAiredProperty());
+        originalAirDate.visibleProperty().bind(recordingSelection.dateFirstAiredProperty().isEmpty().not());
+        originalAirDate.managedProperty().bind(recordingSelection.dateFirstAiredProperty().isEmpty().not());
+
+        duration.textProperty().bind(recordingSelection.durationProperty());
+        duration.visibleProperty().bind(recordingSelection.durationProperty().isEmpty().not());
+        duration.managedProperty().bind(recordingSelection.durationProperty().isEmpty().not());
+
+        channel.textProperty().bind(recordingSelection.channelProperty());
+        channel.visibleProperty().bind(recordingSelection.channelProperty().isEmpty().not());
+        channel.managedProperty().bind(recordingSelection.channelProperty().isEmpty().not());
+
+        expectedDeletion.textProperty().bind(expectedRemovalText);
+        expectedDeletion.visibleProperty().bind(recordingSelection.expectedRemovalDateProperty().isNotNull());
+        expectedDeletion.managedProperty().bind(recordingSelection.expectedRemovalDateProperty().isNotNull());
+
+        copyProtected.visibleProperty().bind(recordingSelection.isCopyProtectedProperty());
+        copyProtected.managedProperty().bind(recordingSelection.isCopyProtectedProperty());
+
+        stillRecording.visibleProperty().bind(recordingSelection.isRecordingProperty());
+        stillRecording.visibleProperty().bind(recordingSelection.isRecordingProperty());
+
+        posterPane.visibleProperty().bind(showPoster);
+        posterPane.managedProperty().bind(showPoster);
+    }
+
+    private void setupControlBindings() {
+        archiveButton.visibleProperty().bind(Bindings.and(
+                cancelButton.visibleProperty().not(), playButton.visibleProperty().not()
+        ));
+        archiveButton.managedProperty().bind(Bindings.and(
+                cancelButton.visibleProperty().not(), playButton.visibleProperty().not()
+        ));
+        archiveButton.disableProperty().bind(recordingSelection.isArchivableProperty().not());
+        cancelButton.visibleProperty().bind(recordingSelection.isCancellableProperty());
+        cancelButton.managedProperty().bind(recordingSelection.isCancellableProperty());
+        playButton.visibleProperty().bind(recordingSelection.isPlayableProperty());
+        playButton.managedProperty().bind(recordingSelection.isPlayableProperty());
     }
 
     @FXML
     public void archive(ActionEvent event) {
-        Path destination = showSaveDialog(mainApp.getPrimaryStage());
-        if (destination != null) {
-            Archivo.logger.info("Archive recording {} to {} (file type = {})...",
-                    recording.getFullTitle(), destination, recording.getDestinationType()
-            );
-            recording.setStatus(ArchiveStatus.QUEUED);
-            mainApp.enqueueRecordingForArchiving(recording);
-            mainApp.setLastFolder(destination.getParent());
+        for (Recording recording : recordingSelection.getRecordings()) {
+            Path destination = showSaveDialog(mainApp.getPrimaryStage(), recording);
+            if (destination != null) {
+                logger.info("Archive recording {} to {} (file type = {})...",
+                        recording.getFullTitle(), destination, recording.getDestinationType()
+                );
+                recording.setStatus(ArchiveStatus.QUEUED);
+                mainApp.enqueueRecordingForArchiving(recording);
+                mainApp.setLastFolder(destination.getParent());
+            } else {
+                break;
+            }
         }
     }
 
     @FXML
     public void cancel(ActionEvent event) {
-        Archivo.logger.info("Cancel archiving of recording {}...", recording.getFullTitle());
-        mainApp.cancelArchiving(recording);
-        recording.setStatus(ArchiveStatus.EMPTY);
+        for (Recording recording : recordingSelection.getRecordings()) {
+            logger.info("Cancel archiving of recording {}...", recording.getFullTitle());
+            mainApp.cancelArchiving(recording);
+            recording.setStatus(ArchiveStatus.EMPTY);
+        }
     }
 
     @FXML
     public void play(ActionEvent event) {
-        Archivo.logger.info("Playing recording {}...", recording.getDestination());
-        try {
-            Desktop.getDesktop().open(recording.getDestination().toFile());
-        } catch (IOException e) {
-            Archivo.logger.error("Error playing '{}': ", recording.getDestination(), e);
+        for (Recording recording : recordingSelection.getRecordings()) {
+            logger.info("Playing recording {}...", recording.getDestination());
+            try {
+                Desktop.getDesktop().open(recording.getDestination().toFile());
+            } catch (IOException e) {
+                Archivo.logger.error("Error playing '{}': ", recording.getDestination(), e);
+            }
         }
     }
 
     @FXML
     public void openFolder(ActionEvent event) {
-        Archivo.logger.info("Opening folder containing recording {}...", recording.getDestination());
-        try {
-            Desktop.getDesktop().browse(recording.getDestination().getParent().toUri());
-        } catch (IOException e) {
-            Archivo.logger.error("Error playing '{}': ", recording.getDestination(), e);
+        for (Recording recording : recordingSelection.getRecordings()) {
+            logger.info("Opening folder containing recording {}...", recording.getDestination());
+            try {
+                Desktop.getDesktop().browse(recording.getDestination().getParent().toUri());
+            } catch (IOException e) {
+                Archivo.logger.error("Error playing '{}': ", recording.getDestination(), e);
+            }
         }
     }
 
-    private Path showSaveDialog(Window parent) {
+    private Path showSaveDialog(Window parent, Recording recording) {
         FileChooser chooser = new FileChooser();
         setupFileTypes(chooser);
         chooser.setInitialFileName(recording.getDefaultFilename());
@@ -159,9 +238,8 @@ public class RecordingDetailsController implements Initializable {
             recording.setDestination(destination.toPath());
             recording.setDestinationType(type);
             return destination.toPath();
-        } else {
-            return null;
         }
+        return null;
     }
 
     private void setupFileTypes(FileChooser chooser) {
@@ -194,126 +272,28 @@ public class RecordingDetailsController implements Initializable {
         return fileType;
     }
 
-    private void clearRecording() {
-        setLabelText(title, "");
-        setLabelText(subtitle, "");
-        setLabelText(episode, "");
-        setLabelText(date, "");
-        setLabelText(originalAirDate, "");
-        setLabelText(channel, "");
-        setLabelText(duration, "");
-        setLabelText(description, "");
-        setLabelText(copyProtected, "");
-        setLabelText(stillRecording, "");
-        setLabelText(expectedDeletion, "");
-        setPosterFromURL(null);
-        hideNode(archiveButton);
-        hideNode(cancelButton);
-        hideNode(playButton);
-    }
-
-    public void showRecording(Recording recording) {
-        if (this.recording != null) {
-            this.recording.statusProperty().removeListener(statusChangeListener);
-        }
-        this.recording = recording;
-        if (this.recording != null) {
-            this.recording.statusProperty().addListener(statusChangeListener);
-        }
-
-        if (recording == null) {
-            clearRecording();
-        } else if (recording.isSeriesHeading()) {
-            showRecordingOverview(recording);
-        } else {
-            showRecordingDetails(recording);
-        }
-    }
-
-    private void showRecordingOverview(Recording recording) {
-        clearRecording();
-
-        setLabelText(title, recording.getSeriesTitle());
-        int numEpisodes = recording.getNumEpisodes();
-        if (numEpisodes == 1) {
-            setLabelText(subtitle, String.format("%d episode", numEpisodes));
-        } else if (numEpisodes > 1) {
-            setLabelText(subtitle, String.format("%d episodes", numEpisodes));
-        } else {
-            setLabelText(subtitle, "");
-        }
-        setPosterFromURL(recording.getImageURL());
-    }
-
-    private void showRecordingDetails(Recording recording) {
-        clearRecording();
-
-        setPosterFromURL(recording.getImageURL());
-
-        setLabelText(title, recording.getSeriesTitle());
-        setLabelText(subtitle, recording.getEpisodeTitle());
-        setLabelText(description, recording.getDescription());
-
-        setLabelText(date, DateUtils.formatRecordedOnDateTime(recording.getDateRecorded()));
-        if (recording.getDuration() != null)
-            setLabelText(duration, formatDuration(recording.getDuration(), recording.isInProgress()));
-        if (recording.getChannel() != null) {
-            setLabelText(channel, String.format(
-                    "Channel %s (%s)", recording.getChannel().getNumber(), recording.getChannel().getName()));
-        }
-
-        setLabelText(episode, recording.getSeasonAndEpisode());
-        if (!recording.isOriginalRecording()) {
-            setLabelText(originalAirDate, "Originally aired on " +
-                    recording.getOriginalAirDate().format(DateUtils.DATE_AIRED_FORMATTER));
-        }
-        if (recording.isCopyProtected()) {
-            setLabelText(copyProtected, "Copy-protected");
-        } else if (recording.isInProgress()) {
-            setLabelText(stillRecording, "Still recording");
-        }
-        updateExpectedDeletion(recording);
-
-        updateControls();
-    }
-
-    private void updateExpectedDeletion(Recording recording) {
+    private void updateExpectedDeletion(LocalDateTime expectedRemovalDate) {
         expectedDeletion.getStyleClass().clear();
+        expectedRemovalText.setValue("");
+
+        if (expectedRemovalDate == null) {
+            return;
+        }
 
         LocalDate today = LocalDate.now();
-        Period timeUntilDeletion = today.until(recording.getExpectedDeletion().toLocalDate());
-        long daysUntilDeletion = timeUntilDeletion.getDays();
+        Period timeUntilDeletion = today.until(expectedRemovalDate.toLocalDate());
+        int daysUntilDeletion = timeUntilDeletion.getDays();
+        logger.debug("Days until deletion = {}", daysUntilDeletion);
         if (daysUntilDeletion < 1) {
-            setLabelText(expectedDeletion, "Will be removed today");
+            expectedRemovalText.setValue("Will be removed today");
             expectedDeletion.getStyleClass().add("removing-today");
         } else if (daysUntilDeletion < 2) {
-            setLabelText(expectedDeletion, "Will be removed tomorrow");
+            expectedRemovalText.setValue("Will be removed tomorrow");
             expectedDeletion.getStyleClass().add("removing-today");
         } else if (daysUntilDeletion < 7) {
-            setLabelText(expectedDeletion, String.format("Will be removed in %d days", daysUntilDeletion));
+            expectedRemovalText.setValue(String.format("Will be removed in %d days", daysUntilDeletion));
             expectedDeletion.getStyleClass().add("removing-soon");
-        } else {
-            expectedDeletion.setGraphic(null);
         }
-    }
-
-    private void setLabelText(Label label, String text) {
-        if (text != null && text.trim().length() > 0) {
-            label.setText(text);
-            showNode(label);
-        } else {
-            hideNode(label);
-        }
-    }
-
-    private void hideNode(Node node) {
-        node.setVisible(false);
-        node.setManaged(false);
-    }
-
-    private void showNode(Node node) {
-        node.setVisible(true);
-        node.setManaged(true);
     }
 
     private void setPosterFromURL(URL url) {
@@ -348,64 +328,9 @@ public class RecordingDetailsController implements Initializable {
     private void setPosterFromImage(Image image) {
         if (image != null) {
             poster.setImage(image);
-            showNode(posterPane);
+            showPoster.setValue(true);
         } else {
-            hideNode(posterPane);
-        }
-    }
-
-    private static String formatDuration(Duration duration, boolean inProgress) {
-        int hours = (int) duration.toHours();
-        int minutes = (int) duration.toMinutes() - (hours * 60);
-        int seconds = (int) (duration.getSeconds() % 60);
-
-        // Round so that we're only displaying hours and minutes
-        if (seconds >= 30) {
-            minutes++;
-        }
-        if (minutes >= 60) {
-            hours++;
-            minutes = 0;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        if (hours > 0) {
-            sb.append(String.format("%d:%02d hour", hours, minutes));
-            if (hours > 1 || minutes > 0)
-                sb.append("s");
-        } else {
-            sb.append(String.format("%d minute", minutes));
-            if (minutes != 1) {
-                sb.append("s");
-            }
-        }
-        if (inProgress)
-            sb.append(" (still recording)");
-
-        return sb.toString();
-    }
-
-    private void updateControls() {
-        archiveButton.disableProperty().bind(Bindings.or(recording.isArchivableProperty().not(), recording.isCancellableProperty()));
-
-        if (recording == null || recording.isSeriesHeading()) {
-            hideNode(archiveButton);
-        } else {
-            if (recording.isCopyProtected() || recording.isInProgress()) {
-                showNode(archiveButton);
-            } else if (recording.getStatus().getStatus().isCancelable()) {
-                showNode(archiveButton);
-                showNode(cancelButton);
-                hideNode(playButton);
-            } else if (recording.getStatus().getStatus() == ArchiveStatus.TaskStatus.FINISHED) {
-                hideNode(archiveButton);
-                hideNode(cancelButton);
-                showNode(playButton);
-            } else {
-                showNode(archiveButton);
-                hideNode(cancelButton);
-                hideNode(playButton);
-            }
+            showPoster.setValue(false);
         }
     }
 }

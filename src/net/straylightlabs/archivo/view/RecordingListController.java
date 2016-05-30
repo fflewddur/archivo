@@ -26,6 +26,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -42,6 +43,7 @@ import org.slf4j.LoggerFactory;
 
 import java.net.URL;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -49,9 +51,10 @@ import java.util.stream.Collectors;
 
 public class RecordingListController implements Initializable {
     private final ObservableList<Tivo> tivos;
-    private TreeItem<Recording> suggestions;
     private final ChangeListener<? super Tivo> tivoSelectedListener;
+    private final RecordingSelection recordingSelection;
 
+    private TreeItem<Recording> suggestions;
     private TivoSearchTask tivoSearchTask;
     private boolean alreadyDefaultSorted;
     private boolean uiDisabled;
@@ -85,6 +88,7 @@ public class RecordingListController implements Initializable {
     private final static Logger logger = LoggerFactory.getLogger(RecordingListController.class);
 
     public RecordingListController(Archivo mainApp) {
+        recordingSelection = new RecordingSelection();
         tivoIsBusy = new SimpleBooleanProperty(false);
         alreadyDefaultSorted = false;
         this.mainApp = mainApp;
@@ -102,6 +106,7 @@ public class RecordingListController implements Initializable {
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         recordingTreeTable.setShowRoot(false);
+        recordingTreeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         recordingTreeTable.setPlaceholder(tablePlaceholderMessage);
         recordingTreeTable.setOnSort(event ->
                 updateGroupStatus(recordingTreeTable.getRoot(), recordingTreeTable.getRoot().getChildren())
@@ -113,7 +118,7 @@ public class RecordingListController implements Initializable {
         statusColumn.setCellValueFactory(data -> data.getValue().getValue().statusProperty());
         statusColumn.setCellFactory(col -> new StatusCellFactory());
 
-        setupContextMenuRowFactory();
+        setupContextMenu();
 
         tivoList.setConverter(new Tivo.StringConverter());
         tivoList.setItems(tivos);
@@ -125,44 +130,37 @@ public class RecordingListController implements Initializable {
         storageLabel.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
         recordingTreeTable.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
 
+        addSelectionChangedListener(recordingSelection::selectionChanged);
+
         setupStyles();
     }
 
-    private void setupContextMenuRowFactory() {
-        recordingTreeTable.setRowFactory((table) -> {
-            final TreeTableRow<Recording> row = new TreeTableRow<>();
-            final ContextMenu menu = new ContextMenu();
-            MenuItem archive = new MenuItem("Archive...");
-            archive.setOnAction(event -> mainApp.getRecordingDetailsController().archive(event));
-            MenuItem cancel = new MenuItem("Cancel");
-            cancel.setOnAction(event -> mainApp.getRecordingDetailsController().cancel(event));
-            MenuItem play = new MenuItem("Play");
-            play.setOnAction(event -> mainApp.getRecordingDetailsController().play(event));
-            MenuItem openFolder = new MenuItem(String.format("Show in %s", OSHelper.getFileBrowserName()));
-            openFolder.setOnAction(event -> mainApp.getRecordingDetailsController().openFolder(event));
-            MenuItem delete = new MenuItem("Remove from TiVo...");
+    private void setupContextMenu() {
+        final ContextMenu menu = new ContextMenu();
 
-            delete.setOnAction(event -> mainApp.deleteFromTivo(table.getSelectionModel().getSelectedItem().getValue()));
-            menu.getItems().addAll(archive, cancel, play, openFolder, new SeparatorMenuItem(), delete);
+        MenuItem archive = new MenuItem("Archive...");
+        archive.disableProperty().bind(recordingSelection.isArchivableProperty().not());
+        archive.setOnAction(event -> mainApp.getRecordingDetailsController().archive(event));
 
-            row.itemProperty().addListener((observable, oldValue, newValue) -> {
-                if (newValue != null) {
-                    archive.disableProperty().bind(newValue.isArchivableProperty().not());
-                    cancel.disableProperty().bind(newValue.isCancellableProperty().not());
-                    play.disableProperty().bind(newValue.isPlayableProperty().not());
-                    openFolder.disableProperty().bind(newValue.isPlayableProperty().not());
-                    delete.disableProperty().bind(newValue.isRemovableProperty().not());
-                }
-            });
+        MenuItem cancel = new MenuItem("Cancel");
+        cancel.disableProperty().bind(recordingSelection.isCancellableProperty().not());
+        cancel.setOnAction(event -> mainApp.getRecordingDetailsController().cancel(event));
 
-            row.contextMenuProperty().bind(
-                    Bindings.when(Bindings.isNotNull(row.itemProperty()))
-                            .then(menu)
-                            .otherwise((ContextMenu) null)
-            );
+        MenuItem play = new MenuItem("Play");
+        play.disableProperty().bind(recordingSelection.isPlayableProperty().not());
+        play.setOnAction(event -> mainApp.getRecordingDetailsController().play(event));
 
-            return row;
-        });
+        MenuItem openFolder = new MenuItem(String.format("Show in %s", OSHelper.getFileBrowserName()));
+        openFolder.disableProperty().bind(recordingSelection.isPlayableProperty().not());
+        openFolder.setOnAction(event -> mainApp.getRecordingDetailsController().openFolder(event));
+
+        MenuItem delete = new MenuItem("Remove from TiVo...");
+        delete.disableProperty().bind(recordingSelection.isRemovableProperty().not());
+        delete.setOnAction(event -> mainApp.deleteFromTivo(recordingSelection.getRecordings()));
+
+        menu.getItems().addAll(archive, cancel, play, openFolder, new SeparatorMenuItem(), delete);
+
+        recordingTreeTable.setContextMenu(menu);
     }
 
     private void setupStyles() {
@@ -176,6 +174,10 @@ public class RecordingListController implements Initializable {
 
     public ObservableList<Tivo> getTivos() {
         return tivos;
+    }
+
+    public RecordingSelection getRecordingSelection() {
+        return recordingSelection;
     }
 
     @SuppressWarnings("unused")
@@ -232,14 +234,18 @@ public class RecordingListController implements Initializable {
             boolean allAreSuggestions = true;
             if (recordings.size() > 1) {
                 // Create a new tree node with children
-                item = new TreeItem<>(new Recording.Builder().seriesTitle(s.getTitle())
-                        .numEpisodes(s.getEpisodes().size()).recordedOn(recordings.get(0).getDateRecorded())
-                        .isSeriesHeading(true).image(recordings.get(0).getImageURL()).build());
+                List<TreeItem<Recording>> childItems = new ArrayList<>();
+                boolean allAreCopyable = true;
                 for (Recording recording : s.getEpisodes()) {
                     allAreSuggestions &= recording.isSuggestion();
+                    allAreCopyable &= !recording.isCopyProtected();
                     recording.isChildRecording(true);
-                    item.getChildren().add(new TreeItem<>(recording));
+                    childItems.add(new TreeItem<>(recording));
                 }
+                item = new TreeItem<>(new Recording.Builder().seriesTitle(s.getTitle())
+                        .numEpisodes(s.getEpisodes().size()).recordedOn(recordings.get(0).getDateRecorded())
+                        .isSeriesHeading(true).copyable(allAreCopyable).image(recordings.get(0).getImageURL()).build());
+                item.getChildren().addAll(childItems);
                 item.setExpanded(true);
             } else {
                 // Don't create children for this node
@@ -458,25 +464,29 @@ public class RecordingListController implements Initializable {
         }
     }
 
-    public void addRecordingChangedListener(ChangeListener<Recording> listener) {
-        // Update our observable property when the selected recording changes
-        recordingTreeTable.getSelectionModel().selectedItemProperty().addListener(
-                (observable, oldValue, newValue) -> {
-                    ObservableValue<Recording> observableRecording = null;
-                    Recording oldRecording = null;
-                    Recording newRecording = null;
-                    if (oldValue != null) {
-                        oldRecording = oldValue.getValue();
-                    }
-                    if (newValue != null) {
-                        newRecording = newValue.getValue();
-                    }
-                    if (observable != null && observable.getValue() != null) {
-                        observableRecording = observable.getValue().valueProperty();
-                    }
-                    listener.changed(observableRecording, oldRecording, newRecording);
-                });
+    public void addSelectionChangedListener(ListChangeListener<TreeItem<Recording>> listener) {
+        recordingTreeTable.getSelectionModel().getSelectedItems().addListener(listener);
     }
+
+//    public void addRecordingChangedListener(ChangeListener<Recording> listener) {
+//        // Update our observable property when the selected recording changes
+//        recordingTreeTable.getSelectionModel().selectedItemProperty().addListener(
+//                (observable, oldValue, newValue) -> {
+//                    ObservableValue<Recording> observableRecording = null;
+//                    Recording oldRecording = null;
+//                    Recording newRecording = null;
+//                    if (oldValue != null) {
+//                        oldRecording = oldValue.getValue();
+//                    }
+//                    if (newValue != null) {
+//                        newRecording = newValue.getValue();
+//                    }
+//                    if (observable != null && observable.getValue() != null) {
+//                        observableRecording = observable.getValue().valueProperty();
+//                    }
+//                    listener.changed(observableRecording, oldRecording, newRecording);
+//                });
+//    }
 
     /**
      * Remove @recording for the recording list's data model.
