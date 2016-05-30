@@ -162,7 +162,7 @@ public class RecordingListController implements Initializable {
 
         MenuItem delete = new MenuItem("Remove from TiVo...");
         delete.disableProperty().bind(recordingSelection.isRemovableProperty().not());
-        delete.setOnAction(event -> mainApp.deleteFromTivo(recordingSelection.getRecordings()));
+        delete.setOnAction(event -> mainApp.getRecordingDetailsController().delete(event));
 
         menu.getItems().addAll(archive, cancel, play, openFolder, new SeparatorMenuItem(), delete);
 

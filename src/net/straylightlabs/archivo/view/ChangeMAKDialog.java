@@ -90,7 +90,7 @@ public class ChangeMAKDialog extends FormattedDialog {
         List<Text> textList = new ArrayList<>();
 
         textList.add(createText("We could not connect to this TiVo using the media access key (MAK) you provided. " +
-                                "You can find your MAK by viewing "));
+                "You can find your MAK by viewing "));
         textList.add(createBoldText("My Account"));
         textList.add(createText(" on tivo.com or from the "));
         textList.add(createBoldText("Account & System Information"));

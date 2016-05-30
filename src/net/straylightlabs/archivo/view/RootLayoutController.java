@@ -51,8 +51,6 @@ import java.util.ResourceBundle;
 
 public class RootLayoutController implements Initializable, Observer {
     private Archivo mainApp;
-//    private Recording selectedRecording;
-//    private final ChangeListener<ArchiveStatus> statusChangeListener;
     private final SimpleBooleanProperty trueProperty;
 
     private static final String ISSUE_URL = "https://github.com/fflewddur/archivo/issues";
@@ -87,11 +85,6 @@ public class RootLayoutController implements Initializable, Observer {
     private final static Logger logger = LoggerFactory.getLogger(RootLayoutController.class);
 
     public RootLayoutController() {
-//        statusChangeListener = (observable, oldStatus, newStatus) -> {
-//            if (oldStatus != newStatus) {
-//                updateMenuItems(selectedRecording);
-//            }
-//        };
         trueProperty = new SimpleBooleanProperty();
         trueProperty.setValue(true);
     }
@@ -143,7 +136,7 @@ public class RootLayoutController implements Initializable, Observer {
 
     @FXML
     public void delete(ActionEvent event) {
-        mainApp.deleteFromTivo(mainApp.getRecordingListController().getRecordingSelection().getRecordings());
+        mainApp.getRecordingDetailsController().delete(event);
     }
 
     @FXML
@@ -230,22 +223,6 @@ public class RootLayoutController implements Initializable, Observer {
         updateMenuItems(null);
         setCancelAllDisabled(true);
     }
-
-//    public void recordingSelected(Recording recording) {
-//        if (selectedRecording == recording) {
-//            return;
-//        }
-//
-//        if (selectedRecording != null) {
-//            selectedRecording.statusProperty().removeListener(statusChangeListener);
-//        }
-//        selectedRecording = recording;
-//        if (selectedRecording != null) {
-//            selectedRecording.statusProperty().addListener(statusChangeListener);
-//        }
-//        updateMenuItems(recording);
-//    }
-
 
     private void updateMenuItems(Recording recording) {
         if (recording == null) {

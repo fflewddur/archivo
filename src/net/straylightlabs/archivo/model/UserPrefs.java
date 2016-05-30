@@ -29,7 +29,9 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
+import java.util.UUID;
 import java.util.prefs.Preferences;
 
 public class UserPrefs {

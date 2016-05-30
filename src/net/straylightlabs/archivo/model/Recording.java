@@ -185,12 +185,13 @@ public class Recording {
     }
 
     private boolean isArchivable() {
-        return isCopyable && !isSeriesHeading.get() && !isInProgress() && !status.get().getStatus().isCancelable();
+        return isCopyable && !isInProgress() && !status.get().getStatus().isCancelable();
     }
 
     private boolean isRemovable() {
-        return !isSeriesHeading() && status.get().getStatus().isRemovable();
+        return status.get().getStatus().isRemovable();
     }
+
     public String getRecordingId() {
         return recordingId;
     }

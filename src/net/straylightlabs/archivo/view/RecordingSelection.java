@@ -31,14 +31,17 @@ import org.slf4j.LoggerFactory;
 import java.net.URL;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Model the group of currently selected recordings.
  */
 class RecordingSelection {
     private final List<Recording> recordings;
+    private final List<Recording> recordingsWithChildren;
 
     // Properties to enable/disable UI controls
+    private final BooleanProperty showControls;
     private final BooleanProperty isArchivable;
     private final BooleanProperty isCancellable;
     private final BooleanProperty isPlayable;
@@ -69,7 +72,9 @@ class RecordingSelection {
 
     public RecordingSelection() {
         recordings = new ArrayList<>();
+        recordingsWithChildren = new ArrayList<>();
 
+        showControls = new SimpleBooleanProperty();
         isArchivable = new SimpleBooleanProperty();
         isCancellable = new SimpleBooleanProperty();
         isPlayable = new SimpleBooleanProperty();
@@ -95,11 +100,27 @@ class RecordingSelection {
         showTitles = new HashMap<>();
     }
 
+    /**
+     * Return a List of the selected Recordings.
+     *
+     * @return List of Recordings
+     */
     public List<Recording> getRecordings() {
         return Collections.unmodifiableList(recordings);
     }
 
+    /**
+     * Return a List of the selected Recordings, including any child recordings of series headers.
+     *
+     * @return List of Recordings
+     */
+    public List<Recording> getRecordingsWithChildren() {
+        return Collections.unmodifiableList(recordingsWithChildren);
+    }
+
     public void selectionChanged(ListChangeListener.Change<? extends TreeItem<Recording>> change) {
+        logger.debug("Selected changed");
+
         ObservableList<? extends TreeItem<Recording>> selectedRecordings = change.getList();
 
         clearFields();
@@ -115,7 +136,11 @@ class RecordingSelection {
             if (recording == null) {
                 continue;
             }
+
             recordings.add(recording);
+            recordingsWithChildren.add(recording);
+            recordingsWithChildren.addAll(item.getChildren().stream().map(TreeItem::getValue).collect(Collectors.toList()));
+
             lastRecording = recording;
             int episodes = showTitles.getOrDefault(recording.getSeriesTitle(), 0);
             showTitles.put(recording.getSeriesTitle(), episodes + 1);
@@ -136,6 +161,7 @@ class RecordingSelection {
         updateLabelProperties(
                 lastRecording, selectedRecordings.size(), isAnyRecordingCopyProtected, isAnyRecordingInProgress
         );
+        updateControlProperties(selectedRecordings.size());
     }
 
     private void clearFields() {
@@ -145,6 +171,7 @@ class RecordingSelection {
         removableBinding.clear();
         showTitles.clear();
         recordings.clear();
+        recordingsWithChildren.clear();
     }
 
     private void rebindProperties() {
@@ -235,6 +262,14 @@ class RecordingSelection {
         isRecording.setValue(recording.isInProgress());
         isCopyProtected.setValue(recording.isCopyProtected());
         posterURL.setValue(recording.getImageURL());
+    }
+
+    private void updateControlProperties(int numRecordings) {
+        showControls.setValue(numRecordings > 0);
+    }
+
+    public BooleanProperty showControlsProperty() {
+        return showControls;
     }
 
     public BooleanProperty isArchivableProperty() {

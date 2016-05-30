@@ -48,6 +48,7 @@ import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RecordingDetailsController implements Initializable {
     private final Archivo mainApp;
@@ -162,12 +163,16 @@ public class RecordingDetailsController implements Initializable {
     }
 
     private void setupControlBindings() {
-        archiveButton.visibleProperty().bind(Bindings.and(
-                cancelButton.visibleProperty().not(), playButton.visibleProperty().not()
-        ));
-        archiveButton.managedProperty().bind(Bindings.and(
-                cancelButton.visibleProperty().not(), playButton.visibleProperty().not()
-        ));
+        archiveButton.visibleProperty().bind(
+                Bindings.and(recordingSelection.showControlsProperty(),
+                        Bindings.and(cancelButton.visibleProperty().not(), playButton.visibleProperty().not())
+                )
+        );
+        archiveButton.managedProperty().bind(
+                Bindings.and(recordingSelection.showControlsProperty(),
+                        Bindings.and(cancelButton.visibleProperty().not(), playButton.visibleProperty().not())
+                )
+        );
         archiveButton.disableProperty().bind(recordingSelection.isArchivableProperty().not());
         cancelButton.visibleProperty().bind(recordingSelection.isCancellableProperty());
         cancelButton.managedProperty().bind(recordingSelection.isCancellableProperty());
@@ -177,7 +182,10 @@ public class RecordingDetailsController implements Initializable {
 
     @FXML
     public void archive(ActionEvent event) {
-        for (Recording recording : recordingSelection.getRecordings()) {
+        for (Recording recording : recordingSelection.getRecordingsWithChildren()) {
+            if (recording.isSeriesHeading()) {
+                continue;
+            }
             Path destination = showSaveDialog(mainApp.getPrimaryStage(), recording);
             if (destination != null) {
                 logger.info("Archive recording {} to {} (file type = {})...",
@@ -223,6 +231,14 @@ public class RecordingDetailsController implements Initializable {
                 Archivo.logger.error("Error playing '{}': ", recording.getDestination(), e);
             }
         }
+    }
+
+    @FXML
+    public void delete(ActionEvent event) {
+        List<Recording> toDelete = recordingSelection.getRecordingsWithChildren().stream().filter(
+                recording -> !recording.isSeriesHeading()).collect(Collectors.toList()
+        );
+        mainApp.deleteFromTivo(toDelete);
     }
 
     private Path showSaveDialog(Window parent, Recording recording) {

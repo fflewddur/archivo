@@ -37,6 +37,7 @@ public class MAKManager {
 
     /**
      * Returns the most-recently used MAK
+     *
      * @return the most-recently used MAK
      */
     public String currentMAK() {
