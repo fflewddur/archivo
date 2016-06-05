@@ -19,6 +19,8 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.ScaleTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
@@ -54,6 +56,7 @@ public class RecordingListController implements Initializable {
     private final ObservableList<Tivo> tivos;
     private final ChangeListener<? super Tivo> tivoSelectedListener;
     private final RecordingSelection recordingSelection;
+    private final FadeTransition fadeTransition;
 
     private TreeItem<Recording> rootUnfiltered;
     private TreeItem<Recording> suggestions;
@@ -101,11 +104,13 @@ public class RecordingListController implements Initializable {
      * Number of milliseconds to wait for further text input before starting to filter the recording list.
      */
     private final static int FILTER_AFTER_MS = 400;
+    private final static int FADE_DURATION = 500;
 
     public RecordingListController(Archivo mainApp) {
         recordingSelection = new RecordingSelection();
         tivoIsBusy = new SimpleBooleanProperty(false);
         alreadyDefaultSorted = false;
+        fadeTransition = new FadeTransition(javafx.util.Duration.millis(FADE_DURATION));
         this.mainApp = mainApp;
         tivos = FXCollections.synchronizedObservableList(FXCollections.observableArrayList());
         tablePlaceholderMessage = new Label("No recordings are available");
@@ -175,6 +180,7 @@ public class RecordingListController implements Initializable {
         addSelectionChangedListener(recordingSelection::selectionChanged);
 
         setupStyles();
+        setupTransitions();
     }
 
     private void setupContextMenu() {
@@ -208,6 +214,14 @@ public class RecordingListController implements Initializable {
     private void setupStyles() {
         recordingTreeTable.getStyleClass().add("recording-list");
         tablePlaceholderMessage.getStyleClass().add("placeholder-message");
+    }
+
+    private void setupTransitions() {
+        fadeTransition.setNode(searchBar);
+        fadeTransition.setFromValue(0);
+        fadeTransition.setToValue(1.0);
+        fadeTransition.setCycleCount(1);
+        fadeTransition.setAutoReverse(false);
     }
 
     public Tivo getSelectedTivo() {
@@ -494,6 +508,7 @@ public class RecordingListController implements Initializable {
     public void showSearchBar() {
         searchBar.setVisible(true);
         searchBar.setManaged(true);
+        fadeTransition.playFromStart();
         searchField.requestFocus();
     }
 
