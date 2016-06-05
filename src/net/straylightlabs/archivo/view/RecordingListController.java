@@ -20,7 +20,6 @@
 package net.straylightlabs.archivo.view;
 
 import javafx.animation.FadeTransition;
-import javafx.animation.ScaleTransition;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.BooleanProperty;
