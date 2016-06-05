@@ -42,8 +42,6 @@ import java.awt.*;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.ResourceBundle;
@@ -181,11 +179,10 @@ public class RootLayoutController implements Initializable, Observer {
 
     @FXML
     public void openLog(ActionEvent event) {
-        Path logPath = Paths.get(OSHelper.getDataDirectory().toString(), "log.txt");
         try {
-            Desktop.getDesktop().open(logPath.toFile());
+            Desktop.getDesktop().open(Archivo.LOG_PATH.toFile());
         } catch (IOException e) {
-            logger.error("Could not open log file '{}': ", logPath, e);
+            logger.error("Could not open log file '{}': ", Archivo.LOG_PATH, e);
         }
     }
 

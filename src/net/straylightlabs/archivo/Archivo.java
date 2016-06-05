@@ -36,10 +36,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
-import net.straylightlabs.archivo.controller.ArchiveQueueManager;
-import net.straylightlabs.archivo.controller.MAKManager;
-import net.straylightlabs.archivo.controller.TelemetryController;
-import net.straylightlabs.archivo.controller.UpdateCheckTask;
+import net.straylightlabs.archivo.controller.*;
 import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.MindCommandRecordingUpdate;
 import net.straylightlabs.archivo.net.MindTask;
@@ -70,6 +67,7 @@ public class Archivo extends Application {
     private RecordingListController recordingListController;
     private RecordingDetailsController recordingDetailsController;
     private final ArchiveQueueManager archiveQueueManager;
+    private final CrashReportController crashReportController;
     private ArchiveHistory archiveHistory;
 
     private final static Logger logger = LoggerFactory.getLogger(Archivo.class);
@@ -79,6 +77,7 @@ public class Archivo extends Application {
     public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
     public static final String APPLICATION_VERSION = "1.0.90";
     public static final String USER_AGENT = String.format("%s/%s", APPLICATION_NAME, APPLICATION_VERSION);
+    public static final Path LOG_PATH = Paths.get(OSHelper.getDataDirectory().toString(), "log.txt");
     private static final int WINDOW_MIN_HEIGHT = 400;
     private static final int WINDOW_MIN_WIDTH = 555;
     private static final Path ARCHIVE_HISTORY_PATH = Paths.get(OSHelper.getDataDirectory().toString(), "history.xml");
@@ -93,6 +92,7 @@ public class Archivo extends Application {
         }
         setLogLevel();
         telemetryController.setUserId(prefs.getUserId());
+        crashReportController = new CrashReportController(prefs.getUserId());
         statusText = new SimpleStringProperty();
         rpcExecutor = Executors.newSingleThreadExecutor();
         archiveQueueManager = new ArchiveQueueManager(this);
@@ -224,12 +224,25 @@ public class Archivo extends Application {
             return;
         }
 
+        if (crashReportController.hasCrashReport() && getUserPrefs().getShareTelemetry()) {
+            setStatusText("Exiting...");
+            CrashReportTask crashReportTask = crashReportController.buildTask();
+            Executors.newSingleThreadExecutor().submit(crashReportTask);
+            while (!crashReportTask.isDone()) {
+                try {
+                    Thread.sleep(200);
+                } catch (InterruptedException e) {
+                    logger.error("Interrupted while waiting for crash report to upload: ", e);
+                }
+            }
+        }
         archiveHistory.save();
         saveWindowDimensions();
 
         int waitTimeMS = 100;
-        int msLimit = 5000;
+        int msLimit = 15000;
         if (archiveQueueManager.hasTasks()) {
+            setStatusText("Exiting...");
             try {
                 int msWaited = 0;
                 archiveQueueManager.cancelAllArchiveTasks();
@@ -241,6 +254,7 @@ public class Archivo extends Application {
                 logger.error("Interrupted while waiting for archive tasks to shutdown: ", e);
             }
         }
+
         logger.info("Shutting down.");
         Platform.exit();
         System.exit(0);
@@ -578,6 +592,10 @@ public class Archivo extends Application {
 
     public void setLastFolder(Path lastFolder) {
         prefs.setLastFolder(lastFolder);
+    }
+
+    public void crashOccurred() {
+        crashReportController.crashOccurred();
     }
 
     public static void main(String[] args) {
