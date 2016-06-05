@@ -39,6 +39,8 @@
                 <MenuItem text="Quit" onAction="#quit"/>
             </Menu>
             <Menu text="Edit">
+                <MenuItem text="Find..." fx:id="findMenuItem" onAction="#showSearchBar"/>
+                <SeparatorMenuItem/>
                 <MenuItem text="Preferences" fx:id="preferencesMenuItem" onAction="#showPreferencesDialog"/>
             </Menu>
             <Menu text="View">

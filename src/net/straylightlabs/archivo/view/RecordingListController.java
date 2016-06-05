@@ -28,10 +28,13 @@ import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Cursor;
 import javafx.scene.control.*;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.controller.ArchiveQueueManager;
@@ -44,10 +47,7 @@ import org.slf4j.LoggerFactory;
 import java.net.URL;
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class RecordingListController implements Initializable {
@@ -55,11 +55,13 @@ public class RecordingListController implements Initializable {
     private final ChangeListener<? super Tivo> tivoSelectedListener;
     private final RecordingSelection recordingSelection;
 
+    private TreeItem<Recording> rootUnfiltered;
     private TreeItem<Recording> suggestions;
     private TivoSearchTask tivoSearchTask;
     private boolean alreadyDefaultSorted;
     private boolean uiDisabled;
     private boolean trySearchAgain;
+    private Timer filterTimer;
 
     private final BooleanProperty tivoIsBusy; // set to true when we're communicating w/ the selected device
 
@@ -85,10 +87,20 @@ public class RecordingListController implements Initializable {
     private ProgressBar storageIndicator;
     @FXML
     private Label storageLabel;
+    @FXML
+    private HBox searchBar;
+    @FXML
+    private TextField searchField;
 
     private final Archivo mainApp;
 
     private final static Logger logger = LoggerFactory.getLogger(RecordingListController.class);
+
+    /**
+     * For the search bar.
+     * Number of milliseconds to wait for further text input before starting to filter the recording list.
+     */
+    private final static int FILTER_AFTER_MS = 400;
 
     public RecordingListController(Archivo mainApp) {
         recordingSelection = new RecordingSelection();
@@ -251,7 +263,7 @@ public class RecordingListController implements Initializable {
 
     private void fillTreeTableView(List<Series> series) {
         List<TreeTableColumn<Recording, ?>> oldSortOrder = recordingTreeTable.getSortOrder().stream().collect(Collectors.toList());
-        TreeItem<Recording> root = new TreeItem<>(new Recording.Builder().seriesTitle("root").build());
+        rootUnfiltered = new TreeItem<>(new Recording.Builder().seriesTitle("root").build());
         suggestions = new TreeItem<>(new Recording.Builder().seriesTitle("TiVo Suggestions")
                 .isSeriesHeading(true).build());
         suggestions.expandedProperty().addListener(new HeaderExpandedHandler(suggestions));
@@ -294,13 +306,13 @@ public class RecordingListController implements Initializable {
                 // If all of the recordings are TiVo Suggestions, put them under the Suggestions node
                 suggestions.getChildren().add(item);
             } else {
-                root.getChildren().add(item);
+                rootUnfiltered.getChildren().add(item);
             }
         }
         if (suggestions.getChildren().size() > 0) {
-            root.getChildren().add(suggestions);
+            rootUnfiltered.getChildren().add(suggestions);
         }
-        recordingTreeTable.setRoot(root);
+        recordingTreeTable.setRoot(rootUnfiltered);
 
         Platform.runLater(() -> {
             // Restore the prior sort order
@@ -479,6 +491,91 @@ public class RecordingListController implements Initializable {
         startTivoSearch();
     }
 
+    public void showSearchBar() {
+        searchBar.setVisible(true);
+        searchBar.setManaged(true);
+        searchField.requestFocus();
+    }
+
+    /**
+     * When the text in the search field changes, check whether we should show the entire recording list or just
+     * a subset. If a subset, start a timer so that we don't keep filtering while the user is still typing, and cancel
+     * any existing timers. When the timer elapses, perform the filtering.
+     */
+    @FXML
+    public void searchFieldChanged(KeyEvent event) {
+        if (event.getCode() == KeyCode.ESCAPE) {
+            hideSearchBar(null);
+        } else {
+            String search = searchField.getText();
+            if (search.isEmpty()) {
+                showAllRecordings();
+            } else {
+                if (filterTimer != null) {
+                    filterTimer.cancel();
+                }
+                filterTimer = new Timer();
+                filterTimer.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        Platform.runLater(() -> onlyShowMatchingRecordings(search));
+                    }
+                }, FILTER_AFTER_MS);
+            }
+        }
+    }
+
+    @FXML
+    public void hideSearchBar(ActionEvent event) {
+        searchField.clear();
+        showAllRecordings();
+        searchBar.setVisible(false);
+        searchBar.setManaged(false);
+    }
+
+    private void onlyShowMatchingRecordings(String search) {
+        logger.debug("Only show recordings matching '{}'", search);
+        TreeItem<Recording> filteredItems = new TreeItem<>();
+        filteredItems.setValue(rootUnfiltered.getValue());
+        filterRecordings(rootUnfiltered, search, filteredItems);
+        recordingTreeTable.setRoot(filteredItems);
+        recordingTreeTable.getSelectionModel().select(0);
+        logger.debug("Completed showing recordings matching '{}'", search);
+    }
+
+    private void filterRecordings(TreeItem<Recording> node, String filter, TreeItem<Recording> filteredItems) {
+        if (node.isLeaf()) {
+            if (node.getValue().getFullTitle().toLowerCase().contains(filter)) {
+                TreeItem<Recording> newItem = new TreeItem<>();
+                newItem.setValue(node.getValue());
+                filteredItems.getChildren().add(newItem);
+            }
+        } else {
+            for (TreeItem<Recording> child : node.getChildren()) {
+                if (child.isLeaf()) {
+                    if (child.getValue().getFullTitle().toLowerCase().contains(filter)) {
+                        TreeItem<Recording> newItem = new TreeItem<>();
+                        newItem.setValue(child.getValue());
+                        filteredItems.getChildren().add(newItem);
+                    }
+                } else {
+                    TreeItem<Recording> filteredChildren = new TreeItem<>();
+                    filteredChildren.setValue(child.getValue());
+                    filteredChildren.setExpanded(child.isExpanded());
+                    filterRecordings(child, filter, filteredChildren);
+                    if (filteredChildren.getChildren().size() > 0) {
+                        filteredItems.getChildren().add(filteredChildren);
+                    }
+                }
+            }
+        }
+    }
+
+    private void showAllRecordings() {
+        recordingTreeTable.setRoot(rootUnfiltered);
+        recordingTreeTable.getSelectionModel().select(0);
+    }
+
     /**
      * Disable the TiVo controls and the recording list
      */
@@ -504,26 +601,6 @@ public class RecordingListController implements Initializable {
     public void addSelectionChangedListener(ListChangeListener<TreeItem<Recording>> listener) {
         recordingTreeTable.getSelectionModel().getSelectedItems().addListener(listener);
     }
-
-//    public void addRecordingChangedListener(ChangeListener<Recording> listener) {
-//        // Update our observable property when the selected recording changes
-//        recordingTreeTable.getSelectionModel().selectedItemProperty().addListener(
-//                (observable, oldValue, newValue) -> {
-//                    ObservableValue<Recording> observableRecording = null;
-//                    Recording oldRecording = null;
-//                    Recording newRecording = null;
-//                    if (oldValue != null) {
-//                        oldRecording = oldValue.getValue();
-//                    }
-//                    if (newValue != null) {
-//                        newRecording = newValue.getValue();
-//                    }
-//                    if (observable != null && observable.getValue() != null) {
-//                        observableRecording = observable.getValue().valueProperty();
-//                    }
-//                    listener.changed(observableRecording, oldRecording, newRecording);
-//                });
-//    }
 
     /**
      * Remove @recording for the recording list's data model.

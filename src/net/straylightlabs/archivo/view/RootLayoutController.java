@@ -70,6 +70,8 @@ public class RootLayoutController implements Initializable, Observer {
     @FXML
     private MenuItem cancelAllMenuItem;
     @FXML
+    private MenuItem findMenuItem;
+    @FXML
     private MenuItem preferencesMenuItem;
     @FXML
     private MenuItem expandMenuItem;
@@ -99,6 +101,7 @@ public class RootLayoutController implements Initializable, Observer {
 
     private void setShortcutKeys() {
         archiveMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.S, KeyCombination.SHORTCUT_DOWN));
+        findMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.F, KeyCombination.SHORTCUT_DOWN));
         preferencesMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.COMMA, KeyCombination.SHORTCUT_DOWN));
         if (OSHelper.isMacOS()) {
             deleteMenuItem.setAccelerator(new KeyCodeCombination(KeyCode.BACK_SPACE, KeyCombination.SHORTCUT_DOWN));
@@ -157,6 +160,11 @@ public class RootLayoutController implements Initializable, Observer {
     @FXML
     public void collapseShows(ActionEvent event) {
         mainApp.collapseShows();
+    }
+
+    @FXML
+    public void showSearchBar(ActionEvent event) {
+        mainApp.getRecordingListController().showSearchBar();
     }
 
     @FXML
