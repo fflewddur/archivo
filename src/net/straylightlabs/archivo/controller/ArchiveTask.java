@@ -373,7 +373,7 @@ class ArchiveTask extends Task<Recording> {
                     ArchiveStatus.createDownloadingStatus(percent, secondsRemaining, kbs)
             ));
         } catch (ArithmeticException e) {
-            logger.warn("ArithmeticException: ", e);
+            logger.warn("ArithmeticException: ", e.getLocalizedMessage());
         }
     }
 
@@ -503,15 +503,15 @@ class ArchiveTask extends Task<Recording> {
                 ArchiveStatus.createRemovingCommercialsStatus(ArchiveStatus.INDETERMINATE, ArchiveStatus.TIME_UNKNOWN))
         );
 
-        double videoStartTime = findVideoStartTime();
-        logger.info("Video start time: {}", videoStartTime);
+        double videoOffsetFromAudio = findVideoOffsetStartTime();
+        logger.info("Video offset from audio: {}", videoOffsetFromAudio);
         Path partList = buildPath(fixedPath, "parts");
         cleanupFiles(cutPath, partList);
         String ffmpegPath = prefs.getFFmpegPath();
         int filePartCounter = 1;
         List<Path> partPaths = new ArrayList<>();
         try (PrintWriter writer = new PrintWriter(Files.newBufferedWriter(partList))) {
-            FFSplitList splitList = FFSplitList.createFromFileWithOffset(ffsplitPath, videoStartTime);
+            FFSplitList splitList = FFSplitList.createFromFileWithOffset(ffsplitPath, videoOffsetFromAudio);
             logger.info("splitList: {}", splitList);
             List<FFSplitList.Segment> toKeep = splitList.getSegmentsToKeep();
             int curSegment = 1;
@@ -519,16 +519,11 @@ class ArchiveTask extends Task<Recording> {
             for (FFSplitList.Segment segment : toKeep) {
                 List<String> cmd = new ArrayList<>();
                 cmd.add(ffmpegPath);
-                cmd.addAll(segment.buildFFmpegInputParamList());
-                cmd.add("-seek2any");
-                cmd.add("1");
-                cmd.add("-seek_timestamp");
-                cmd.add("1");
                 cmd.add("-i");
                 cmd.add(fixedPath.toString());
-                cmd.addAll(segment.buildFFmpegOutputParamList());
                 cmd.add("-codec");
                 cmd.add("copy");
+                cmd.addAll(segment.buildFFmpegOutputParamList());
 
                 Path partPath = buildPath(escapedPath, String.format("part%02d.ts", filePartCounter++));
                 writer.println(String.format("file '%s'", partPath.toString().replace("'", "\\'")));
@@ -571,14 +566,17 @@ class ArchiveTask extends Task<Recording> {
         cmd.add("-f");
         cmd.add("concat");
         cmd.add("-fflags");
-        cmd.add("+genpts+igndts");
+        cmd.add("+genpts+discardcorrupt+sortdts");
         cmd.add("-safe");
         cmd.add("0");
         cmd.add("-i");
         cmd.add(partList.toString());
         cmd.add("-codec");
         cmd.add("copy");
+        cmd.add("-f");
+        cmd.add("mpegts");
         cmd.add(cutPath.toString());
+        cleanupFiles(cutPath);
         try {
             FFmpegOutputReader outputReader = new FFmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMOVING_COMMERCIALS);
             if (!runProcess(cmd, outputReader)) {
@@ -596,7 +594,7 @@ class ArchiveTask extends Task<Recording> {
         }
     }
 
-    private double findVideoStartTime() {
+    private double findVideoOffsetStartTime() {
         String ffprobePath = prefs.getFFprobePath();
         List<String> cmd = new ArrayList<>();
         cmd.add(ffprobePath);
@@ -614,7 +612,7 @@ class ArchiveTask extends Task<Recording> {
             logger.error("Error running ffprobe: ", e);
             throw new ArchiveTaskException("Error finding video stream start time");
         }
-        return outputReader.getVideoStartTime();
+        return outputReader.getVideoOffsetFromAudio();
     }
 
     private void transcode() {

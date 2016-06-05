@@ -59,6 +59,7 @@ public class FFprobeOutputReader extends ProcessOutputReader {
         return audioStartTime;
     }
 
+    @SuppressWarnings("unused")
     public double getVideoStartTime() {
         if (streamOutput == null) {
             findStartTimes();
@@ -67,7 +68,7 @@ public class FFprobeOutputReader extends ProcessOutputReader {
     }
 
     @SuppressWarnings("unused")
-    public double getAudioOffset() {
+    public double getVideoOffsetFromAudio() {
         if (streamOutput == null) {
             findStartTimes();
         }

@@ -125,22 +125,14 @@ public class FFSplitList {
         }
 
         /**
-         * Create a list representing the input arguments FFmpeg will need to trim a video to this segment.
-         */
-        public List<String> buildFFmpegInputParamList() {
-            List<String> params = new ArrayList<>();
-            params.add("-ss");
-            params.add(String.format("%1.3f", startTime + offset));
-            return params;
-        }
-
-        /**
          * Create a list representing the output arguments FFmpeg will need to trim a video to this segment.
          */
         public List<String> buildFFmpegOutputParamList() {
             List<String> params = new ArrayList<>();
+            params.add("-ss");
+            params.add(String.format("%1.4f", startTime + offset));
             params.add("-t");
-            params.add(String.format("%1.3f", duration));
+            params.add(String.format("%1.4f", duration));
             return params;
         }
 
