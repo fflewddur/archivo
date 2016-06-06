@@ -285,7 +285,11 @@ public class UserPrefs {
     }
 
     public synchronized boolean getShareTelemetry() {
-        return prefs.getBoolean(SHARE_TELEMETRY, sysPrefs.getBoolean(SHARE_TELEMETRY, true));
+        if (Archivo.IS_BETA) {
+            return true;
+        } else {
+            return prefs.getBoolean(SHARE_TELEMETRY, sysPrefs.getBoolean(SHARE_TELEMETRY, true));
+        }
     }
 
     public synchronized void setShareTelemetry(boolean val) {

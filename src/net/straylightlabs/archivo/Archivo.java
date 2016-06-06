@@ -118,7 +118,7 @@ public class Archivo extends Application {
      * If the user has requested debugging mode, set the root logger to the DEBUG level
      */
     private void setLogLevel() {
-        if (prefs.getDebugMode()) {
+        if (prefs.getDebugMode() || Archivo.IS_BETA) {
             ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory.getLogger(
                     ch.qos.logback.classic.Logger.ROOT_LOGGER_NAME
             );

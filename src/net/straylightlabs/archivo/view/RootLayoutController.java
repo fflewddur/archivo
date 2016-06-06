@@ -201,8 +201,15 @@ public class RootLayoutController implements Initializable, Observer {
     }
 
     public void setMenuBindings(RecordingListController listController) {
-        expandMenuItem.disableProperty().bind(Bindings.size(listController.getTivos()).lessThan(1));
-        collapseMenuItem.disableProperty().bind(Bindings.size(listController.getTivos()).lessThan(1));
+        expandMenuItem.disableProperty().bind(Bindings.or(
+                Bindings.size(listController.getTivos()).lessThan(1), listController.tivoIsBusyProperty()
+        ));
+        collapseMenuItem.disableProperty().bind(Bindings.or(
+                Bindings.size(listController.getTivos()).lessThan(1), listController.tivoIsBusyProperty()
+        ));
+        findMenuItem.disableProperty().bind(Bindings.or(
+                Bindings.size(listController.getTivos()).lessThan(1), listController.tivoIsBusyProperty()
+        ));
         archiveMenuItem.disableProperty().bind(listController.getRecordingSelection().isArchivableProperty().not());
         cancelMenuItem.disableProperty().bind(listController.getRecordingSelection().isCancellableProperty().not());
         playMenuItem.disableProperty().bind(listController.getRecordingSelection().isPlayableProperty().not());

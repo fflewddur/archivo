@@ -129,6 +129,9 @@ class PreferencesDialog {
         CheckBox telemetry = new CheckBox("Share anonymous data about feature usage");
         telemetry.setTooltip(new Tooltip("This helps the Archivo developers identify features that aren't working as intended"));
         telemetry.setSelected(userPrefs.getShareTelemetry());
+        if (Archivo.IS_BETA) {
+            telemetry.setDisable(true);
+        }
         grid.add(telemetry, LABEL_COL, row++, 2, 1);
 
         CheckBox debugMode = new CheckBox("Save debugging files\n(May use significant disk space)");

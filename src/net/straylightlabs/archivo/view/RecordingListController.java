@@ -122,6 +122,10 @@ public class RecordingListController implements Initializable {
         };
     }
 
+    public BooleanProperty tivoIsBusyProperty() {
+        return tivoIsBusy;
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         recordingTreeTable.setShowRoot(false);
@@ -250,7 +254,7 @@ public class RecordingListController implements Initializable {
         MindCommandRecordingFolderItemSearch command = new MindCommandRecordingFolderItemSearch(tivo);
         MindTask task = new MindTask(tivo.getClient(), command);
         task.setOnSucceeded(event -> {
-            logger.info("Fetching list of recordings credentialsRejected.");
+            logger.info("Fetching list of recordings succeeded.");
             fillTreeTableView(command.getSeries());
             updateTivoDetails(tivo);
         });
@@ -416,11 +420,12 @@ public class RecordingListController implements Initializable {
         if (tivoSearchTask == null) {
             tivoSearchTask = new TivoSearchTask(tivos, mainApp.getMak(), timeout);
             tivoSearchTask.setOnSucceeded(e -> {
-                logger.debug("Tivo search task credentialsRejected");
+                logger.debug("Tivo search task succeeded");
                 if (tivoSearchTask.searchFailed()) {
                     logger.debug("Search task failed because of a network error");
                     mainApp.clearStatusText();
                     enableUI();
+                    mainApp.crashOccurred();
                     Archivo.telemetryController.sendNoTivosFoundEvent(
                             TivoSearchTask.TIMEOUTS_BEFORE_PROMPT - retries_before_prompt, true
                     );
@@ -437,6 +442,7 @@ public class RecordingListController implements Initializable {
                         logger.debug("Could not find any TiVos");
                         mainApp.clearStatusText();
                         enableUI();
+                        mainApp.crashOccurred();
                         Archivo.telemetryController.sendNoTivosFoundEvent(
                                 TivoSearchTask.TIMEOUTS_BEFORE_PROMPT - retries_before_prompt, false
                         );
