@@ -75,12 +75,28 @@ public class Archivo extends Application {
 
     public static final String APPLICATION_NAME = "Archivo";
     public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
-    public static final String APPLICATION_VERSION = "1.0.90";
-    public static final String USER_AGENT = String.format("%s/%s", APPLICATION_NAME, APPLICATION_VERSION);
+    public static final int APP_MAJOR_VERSION = 1;
+    public static final int APP_MINOR_VERSION = 0;
+    public static final int APP_RELEASE_VERSION = 90;
+    public static final boolean IS_BETA = false;
+    public static final int BETA_VERSION = 1;
+    public static final String APPLICATION_VERSION;
+    public static final String USER_AGENT;
     public static final Path LOG_PATH = Paths.get(OSHelper.getDataDirectory().toString(), "log.txt");
     private static final int WINDOW_MIN_HEIGHT = 400;
     private static final int WINDOW_MIN_WIDTH = 555;
     private static final Path ARCHIVE_HISTORY_PATH = Paths.get(OSHelper.getDataDirectory().toString(), "history.xml");
+
+    static {
+        if (IS_BETA) {
+            APPLICATION_VERSION = String.format(
+                    "%d.%d.%d Beta %d", APP_MAJOR_VERSION, APP_MINOR_VERSION, APP_RELEASE_VERSION, BETA_VERSION
+            );
+        } else {
+            APPLICATION_VERSION = String.format("%d.%d.%d", APP_MAJOR_VERSION, APP_MINOR_VERSION, APP_RELEASE_VERSION);
+        }
+        USER_AGENT = String.format("%s/%s", APPLICATION_NAME, APPLICATION_VERSION);
+    }
 
     public Archivo() {
         super();
