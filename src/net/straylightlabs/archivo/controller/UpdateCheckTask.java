@@ -25,21 +25,18 @@ import net.straylightlabs.archivo.model.SoftwareUpdateDetails;
 import org.apache.http.HttpEntity;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
-import org.xml.sax.SAXException;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URL;
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -49,37 +46,32 @@ import java.util.List;
  * Check for software updates and notify the user if one is available.
  */
 public class UpdateCheckTask extends Task<SoftwareUpdateDetails> {
-    private Document releaseDocument;
-    private String latestReleaseVersion;
-    private List<SoftwareUpdateDetails> releaseList;
-
     public final static Logger logger = LoggerFactory.getLogger(UpdateCheckTask.class);
-
-    private static final String UPDATE_CHECK_URL = "http://straylightlabs.net/archivo/current_version.xml";
 
     @Override
     protected SoftwareUpdateDetails call() throws Exception {
         CloseableHttpClient httpclient = buildHttpClient();
-        HttpGet httpGet = new HttpGet(UPDATE_CHECK_URL);
+        URIBuilder builder = new URIBuilder();
+        builder.setScheme("https").setHost("straylightlabs.net").setPath("/archivo/check_for_updates.php")
+                .addParameter("major_ver", Integer.toString(Archivo.APP_MAJOR_VERSION))
+                .addParameter("minor_ver", Integer.toString(Archivo.APP_MINOR_VERSION))
+                .addParameter("release_ver", Integer.toString(Archivo.APP_RELEASE_VERSION))
+                .addParameter("is_beta", Boolean.toString(Archivo.IS_BETA))
+                .addParameter("beta_ver", Integer.toString(Archivo.BETA_VERSION));
+        URI updateURI = builder.build();
+        logger.debug("Fetching {}...", updateURI);
+        HttpGet httpGet = new HttpGet(updateURI);
         try (CloseableHttpResponse response = httpclient.execute(httpGet)) {
             int statusCode = response.getStatusLine().getStatusCode();
             HttpEntity entity = response.getEntity();
             if (statusCode == 200) {
-                logger.info("Successfully fetched current_version.xml");
-                DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
-                try {
-                    DocumentBuilder builder = factory.newDocumentBuilder();
-                    releaseDocument = builder.parse(entity.getContent());
-                    parseReleaseList();
-                    return getCurrentRelease();
-                } catch (ParserConfigurationException | IllegalStateException | SAXException e) {
-                    logger.error("Error parsing release list: {}", e.getLocalizedMessage());
-                    throw e;
-                }
+                logger.info("Successfully fetched update URL");
+                JSONObject json = new JSONObject(EntityUtils.toString(entity));
+                return getCurrentRelease(json);
             } else {
                 EntityUtils.consume(entity);
                 logger.error("Error fetching release list: HTTP code {}", statusCode);
-                throw new IOException(String.format("Error fetching %s: status code %d", UPDATE_CHECK_URL, statusCode));
+                throw new IOException(String.format("Error fetching %s: status code %d", updateURI, statusCode));
             }
         }
     }
@@ -91,81 +83,34 @@ public class UpdateCheckTask extends Task<SoftwareUpdateDetails> {
                 .build();
     }
 
-    private void parseReleaseList() throws IOException {
-        releaseList = new ArrayList<>();
-        NodeList nodes = releaseDocument.getElementsByTagName("App");
-        for (int i = 0; i < nodes.getLength(); i++) {
-            Node node = nodes.item(i);
-            if (node.hasAttributes() && Archivo.APPLICATION_NAME.equals(node.getAttributes().getNamedItem("name").getNodeValue())) {
-                NodeList appNodes = node.getChildNodes();
-                for (int j = 0; j < appNodes.getLength(); j++) {
-                    Node appNode = appNodes.item(j);
-                    if (appNode.getNodeName().equals("CurrentRelease")) {
-                        latestReleaseVersion = appNode.getTextContent();
-                    } else if (appNode.getNodeName().equals("ReleaseList")) {
-                        NodeList releaseNodes = appNode.getChildNodes();
-                        for (int k = 0; k < releaseNodes.getLength(); k++) {
-                            Node releaseNode = releaseNodes.item(k);
-                            if (releaseNode.getNodeName().equals("Release")) {
-                                parseRelease(releaseNode);
-                            }
-                        }
-                    }
-                }
+    private SoftwareUpdateDetails getCurrentRelease(JSONObject json) {
+        logger.debug("Release JSON: {}", json);
+        try {
+            if (json.getBoolean("update_available")) {
+                URL location = new URL(json.getString("location"));
+                List<String> changes = parseChangeList(json);
+                LocalDate date = LocalDate.parse(json.getString("date"));
+                return new SoftwareUpdateDetails(
+                        SoftwareUpdateDetails.versionToString(
+                                json.getInt("major_ver"), json.getInt("minor_ver"), json.getInt("release_ver"),
+                                json.getBoolean("is_beta"), json.getInt("beta_ver")
+                        ), location, date, changes
+                );
+            } else {
+                return SoftwareUpdateDetails.UNAVAILABLE;
             }
-        }
-    }
-
-    private void parseRelease(Node releaseNode) throws IOException {
-        NamedNodeMap attributes = releaseNode.getAttributes();
-        String version = attributes.getNamedItem("version").getTextContent();
-        URL location = new URL(attributes.getNamedItem("url").getTextContent());
-        LocalDate releaseDate = LocalDate.parse(attributes.getNamedItem("date").getTextContent());
-        List<String> changes = new ArrayList<>();
-        NodeList children = releaseNode.getChildNodes();
-        for (int i = 0; i < children.getLength(); i++) {
-            Node child = children.item(i);
-            if (child.getNodeName().equals("Change")) {
-                changes.add(child.getTextContent());
-            }
-        }
-
-        SoftwareUpdateDetails details = new SoftwareUpdateDetails(version, location, releaseDate, changes);
-        releaseList.add(details);
-    }
-
-    private SoftwareUpdateDetails getCurrentRelease() {
-        logger.debug("Release list: {}", releaseList);
-
-        // Figure out the dates associated with the user's release and the current release
-        SoftwareUpdateDetails latestRelease = SoftwareUpdateDetails.UNAVAILABLE;
-        SoftwareUpdateDetails usersRelease = SoftwareUpdateDetails.UNAVAILABLE;
-        for (SoftwareUpdateDetails release : releaseList) {
-            if (release.getVersion().equals(latestReleaseVersion)) {
-                latestRelease = release;
-            }
-            if (release.getVersion().equals(Archivo.APPLICATION_VERSION)) {
-                usersRelease = release;
-            }
-        }
-        if (usersRelease == SoftwareUpdateDetails.UNAVAILABLE) {
-            // Ensure we have a version for the user's release
-            usersRelease = new SoftwareUpdateDetails(Archivo.APPLICATION_VERSION);
-        }
-
-        logger.debug("latestRelease = {}, usersRelease = {}", latestRelease, usersRelease);
-        if (usersRelease.isSameOrNewerThan(latestRelease)) {
+        } catch (MalformedURLException e) {
+            logger.error("Error parsing update location: {}", e.getLocalizedMessage());
             return SoftwareUpdateDetails.UNAVAILABLE;
-        } else {
-            // Build a summary of all changes occurring between the user's release and the latest release
-            List<String> changes = new ArrayList<>();
-            for (SoftwareUpdateDetails release : releaseList) {
-                if (release.getReleaseDate().isAfter(usersRelease.getReleaseDate())) {
-                    changes.addAll(release.getChanges());
-                }
-            }
-            return new SoftwareUpdateDetails(latestRelease.getVersion(), latestRelease.getLocation(),
-                    latestRelease.getReleaseDate(), changes);
         }
+    }
+
+    private List<String> parseChangeList(JSONObject json) {
+        List<String> changes = new ArrayList<>();
+        JSONArray changeArray = json.getJSONArray("changes");
+        for (int i = 0; i < changeArray.length(); i++) {
+            changes.add(changeArray.get(i).toString());
+        }
+        return changes;
     }
 }
