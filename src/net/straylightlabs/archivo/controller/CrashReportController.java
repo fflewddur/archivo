@@ -35,7 +35,7 @@ public class CrashReportController {
 
     public CrashReportController(String userId) {
         this.userId = userId;
-        this.hasCrashReport = false;
+        this.hasCrashReport = true;
     }
 
     public void crashOccurred() {

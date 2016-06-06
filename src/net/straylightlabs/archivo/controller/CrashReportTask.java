@@ -41,7 +41,7 @@ public class CrashReportTask extends Task<Void> {
     private final String userId;
     private final Path logPath;
 
-    private final static String CRASH_REPORT_URL = "http://straylightlabs.net/archivo/crash_report.php";
+    private final static String CRASH_REPORT_URL = "https://straylightlabs.net/archivo/crash_report.php";
     private final static Logger logger = LoggerFactory.getLogger(CrashReportTask.class);
 
     public CrashReportTask(String userId, Path logPath) {
@@ -50,7 +50,7 @@ public class CrashReportTask extends Task<Void> {
     }
 
     @Override
-    protected Void call() {
+    protected Void call() throws Exception {
         performUpload();
         return null;
     }
@@ -69,18 +69,9 @@ public class CrashReportTask extends Task<Void> {
             HttpResponse response = client.execute(post);
             if (response.getStatusLine().getStatusCode() != 200) {
                 logger.debug("Error uploading crash report: {}", response.getStatusLine());
-//            } else {
-//                HttpEntity responseEntity = response.getEntity();
-//                if (responseEntity != null) {
-//                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(responseEntity.getContent()))) {
-//                        for (String line = reader.readLine(); line != null; line = reader.readLine()) {
-//                            logger.debug("Upload response: {}", line);
-//                        }
-//                    }
-//                }
             }
         } catch (IOException e) {
-            logger.error("Error upload crash report: {}", e.getLocalizedMessage());
+            logger.error("Error uploading crash report: {}", e.getLocalizedMessage());
         }
     }
 

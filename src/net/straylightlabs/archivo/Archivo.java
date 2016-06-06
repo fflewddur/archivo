@@ -148,9 +148,8 @@ public class Archivo extends Application {
         archiveQueueManager.addObserver(rootController);
 
         primaryStage.setOnCloseRequest(e -> {
-            if (!confirmTaskCancellation()) {
-                e.consume();
-            } else {
+            e.consume();
+            if (confirmTaskCancellation()) {
                 archiveQueueManager.cancelAllArchiveTasks();
                 cleanShutdown();
             }
@@ -224,18 +223,6 @@ public class Archivo extends Application {
             return;
         }
 
-        if (crashReportController.hasCrashReport() && getUserPrefs().getShareTelemetry()) {
-            setStatusText("Exiting...");
-            CrashReportTask crashReportTask = crashReportController.buildTask();
-            Executors.newSingleThreadExecutor().submit(crashReportTask);
-            while (!crashReportTask.isDone()) {
-                try {
-                    Thread.sleep(200);
-                } catch (InterruptedException e) {
-                    logger.error("Interrupted while waiting for crash report to upload: ", e);
-                }
-            }
-        }
         archiveHistory.save();
         saveWindowDimensions();
 
@@ -255,6 +242,19 @@ public class Archivo extends Application {
             }
         }
 
+        boolean reportingCrashes = crashReportController.hasCrashReport() && getUserPrefs().getShareTelemetry();
+        if (reportingCrashes) {
+            setStatusText("Exiting...");
+            Task<Void> crashReportTask = crashReportController.buildTask();
+            crashReportTask.setOnSucceeded(event -> shutdown());
+            crashReportTask.setOnFailed(event -> shutdown());
+            Executors.newSingleThreadExecutor().submit(crashReportTask);
+        } else {
+            shutdown();
+        }
+    }
+
+    private void shutdown() {
         logger.info("Shutting down.");
         Platform.exit();
         System.exit(0);
