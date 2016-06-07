@@ -34,8 +34,14 @@ import org.apache.http.impl.client.HttpClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.zip.GZIPOutputStream;
 
 public class CrashReportTask extends Task<Void> {
     private final String userId;
@@ -56,11 +62,12 @@ public class CrashReportTask extends Task<Void> {
     }
 
     private void performUpload() {
+        Path gzLog = compressLog();
         try (CloseableHttpClient client = buildHttpClient()) {
             HttpPost post = new HttpPost(CRASH_REPORT_URL);
             MultipartEntityBuilder builder = MultipartEntityBuilder.create();
             builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
-            FileBody logFile = new FileBody(logPath.toFile(), ContentType.TEXT_PLAIN);
+            FileBody logFile = new FileBody(gzLog.toFile(), ContentType.DEFAULT_BINARY);
             builder.addPart("log", logFile);
             StringBody uid = new StringBody(userId, ContentType.TEXT_PLAIN);
             builder.addPart("uid", uid);
@@ -73,6 +80,21 @@ public class CrashReportTask extends Task<Void> {
         } catch (IOException e) {
             logger.error("Error uploading crash report: {}", e.getLocalizedMessage());
         }
+    }
+
+    private Path compressLog() {
+        Path gzPath = Paths.get(logPath.getParent().toString(), "log.gz");
+        try (BufferedReader logReader = Files.newBufferedReader(logPath);
+             BufferedWriter gzipWriter =
+                     new BufferedWriter(new OutputStreamWriter(new GZIPOutputStream(Files.newOutputStream(gzPath))))) {
+            for (String line = logReader.readLine(); line != null; line = logReader.readLine()) {
+                gzipWriter.write(line);
+                gzipWriter.write("\n");
+            }
+        } catch (IOException e) {
+            logger.error("Error compressing log file: ", e);
+        }
+        return gzPath;
     }
 
     private CloseableHttpClient buildHttpClient() {

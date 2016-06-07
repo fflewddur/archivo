@@ -76,9 +76,9 @@ public class Archivo extends Application {
     public static final String APPLICATION_NAME = "Archivo";
     public static final String APPLICATION_RDN = "net.straylightlabs.archivo";
     public static final int APP_MAJOR_VERSION = 1;
-    public static final int APP_MINOR_VERSION = 0;
-    public static final int APP_RELEASE_VERSION = 90;
-    public static final boolean IS_BETA = false;
+    public static final int APP_MINOR_VERSION = 1;
+    public static final int APP_RELEASE_VERSION = 0;
+    public static final boolean IS_BETA = true;
     public static final int BETA_VERSION = 1;
     public static final String APPLICATION_VERSION;
     public static final String USER_AGENT;
