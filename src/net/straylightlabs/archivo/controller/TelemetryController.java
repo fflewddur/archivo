@@ -172,7 +172,7 @@ public class TelemetryController {
         sendAll();
     }
 
-    private synchronized List<String> getNetworkInterfaces() {
+    private static List<String> getNetworkInterfaces() {
         List<String> nics = new ArrayList<>();
         try {
             for (NetworkInterface nic : Collections.list(NetworkInterface.getNetworkInterfaces())) {
@@ -187,7 +187,7 @@ public class TelemetryController {
         return nics;
     }
 
-    private synchronized String getAddressesAsString(NetworkInterface nic) {
+    public static String getAddressesAsString(NetworkInterface nic) {
         StringJoiner sj = new StringJoiner(", ");
         for (InetAddress address : Collections.list(nic.getInetAddresses())) {
             sj.add(address.getHostAddress());

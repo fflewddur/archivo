@@ -39,13 +39,14 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.controller.ArchiveQueueManager;
+import net.straylightlabs.archivo.controller.TelemetryController;
 import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.*;
 import net.straylightlabs.archivo.utilities.OSHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.URL;
+import java.net.*;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -423,6 +424,7 @@ public class RecordingListController implements Initializable {
                 logger.debug("Tivo search task succeeded");
                 if (tivoSearchTask.searchFailed()) {
                     logger.debug("Search task failed because of a network error");
+                    logNetworkInterfaces();
                     mainApp.clearStatusText();
                     enableUI();
                     mainApp.crashOccurred();
@@ -440,6 +442,7 @@ public class RecordingListController implements Initializable {
                         trySearchAgain = true;
                     } else {
                         logger.debug("Could not find any TiVos");
+                        logNetworkInterfaces();
                         mainApp.clearStatusText();
                         enableUI();
                         mainApp.crashOccurred();
@@ -488,6 +491,24 @@ public class RecordingListController implements Initializable {
         tivos.clear();
 
         mainApp.getRpcExecutor().submit(tivoSearchTask);
+    }
+
+    private void logNetworkInterfaces() {
+        List<String> nics = new ArrayList<>();
+        try {
+            for (NetworkInterface nic : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                if (nic.isUp())
+                    nics.add(String.format("name='%s' isLoopback=%b isP2P=%b isVirtual=%b multicast=%b addresses=[%s]",
+                            nic.getDisplayName(), nic.isLoopback(), nic.isPointToPoint(), nic.isVirtual(),
+                            nic.supportsMulticast(), TelemetryController.getAddressesAsString(nic)));
+            }
+            logger.debug("Localhost address: {}", InetAddress.getLocalHost());
+        } catch (SocketException e) {
+            logger.error("Error fetching network interface list: ", e);
+        } catch (UnknownHostException e) {
+            logger.error("Error fetching localhost address: ", e);
+        }
+        nics.forEach(nic -> logger.debug("Found network interface: {}", nic));
     }
 
     private void addTivoSelectedListener() {
