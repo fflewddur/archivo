@@ -19,20 +19,28 @@
 
 package net.straylightlabs.archivo.view;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.Modality;
 import javafx.stage.Window;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.AudioChannel;
+import net.straylightlabs.archivo.model.FileType;
 import net.straylightlabs.archivo.model.UserPrefs;
 import net.straylightlabs.archivo.model.VideoResolution;
 import net.straylightlabs.archivo.utilities.OSHelper;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -43,6 +51,8 @@ import java.util.List;
 class PreferencesDialog {
     private final Dialog<String> dialog;
     private final UserPrefs userPrefs;
+    private final StringProperty organizeLabel;
+    private Path defaultFolder;
 
     private final ObservableList<VideoResolution> videoResolutions;
     private final ObservableList<AudioChannel> audioChannels;
@@ -54,9 +64,18 @@ class PreferencesDialog {
     public PreferencesDialog(Window parent, Archivo mainApp) {
         dialog = new Dialog<>();
         userPrefs = mainApp.getUserPrefs();
+        defaultFolder = userPrefs.getLastFolder();
+        organizeLabel = new SimpleStringProperty();
+        updateOrganizeLabel();
         videoResolutions = buildVideoResolutionList();
         audioChannels = buildAudioChannelList();
         initDialog(parent);
+    }
+
+    private void updateOrganizeLabel() {
+        organizeLabel.setValue(
+                String.format("Automatically organize recordings to\n%s", defaultFolder)
+        );
     }
 
     private ObservableList<VideoResolution> buildVideoResolutionList() {
@@ -74,7 +93,7 @@ class PreferencesDialog {
     private void initDialog(Window parent) {
         dialog.initOwner(parent);
         dialog.initModality(Modality.NONE);
-        dialog.getDialogPane().setPrefWidth(350);
+        dialog.getDialogPane().setPrefWidth(450);
         dialog.setTitle("Preferences");
 
         GridPane grid = new GridPane();
@@ -83,7 +102,10 @@ class PreferencesDialog {
         grid.setVgap(10);
         ColumnConstraints col1 = new ColumnConstraints();
         col1.setPrefWidth(10);
-        grid.getColumnConstraints().addAll(col1);
+        ColumnConstraints col2 = new ColumnConstraints();
+        ColumnConstraints col3 = new ColumnConstraints();
+        col3.setFillWidth(true);
+        grid.getColumnConstraints().setAll(col1, col2, col3);
         int row = 0;
 
         Label header = createHeader("Archive Preferences");
@@ -93,11 +115,6 @@ class PreferencesDialog {
         comskip.setTooltip(new Tooltip("Try to determine when commercials start and end, and remove them from the final video. May not always be accurate."));
         comskip.setSelected(userPrefs.getSkipCommercials());
         grid.add(comskip, LABEL_COL, row++, 2, 1);
-
-        CheckBox organize = new CheckBox("Organize recordings by show and season");
-        organize.setTooltip(new Tooltip("Automatically create a folder for each show and season of the recordings you archive."));
-        organize.setSelected(userPrefs.getOrganizeArchivedShows());
-        grid.add(organize, LABEL_COL, row++, 2, 1);
 
         CheckBox qsv = new CheckBox("Use hardware acceleration");
         qsv.setTooltip(new Tooltip("Use Intel Quick Sync Video (if available) to accelerate video conversions. May result in large file sizes."));
@@ -109,7 +126,43 @@ class PreferencesDialog {
             qsv.setDisable(true);
         }
 
-        Label label = createLabelWithTooltip("Limit video resolution to", "If your selected file type has a larger resolution than this, archived recordings will be scaled down to this size");
+        CheckBox organize = new CheckBox();
+        organize.textProperty().bind(organizeLabel);
+        organize.setTooltip(new Tooltip("Automatically name each recording you archive and create a folder for each show and season."));
+        organize.setSelected(userPrefs.getOrganizeArchivedShows());
+        grid.add(organize, LABEL_COL, row++, 2, 1);
+
+        HBox box = new HBox();
+        Button changeLocation = new Button("Change Folder");
+        changeLocation.setOnAction(event -> {
+            DirectoryChooser chooser = new DirectoryChooser();
+            chooser.setInitialDirectory(defaultFolder.toFile());
+            chooser.setTitle("Where Should Archivo Save Recordings?");
+            File newFolder = chooser.showDialog(dialog.getOwner());
+            if (newFolder != null) {
+                defaultFolder = newFolder.toPath();
+                updateOrganizeLabel();
+            }
+        });
+        changeLocation.disableProperty().bind(organize.selectedProperty().not());
+        HBox.setMargin(changeLocation, new Insets(0, 0, 0, 30));
+        box.getChildren().add(changeLocation);
+        grid.add(box, LABEL_COL, row++, 2, 1);
+
+        box = new HBox();
+        box.setMinWidth(450);
+        box.setAlignment(Pos.CENTER_LEFT);
+        box.setSpacing(10);
+        box.disableProperty().bind(organize.selectedProperty().not());
+        Label label = new Label("Save as");
+        ComboBox<FileType> fileType = new ComboBox<>();
+        fileType.getItems().addAll(FileType.values());
+        fileType.getSelectionModel().select(FileType.fromDescription(userPrefs.getMostRecentFileType()));
+        HBox.setMargin(label, new Insets(0, 0, 0, 30));
+        box.getChildren().addAll(label, fileType);
+        grid.add(box, LABEL_COL, row++, 2, 1);
+
+        label = createLabelWithTooltip("Limit video resolution to", "If your selected file type has a larger resolution than this, archived recordings will be scaled down to this size");
         grid.add(label, LABEL_COL, row);
         ChoiceBox<VideoResolution> videoResolution = new ChoiceBox<>(videoResolutions);
         videoResolution.setValue(userPrefs.getVideoResolution());
@@ -123,7 +176,7 @@ class PreferencesDialog {
         grid.add(audioChannel, CONTROL_COL, row);
         row++;
 
-        header = createHeader("Improve Archivo");
+        header = createHeader("Help Improve Archivo");
         grid.add(header, HEADER_COL, row++, 3, 1);
 
         CheckBox telemetry = new CheckBox("Share anonymous data about feature usage");
@@ -147,6 +200,8 @@ class PreferencesDialog {
             if (button == ButtonType.OK) {
                 userPrefs.setSkipCommercials(comskip.isSelected());
                 userPrefs.setOrganizeArchivedShows(organize.isSelected());
+                userPrefs.setLastFolder(defaultFolder);
+                userPrefs.setMostRecentType(fileType.getValue());
                 if (OSHelper.isWindows()) {
                     userPrefs.setHardwareAcceleration(qsv.isSelected());
                 }

@@ -52,7 +52,8 @@
                 <Insets bottom="6" left="12" right="6" top="6"/>
             </padding>
             <Label>Find:</Label>
-            <TextField fx:id="searchField" prefWidth="250" promptText="Show or episode to search for" onKeyReleased="#searchFieldChanged"/>
+            <TextField fx:id="searchField" prefWidth="250" promptText="Show or episode to search for"
+                       onKeyReleased="#searchFieldChanged"/>
             <Button fx:id="searchCancel" onAction="#hideSearchBar">Cancel</Button>
         </HBox>
     </VBox>

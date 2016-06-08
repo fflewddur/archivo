@@ -477,7 +477,7 @@ class ArchiveTask extends Task<Recording> {
         cmd.add("--ini");
         cmd.add(comskipIniPath);
         cmd.add("--threads");
-        cmd.add(String.valueOf(OSHelper.getProcessorCores()));
+        cmd.add(String.valueOf(OSHelper.getProcessorThreads()));
         cmd.add("--ts");
         cmd.add(fixedPath.toString());
         cmd.add(fixedPath.getParent().toString());

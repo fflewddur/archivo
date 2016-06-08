@@ -550,7 +550,6 @@ public class Archivo extends Application {
     }
 
     private void promptForMAK() {
-        logger.debug("mak = {}", maks.currentMAK());
         ChangeMAKDialog dialog = new ChangeMAKDialog(primaryStage, maks.currentMAK());
         try {
             updateMAK(dialog.promptUser());
