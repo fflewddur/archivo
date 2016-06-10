@@ -186,7 +186,7 @@ public enum FileType {
         if (OSHelper.isMacOS()) {
             return "ca_aac";
         } else {
-            return "fdk_aac";
+            return "aac";
         }
     }
 
