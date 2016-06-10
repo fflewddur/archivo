@@ -138,7 +138,7 @@ public class MindRPC {
     }
 
     public JSONObject send(String request) throws IOException {
-        logger.info("Request to send:{}\n ", request);
+        logger.trace("Request to send:{}\n ", request);
 
         connectAndAuthenticate();
         socketWriter.print(request);

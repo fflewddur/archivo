@@ -146,7 +146,7 @@ public abstract class MindCommand {
         }
 
         if (response.get("type").equals("error")) {
-            logger.debug("Invalid response: {}", response.toString());
+            logger.error("Invalid response: {}", response.toString());
             throw new IOException(response.get("text").toString());
         }
     }

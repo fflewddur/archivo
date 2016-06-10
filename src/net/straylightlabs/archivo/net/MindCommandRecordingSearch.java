@@ -61,7 +61,7 @@ class MindCommandRecordingSearch extends MindCommand {
     public Recording getRecording() {
         failOnInvalidState();
         Recording.Builder builder = new Recording.Builder();
-        logger.info("Response: {}", response);
+        logger.trace("Response: {}", response);
         if (response.has("recording")) {
             JSONArray recordingsJSON = response.getJSONArray("recording");
             for (Object obj : recordingsJSON) {

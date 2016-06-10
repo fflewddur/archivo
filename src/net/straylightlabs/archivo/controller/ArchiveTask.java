@@ -311,7 +311,7 @@ class ArchiveTask extends Task<Recording> {
                     double percent = totalBytesRead / (double) estimatedLength;
                     updateProgress(recording, percent, startTime, totalBytesRead, estimatedLength);
                     priorBytesRead = totalBytesRead;
-                    logger.info("Total bytes read from network: {}", totalBytesRead);
+                    logger.trace("Total bytes read from network: {}", totalBytesRead);
                 }
             }
             logger.info("Download finished.");
@@ -367,7 +367,7 @@ class ArchiveTask extends Task<Recording> {
             double kbs = (totalBytesRead / 1024) / elapsedTime.getSeconds();
             long kbRemaining = (estimatedLength - totalBytesRead) / 1024;
             int secondsRemaining = (int) (kbRemaining / kbs);
-            logger.info(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
+            logger.trace(String.format("Read %d bytes of %d expected bytes (%d%%) in %s (%.1f KB/s)",
                     totalBytesRead, estimatedLength, (int) (percent * 100), elapsedTime, kbs));
             Platform.runLater(() -> recording.setStatus(
                     ArchiveStatus.createDownloadingStatus(percent, secondsRemaining, kbs)

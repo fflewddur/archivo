@@ -50,7 +50,7 @@ public class MindCommandBodyConfigSearch extends MindCommand {
 
     @Override
     protected void afterExecute() {
-        logger.info("Response: {}", response.toString());
+        logger.trace("Response: {}", response.toString());
         JSONArray configs = response.getJSONArray("bodyConfig");
         // There should only be one config in the array
         JSONObject config = configs.getJSONObject(0);
