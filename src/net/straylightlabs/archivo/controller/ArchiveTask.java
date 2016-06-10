@@ -627,7 +627,8 @@ class ArchiveTask extends Task<Recording> {
         if (!Files.exists(sourcePath)) {
             sourcePath = fixedPath;
         }
-        boolean useQuickSync = isQuickSyncSupported(handbrakePath, sourcePath) && prefs.getHardwareAcceleration();
+        boolean useQuickSync = isQuickSyncSupported(handbrakePath, sourcePath) && prefs.getHardwareAcceleration() &&
+                recording.getDestinationType().supportsQSV();
         logger.info("Using Intel Quick Sync Video: {}", useQuickSync);
         cleanupFiles(recording.getDestination());
         List<String> cmd = new ArrayList<>();

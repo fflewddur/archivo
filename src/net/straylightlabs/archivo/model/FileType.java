@@ -30,19 +30,21 @@ public enum FileType {
     ANDROID_TABLET("Android Tablet Files", "*.mp4"),
     //    APPLE_TV("AppleTV 1 & 2 Files", "*.m4v"),
     APPLE_TV3("AppleTV 3 Files", "*.m4v"),
-    TS("Decrypted TiVo Files", "*.ts", false, false),
-    TIVO("Encrypted TiVo Files", "*.TiVo", false, false),
+    TS("Decrypted TiVo Files", "*.ts", false, false, false),
+    TIVO("Encrypted TiVo Files", "*.TiVo", false, false, false),
     IPAD("iPad Files", "*.mp4"),
     IPHONE("iPhone & iPod Touch Files", "*.mp4"),
-    PYTIVO("PyTivo Files", "*.ts", false, true),
+    PYTIVO("PyTivo Files", "*.ts", false, true, false),
     H264_NORMAL("Standard H.264 Files", "*.mp4"),
     H264_HIGH("Standard H.264 (High Profile) Files ", "*.mp4"),
+    H265("Standard H.265 Files", "*.mp4", true, true, false),
     WINDOWS_PHONE("Windows Phone Files", "*.mp4");
 
     private final String description;
     private final String extension;
     private final boolean needsTranscoding;
     private final boolean includeMetadata;
+    private final boolean supportsQSV;
 
     private static final Map<FileType, Map<String, String>> handbrakeArgs;
 
@@ -51,14 +53,16 @@ public enum FileType {
     }
 
     FileType(String description, String extension) {
-        this(description, extension, true, false);
+        this(description, extension, true, false, true);
     }
 
-    FileType(String description, String extension, boolean needsTranscoding, boolean includeMetadata) {
+    FileType(String description, String extension, boolean needsTranscoding, boolean includeMetadata,
+             boolean supportsQSV) {
         this.description = description;
         this.extension = extension;
         this.needsTranscoding = needsTranscoding;
         this.includeMetadata = includeMetadata;
+        this.supportsQSV = supportsQSV;
     }
 
     public static FileType fromDescription(String description) {
@@ -74,6 +78,9 @@ public enum FileType {
         return H264_NORMAL;
     }
 
+    public boolean supportsQSV() {
+        return supportsQSV;
+    }
     public String getDescription() {
         return description;
     }
@@ -144,18 +151,24 @@ public enum FileType {
                 "--h264-level 3.1 -X 1280 -Y 720", getPlatformAudioEncoder());
         map.put(WINDOWS_PHONE, parseArgs(args));
 
-        // Normal
+        // Normal H264
         args = String.format("-e x264 -q 21.0 -a 1 -E %s -B 160 -6 dpl2 -R Auto -D 0.0 --audio-copy-mask aac,ac3,dtshd,dts,mp3 " +
                 "--audio-fallback ffac3 -f mp4 --loose-anamorphic --modulus 2 -m --x264-preset veryfast --h264-profile main " +
                 "--decomb=fast " +
                 "--h264-level 4.0", getPlatformAudioEncoder());
         map.put(H264_NORMAL, parseArgs(args));
 
-        // High Profile
-        args = String.format("-e x264  -q 21.0 -a 1,1 -E %s,copy:ac3 -B 160,160 -6 dpl2,none -R Auto,Auto -D 0.0,0.0 " +
+        // High Profile H264
+        args = String.format("-e x264 -q 21.0 -a 1,1 -E %s,copy:ac3 -B 160,160 -6 dpl2,none -R Auto,Auto -D 0.0,0.0 " +
                 "--audio-copy-mask aac,ac3,dtshd,dts,mp3 --audio-fallback ffac3 -f mp4 -4 -5 --loose-anamorphic " +
                 "--modulus 2 -m --x264-preset veryfast --h264-profile high --h264-level 4.1", getPlatformAudioEncoder());
         map.put(H264_HIGH, parseArgs(args));
+
+        // H265
+        args = String.format("-e x265 -q 21.0 -a 1,1 -E %s,copy:ac3 -B 160,160 -6 dpl2,none -R Auto,Auto -D 0.0,0.0 " +
+                "--audio-copy-mask aac,ac3,dtshd,dts,mp3 --audio-fallback ffac3 -f mp4 -4 -5 --loose-anamorphic " +
+                "--modulus 2 -m --x265-preset veryfast ", getPlatformAudioEncoder());
+        map.put(H265, parseArgs(args));
 
         return map;
     }
