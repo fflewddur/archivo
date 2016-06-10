@@ -31,6 +31,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.*;
 
 /**
@@ -123,6 +124,11 @@ public class TelemetryController {
         userDetails.put("Found TiVos", numFound);
         userDetails.put("Search Retries", retriesNeeded);
         userDetails.put("No TiVos Found", numFound < 1);
+        try {
+            userDetails.put("Localhost", InetAddress.getLocalHost());
+        } catch (UnknownHostException e) {
+            logger.error("Error fetching localhost address: {}", e.getLocalizedMessage());
+        }
         eventQueue.addLast(messageBuilder.set(userId, userDetails));
         sendAll();
     }
@@ -141,6 +147,11 @@ public class TelemetryController {
         for (String nic : getNetworkInterfaces()) {
             userDetails.put(String.format("Network Interface %d", i), nic);
             i++;
+        }
+        try {
+            userDetails.put("Localhost", InetAddress.getLocalHost());
+        } catch (UnknownHostException e) {
+            logger.error("Error fetching localhost address: {}", e.getLocalizedMessage());
         }
         eventQueue.addLast(messageBuilder.set(userId, userDetails));
         sendAll();
