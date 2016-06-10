@@ -32,6 +32,7 @@ class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
 
     private static final String STYLE_FINISHED = "status-finished";
     private static final String STYLE_UNAVAILABLE = "status-unavailable";
+    private static final String STYLE_ROW_BASE = "recording-list-row";
 
     public StatusCellFactory() {
         super();
@@ -57,8 +58,9 @@ class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
         if (row != null && row.getTreeItem() != null) {
             recording = row.getTreeItem().getValue();
             clearCustomClasses(row);
+            row.getStyleClass().add(STYLE_ROW_BASE);
             if (!recording.isSeriesHeading() && (recording.isCopyProtected() || recording.isInProgress())) {
-                row.getStyleClass().add(STYLE_UNAVAILABLE);
+                row.getStyleClass().addAll(STYLE_UNAVAILABLE);
             }
         }
         if (status != null && status.getStatus() != ArchiveStatus.TaskStatus.NONE && recording != null && !recording.isSeriesHeading()) {

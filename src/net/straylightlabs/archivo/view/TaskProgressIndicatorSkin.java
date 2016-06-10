@@ -224,6 +224,8 @@ class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicator, Beha
                     indeterminateTransition.play();
                 }
             }
+            pseudoClassStateChanged(PseudoClass.getPseudoClass("indeterminate"), true);
+            pseudoClassStateChanged(PseudoClass.getPseudoClass("determinate"), false);
         } else {
             // clean up after spinner
             if (spinner != null) {
@@ -236,6 +238,8 @@ class TaskProgressIndicatorSkin extends BehaviorSkinBase<ProgressIndicator, Beha
             // create determinateIndicator
             determinateIndicator = new DeterminateIndicator(control, progressColor.get());
             getChildren().setAll(determinateIndicator);
+            pseudoClassStateChanged(PseudoClass.getPseudoClass("indeterminate"), false);
+            pseudoClassStateChanged(PseudoClass.getPseudoClass("determinate"), true);
         }
     }
 

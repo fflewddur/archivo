@@ -29,7 +29,7 @@
     -fx-text-fill: -medium-text;
 }
 
-.status-unavailable:selected .tree-table-cell {
+.status-unavailable:focused .tree-table-cell {
     -fx-text-fill: white;
 }
 
@@ -37,8 +37,16 @@
     -fx-text-fill: -medium-text;
 }
 
-.status-finished:selected .tree-table-cell {
+.status-finished:focused .tree-table-cell {
     -fx-text-fill: white;
+}
+
+.recording-list-row .tree-table-cell .progress-indicator:indeterminate {
+    -fx-progress-color: green;
+}
+
+.recording-list-row:focused .tree-table-cell .progress-indicator:indeterminate {
+    -fx-progress-color: white;
 }
 
 .preference-header {
