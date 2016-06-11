@@ -41,10 +41,6 @@
     -fx-text-fill: white;
 }
 
-.recording-list-row .tree-table-cell .progress-indicator:indeterminate {
-    -fx-progress-color: green;
-}
-
 .recording-list-row:focused .tree-table-cell .progress-indicator:indeterminate {
     -fx-progress-color: white;
 }
