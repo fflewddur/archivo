@@ -36,7 +36,7 @@ import java.util.stream.Collectors;
 /**
  * Model the group of currently selected recordings.
  */
-class RecordingSelection {
+public class RecordingSelection {
     private final List<Recording> recordings;
     private final List<Recording> recordingsWithChildren;
 

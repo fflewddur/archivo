@@ -36,6 +36,8 @@ import javafx.scene.Cursor;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.input.MouseButton;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.HBox;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.controller.ArchiveQueueManager;
@@ -136,6 +138,28 @@ public class RecordingListController implements Initializable {
         recordingTreeTable.setOnSort(event ->
                 updateGroupStatus(recordingTreeTable.getRoot(), recordingTreeTable.getRoot().getChildren())
         );
+        recordingTreeTable.setOnMouseClicked(this::archiveOnDoubleClick);
+
+        setupColumns();
+        setupContextMenu();
+
+        tivoList.setConverter(new Tivo.StringConverter());
+        tivoList.setItems(tivos);
+
+        // Disable the TiVo controls when no devices are available
+        refreshTivoList.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
+        tivoList.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
+        storageIndicator.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
+        storageLabel.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
+        recordingTreeTable.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
+
+        addSelectionChangedListener(recordingSelection::selectionChanged);
+
+        setupStyles();
+        setupTransitions();
+    }
+
+    private void setupColumns() {
         showColumn.setCellValueFactory(data -> data.getValue().getValue().titleProperty());
         showColumn.setPrefWidth(mainApp.getUserPrefs().getTitleColumnWidth());
         showColumn.widthProperty().addListener(
@@ -168,23 +192,6 @@ public class RecordingListController implements Initializable {
         statusColumn.widthProperty().addListener(
                 (observable, oldValue, newValue) -> mainApp.getUserPrefs().setStatusColumnWidth(newValue.intValue())
         );
-
-        setupContextMenu();
-
-        tivoList.setConverter(new Tivo.StringConverter());
-        tivoList.setItems(tivos);
-
-        // Disable the TiVo controls when no devices are available
-        refreshTivoList.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
-        tivoList.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
-        storageIndicator.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
-        storageLabel.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
-        recordingTreeTable.disableProperty().bind(Bindings.or(Bindings.size(tivos).lessThan(1), tivoIsBusy));
-
-        addSelectionChangedListener(recordingSelection::selectionChanged);
-
-        setupStyles();
-        setupTransitions();
     }
 
     private void setupContextMenu() {
@@ -226,6 +233,14 @@ public class RecordingListController implements Initializable {
         fadeTransition.setToValue(1.0);
         fadeTransition.setCycleCount(1);
         fadeTransition.setAutoReverse(false);
+    }
+
+    private void archiveOnDoubleClick(MouseEvent event) {
+        if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() > 1) {
+            if (recordingSelection.isArchivableProperty().get()) {
+                mainApp.archiveSelection();
+            }
+        }
     }
 
     public Tivo getSelectedTivo() {

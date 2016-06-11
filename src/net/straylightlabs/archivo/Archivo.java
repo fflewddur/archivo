@@ -22,6 +22,7 @@ package net.straylightlabs.archivo;
 import ch.qos.logback.classic.Level;
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
@@ -35,6 +36,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import net.straylightlabs.archivo.controller.*;
 import net.straylightlabs.archivo.model.*;
@@ -46,12 +48,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
@@ -212,7 +216,7 @@ public class Archivo extends Application {
         alert.setTitle("Update Available");
         alert.setHeaderText(String.format("A new version of %s is available", Archivo.APPLICATION_NAME));
         alert.setContentText(String.format("%s %s was released on %s.\n\nNotable changes include %s.\n\n" +
-                        "Would you like to download the update now?\n\n",
+                        "Would you like to install the update now?\n\n",
                 Archivo.APPLICATION_NAME, updateDetails.getVersion(),
                 updateDetails.getReleaseDate().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM)),
                 updateDetails.getSummary()));
@@ -409,6 +413,96 @@ public class Archivo extends Application {
      */
     public void cancelAll() {
         archiveQueueManager.cancelAllArchiveTasks();
+    }
+
+    public void archiveSelection() {
+        for (Recording recording : recordingListController.getRecordingSelection().getRecordingsWithChildren()) {
+            if (recording.isSeriesHeading()) {
+                continue;
+            }
+            Path destination;
+            if (getUserPrefs().getOrganizeArchivedShows()) {
+                destination = buildOrganizedPath(recording);
+            } else {
+                destination = showSaveDialog(getPrimaryStage(), recording);
+            }
+            if (destination == null) {
+                break;
+            }
+            logger.info("Archive recording {} to {} (file type = {})...",
+                    recording.getFullTitle(), destination, recording.getDestinationType()
+            );
+            recording.setStatus(ArchiveStatus.QUEUED);
+            enqueueRecordingForArchiving(recording);
+        }
+    }
+
+    private Path buildOrganizedPath(Recording recording) {
+        Path path = null;
+        try {
+            FileType fileType = FileType.fromDescription(getUserPrefs().getMostRecentFileType());
+            path = Paths.get(
+                    getLastFolder().toString(),
+                    recording.getDefaultNestedPath().toString() + fileType.getExtension().substring(1)
+            );
+            Files.createDirectories(path.getParent());
+            recording.setDestinationType(fileType);
+            recording.setDestination(path);
+            return path;
+        } catch (IOException e) {
+            logger.error("Error creating directory '{}': ", path.getParent(), e);
+        }
+        return null;
+    }
+
+    private Path showSaveDialog(Stage parent, Recording recording) {
+        FileChooser chooser = new FileChooser();
+        setupFileTypes(chooser);
+        String defaultFilename = recording.getDefaultFlatFilename();
+        chooser.setInitialFileName(defaultFilename);
+        chooser.setInitialDirectory(getLastFolder().toFile());
+
+        ObjectProperty<FileChooser.ExtensionFilter> selectedExtensionFilterProperty = chooser.selectedExtensionFilterProperty();
+        File destination = chooser.showSaveDialog(parent);
+        FileType type = saveFileType(selectedExtensionFilterProperty);
+        if (destination != null) {
+            Path lastFolder = destination.toPath();
+            recording.setDestination(destination.toPath());
+            recording.setDestinationType(type);
+            setLastFolder(lastFolder.getParent());
+            return destination.toPath();
+        }
+        return null;
+    }
+
+    private void setupFileTypes(FileChooser chooser) {
+        List<FileChooser.ExtensionFilter> fileTypes = new ArrayList<>();
+        FileChooser.ExtensionFilter selected = null;
+        String previousFileType = getUserPrefs().getMostRecentFileType();
+        for (FileType type : FileType.values()) {
+            FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter(type.getDescription(), type.getExtension());
+            fileTypes.add(filter);
+            if (type.getDescription().equalsIgnoreCase(previousFileType)) {
+                logger.info("Setting extension filter: {}", previousFileType);
+                selected = filter;
+            }
+        }
+        chooser.getExtensionFilters().addAll(fileTypes);
+        if (selected != null) {
+            chooser.setSelectedExtensionFilter(selected);
+        }
+    }
+
+    private FileType saveFileType(ObjectProperty<FileChooser.ExtensionFilter> selectedExtensionFilterProperty) {
+        FileChooser.ExtensionFilter filter = selectedExtensionFilterProperty.get();
+        FileType fileType = null;
+        if (filter != null) {
+            String description = filter.getDescription();
+            logger.info("Selected extension filter: {}", description);
+            fileType = FileType.fromDescription(description);
+            getUserPrefs().setMostRecentType(fileType);
+        }
+        return fileType;
     }
 
     public void deleteFromTivo(List<Recording> recordings) {

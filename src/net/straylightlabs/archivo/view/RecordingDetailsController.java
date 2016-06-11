@@ -20,7 +20,10 @@
 package net.straylightlabs.archivo.view;
 
 import javafx.beans.binding.Bindings;
-import javafx.beans.property.*;
+import javafx.beans.property.BooleanProperty;
+import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -29,27 +32,22 @@ import javafx.scene.control.Label;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.Pane;
-import javafx.stage.FileChooser;
-import javafx.stage.Window;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.ArchiveStatus;
-import net.straylightlabs.archivo.model.FileType;
 import net.straylightlabs.archivo.model.Recording;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.awt.*;
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
-import java.util.*;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 public class RecordingDetailsController implements Initializable {
@@ -184,25 +182,7 @@ public class RecordingDetailsController implements Initializable {
 
     @FXML
     public void archive(ActionEvent event) {
-        for (Recording recording : recordingSelection.getRecordingsWithChildren()) {
-            if (recording.isSeriesHeading()) {
-                continue;
-            }
-            Path destination;
-            if (mainApp.getUserPrefs().getOrganizeArchivedShows()) {
-                destination = buildOrganizedPath(recording);
-            } else {
-                destination = showSaveDialog(mainApp.getPrimaryStage(), recording);
-            }
-            if (destination == null) {
-                break;
-            }
-            logger.info("Archive recording {} to {} (file type = {})...",
-                    recording.getFullTitle(), destination, recording.getDestinationType()
-            );
-            recording.setStatus(ArchiveStatus.QUEUED);
-            mainApp.enqueueRecordingForArchiving(recording);
-        }
+        mainApp.archiveSelection();
     }
 
     @FXML
@@ -244,74 +224,6 @@ public class RecordingDetailsController implements Initializable {
                 recording -> !recording.isSeriesHeading()).collect(Collectors.toList()
         );
         mainApp.deleteFromTivo(toDelete);
-    }
-
-    private Path buildOrganizedPath(Recording recording) {
-        Path path = null;
-        try {
-            FileType fileType = FileType.fromDescription(mainApp.getUserPrefs().getMostRecentFileType());
-            path = Paths.get(
-                    mainApp.getLastFolder().toString(),
-                    recording.getDefaultNestedPath().toString() + fileType.getExtension().substring(1)
-            );
-            Files.createDirectories(path.getParent());
-            recording.setDestinationType(fileType);
-            recording.setDestination(path);
-            return path;
-        } catch (IOException e) {
-            logger.error("Error creating directory '{}': ", path.getParent(), e);
-        }
-        return null;
-    }
-
-    private Path showSaveDialog(Window parent, Recording recording) {
-        FileChooser chooser = new FileChooser();
-        setupFileTypes(chooser);
-        String defaultFilename = recording.getDefaultFlatFilename();
-        chooser.setInitialFileName(defaultFilename);
-        chooser.setInitialDirectory(mainApp.getLastFolder().toFile());
-
-        ObjectProperty<FileChooser.ExtensionFilter> selectedExtensionFilterProperty = chooser.selectedExtensionFilterProperty();
-        File destination = chooser.showSaveDialog(parent);
-        FileType type = saveFileType(selectedExtensionFilterProperty);
-        if (destination != null) {
-            Path lastFolder = destination.toPath();
-            recording.setDestination(destination.toPath());
-            recording.setDestinationType(type);
-            mainApp.setLastFolder(lastFolder.getParent());
-            return destination.toPath();
-        }
-        return null;
-    }
-
-    private void setupFileTypes(FileChooser chooser) {
-        List<FileChooser.ExtensionFilter> fileTypes = new ArrayList<>();
-        FileChooser.ExtensionFilter selected = null;
-        String previousFileType = mainApp.getUserPrefs().getMostRecentFileType();
-        for (FileType type : FileType.values()) {
-            FileChooser.ExtensionFilter filter = new FileChooser.ExtensionFilter(type.getDescription(), type.getExtension());
-            fileTypes.add(filter);
-            if (type.getDescription().equalsIgnoreCase(previousFileType)) {
-                logger.info("Setting extension filter: {}", previousFileType);
-                selected = filter;
-            }
-        }
-        chooser.getExtensionFilters().addAll(fileTypes);
-        if (selected != null) {
-            chooser.setSelectedExtensionFilter(selected);
-        }
-    }
-
-    private FileType saveFileType(ObjectProperty<FileChooser.ExtensionFilter> selectedExtensionFilterProperty) {
-        FileChooser.ExtensionFilter filter = selectedExtensionFilterProperty.get();
-        FileType fileType = null;
-        if (filter != null) {
-            String description = filter.getDescription();
-            logger.info("Selected extension filter: {}", description);
-            fileType = FileType.fromDescription(description);
-            mainApp.getUserPrefs().setMostRecentType(fileType);
-        }
-        return fileType;
     }
 
     private void updateExpectedDeletion(LocalDateTime expectedRemovalDate) {
