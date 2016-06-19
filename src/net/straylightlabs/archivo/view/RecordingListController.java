@@ -45,6 +45,7 @@ import net.straylightlabs.archivo.controller.TelemetryController;
 import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.net.*;
 import net.straylightlabs.archivo.utilities.OSHelper;
+import org.controlsfx.glyphfont.FontAwesome;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -131,6 +132,8 @@ public class RecordingListController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        refreshTivoList.setGraphic(mainApp.getGlyph(FontAwesome.Glyph.REFRESH));
+
         recordingTreeTable.setShowRoot(false);
         recordingTreeTable.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         recordingTreeTable.setTableMenuButtonVisible(true);

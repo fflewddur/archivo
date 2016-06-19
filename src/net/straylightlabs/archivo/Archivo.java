@@ -42,6 +42,9 @@ import net.straylightlabs.archivo.net.MindCommandRecordingUpdate;
 import net.straylightlabs.archivo.net.MindTask;
 import net.straylightlabs.archivo.utilities.OSHelper;
 import net.straylightlabs.archivo.view.*;
+import org.controlsfx.glyphfont.FontAwesome;
+import org.controlsfx.glyphfont.Glyph;
+import org.controlsfx.glyphfont.GlyphFont;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +55,9 @@ import java.net.URL;
 import java.nio.file.*;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -70,6 +74,7 @@ public class Archivo extends Application {
     private final ArchiveQueueManager archiveQueueManager;
     private final CrashReportController crashReportController;
     private ArchiveHistory archiveHistory;
+    private GlyphFont symbolFont;
 
     private final static Logger logger = LoggerFactory.getLogger(Archivo.class);
     public final static TelemetryController telemetryController = new TelemetryController();
@@ -136,6 +141,7 @@ public class Archivo extends Application {
         logger.info("Starting up {} {}...", APPLICATION_NAME, APPLICATION_VERSION);
         logVMInfo();
 
+        loadSymbolFont();
         archiveHistory = ArchiveHistory.loadFrom(ARCHIVE_HISTORY_PATH);
 
         this.primaryStage = primaryStage;
@@ -174,6 +180,24 @@ public class Archivo extends Application {
 
         telemetryController.sendStartupEvent();
         checkForUpdates();
+    }
+
+    private void loadSymbolFont() {
+        URL fontUrl = getClass().getClassLoader().getResource("resources/fontawesome.otf");
+        logger.debug("Loading font resource at {}", fontUrl);
+        if (fontUrl == null) {
+            logger.error("Error loading symbol font");
+        } else {
+            symbolFont = new FontAwesome(fontUrl.toString());
+        }
+    }
+
+    public Glyph getGlyph(Enum<?> glyphName) {
+        if (symbolFont == null) {
+            logger.warn("No symbol font available");
+            return null;
+        }
+        return symbolFont.create(glyphName);
     }
 
     private void logVMInfo() {

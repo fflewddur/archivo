@@ -35,6 +35,7 @@ import javafx.scene.layout.Pane;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
+import org.controlsfx.glyphfont.FontAwesome;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,6 +106,7 @@ public class RecordingDetailsController implements Initializable {
         // Only set the preferred height; the width will scale appropriately
         poster.setFitHeight(Recording.DESIRED_IMAGE_HEIGHT);
 
+        setupIcons();
         setupLabelBindings();
         setupControlBindings();
         recordingSelection.posterUrlProperty().addListener((observable, oldValue, newValue) -> {
@@ -113,6 +115,12 @@ public class RecordingDetailsController implements Initializable {
         recordingSelection.expectedRemovalDateProperty().addListener(((observable, oldValue, newValue) -> {
             updateExpectedDeletion(newValue);
         }));
+    }
+
+    private void setupIcons() {
+        archiveButton.setGraphic(mainApp.getGlyph(FontAwesome.Glyph.DOWNLOAD));
+        cancelButton.setGraphic(mainApp.getGlyph(FontAwesome.Glyph.CLOSE));
+        playButton.setGraphic(mainApp.getGlyph(FontAwesome.Glyph.PLAY));
     }
 
     private void setupLabelBindings() {
