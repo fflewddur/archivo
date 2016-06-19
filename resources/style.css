@@ -5,6 +5,7 @@
     -dark: rgb(47.0, 52.0, 57.0);
     -light-text: rgb(180, 185, 190);
     -medium-text: rgb(130, 135, 140);
+    -dark-text: rgb(80, 85, 90);
 }
 
 .text {
@@ -58,4 +59,23 @@
 .removing-today {
     -fx-font-weight: bold;
     -fx-text-fill: darkred;
+}
+
+.recording-exists-list {
+    -fx-background-color: transparent;
+}
+
+.recording-exists-list .scroll-bar:vertical .increment-button,
+.recording-exists-list .scroll-bar:vertical .decrement-button {
+    -fx-padding: 5;
+}
+
+.recording-exists-list .destination {
+    -fx-text-fill: -dark-text;
+    -fx-font-style: italic;
+}
+
+.tooltip {
+    -fx-font-size: 14;
+    -fx-font-style: normal;
 }

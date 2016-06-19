@@ -21,20 +21,29 @@ package net.straylightlabs.archivo.view;
 
 import javafx.geometry.HPos;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.StageStyle;
-import javafx.stage.Window;
+import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.model.Recording;
 import net.straylightlabs.archivo.model.UserPrefs;
 import org.controlsfx.control.SegmentedButton;
+import org.controlsfx.glyphfont.FontAwesome;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 
@@ -45,15 +54,19 @@ public class RecordingsExistDialog {
     private final Dialog<ButtonType> dialog;
     private final List<Recording> recordings;
     private final List<Recording> recordingsToDisplay;
-    private final Window parent;
     private final UserPrefs userPrefs;
+    private final Archivo mainApp;
+
+    private static final int STATUS_MIN_WIDTH = 30;
+    private static final int TITLE_MIN_WIDTH = 200;
+    private static final int ACTION_BAR_MIN_WIDTH = 200;
 
     @SuppressWarnings("unused")
     private final static Logger logger = LoggerFactory.getLogger(RecordingsExistDialog.class);
 
-    public RecordingsExistDialog(Window parent, List<Recording> recordings, List<Recording> toDisplay, UserPrefs userPrefs) {
+    public RecordingsExistDialog(Archivo mainApp, List<Recording> recordings, List<Recording> toDisplay, UserPrefs userPrefs) {
         dialog = new Dialog<>();
-        this.parent = parent;
+        this.mainApp = mainApp;
         this.recordings = recordings;
         this.recordingsToDisplay = toDisplay;
         this.userPrefs = userPrefs;
@@ -61,7 +74,7 @@ public class RecordingsExistDialog {
     }
 
     private void initDialog() {
-        dialog.initOwner(parent);
+        dialog.initOwner(mainApp.getPrimaryStage());
         dialog.initModality(Modality.APPLICATION_MODAL);
         dialog.initStyle(StageStyle.DECORATED);
         dialog.setResizable(true);
@@ -71,7 +84,6 @@ public class RecordingsExistDialog {
 
         VBox vbox = new VBox();
         vbox.setSpacing(10);
-        vbox.setPrefWidth(800);
         dialog.getDialogPane().setContent(vbox);
 
         Label label = new Label("Archiving the following recordings will replace files on your computer unless you rename them:");
@@ -85,9 +97,13 @@ public class RecordingsExistDialog {
         }
 
         ScrollPane scrollPane = new ScrollPane();
-        scrollPane.setMinHeight(300);
-        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.getStyleClass().add("recording-exists-list");
+        scrollPane.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scrollPane.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setFitToHeight(true);
         scrollPane.setContent(recordingBox);
+        scrollPane.setPadding(new Insets(10));
         vbox.getChildren().add(scrollPane);
 
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -95,27 +111,57 @@ public class RecordingsExistDialog {
 
     private GridPane buildRecordingGrid(Recording recording) {
         GridPane grid = new GridPane();
-//        grid.setGridLinesVisible(true);
         grid.setHgap(5);
         grid.setVgap(5);
 
         Label status = new Label();
-        status.setMinWidth(100);
-        status.textProperty().bind(recording.fileExistsActionProperty().asString());
+        status.setAlignment(Pos.CENTER);
+        status.setMinWidth(STATUS_MIN_WIDTH);
+        updateStatusIcon(recording, status);
+        recording.fileExistsActionProperty().addListener(observable -> updateStatusIcon(recording, status));
+
         Label title = new Label();
+        title.setMinWidth(TITLE_MIN_WIDTH);
         title.textProperty().bind(recording.fullTitleProperty());
+
         Label destination = new Label();
+        destination.getStyleClass().add("destination");
         destination.textProperty().bind(recording.destinationProperty().asString());
+        if (recording.getDateArchived() != null) {
+            String dateArchived = String.format(
+                    "Archived on %s", recording.getDateArchived().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
+            );
+            Tooltip tooltip = new Tooltip(dateArchived);
+            title.setTooltip(tooltip);
+            destination.setTooltip(tooltip);
+        }
+
         ReplaceOrRenameActionBar actionBar = new ReplaceOrRenameActionBar(recording, userPrefs);
+        actionBar.setMinWidth(ACTION_BAR_MIN_WIDTH);
         GridPane.setHalignment(actionBar, HPos.RIGHT);
         GridPane.setHgrow(actionBar, Priority.ALWAYS);
-//            grid.setFillWidth(title, true);
+        GridPane.setMargin(actionBar, new Insets(0, 0, 0, 10));
+
         grid.add(status, 0, 0, 1, 2);
         grid.add(title, 1, 0);
         grid.add(destination, 1, 1);
         grid.add(actionBar, 2, 0, 1, 2);
 
         return grid;
+    }
+
+    private void updateStatusIcon(Recording recording, Label status) {
+        switch (recording.getFileExistsAction()) {
+            case OK:
+                status.setGraphic(mainApp.getGlyph(FontAwesome.Glyph.CHECK));
+                break;
+            case REPLACE:
+                status.setGraphic(mainApp.getGlyph(FontAwesome.Glyph.EXCLAMATION_CIRCLE));
+                break;
+            case CANCEL:
+                status.setGraphic(mainApp.getGlyph(FontAwesome.Glyph.CLOSE));
+                break;
+        }
     }
 
     public boolean showAndWait() {
@@ -182,12 +228,12 @@ public class RecordingsExistDialog {
         }
 
         private void renameDestination() {
-            SaveFileDialog dialog = new SaveFileDialog(parent, recording, userPrefs);
+            SaveFileDialog dialog = new SaveFileDialog(mainApp.getPrimaryStage(), recording, userPrefs);
             if (dialog.showAndWait()) {
                 if (destinationExistsOrIsDuplicate(recording)) {
                     recording.setFileExistsAction(Recording.FileExistsAction.REPLACE);
                 } else {
-                    recording.setFileExistsAction(Recording.FileExistsAction.RENAME);
+                    recording.setFileExistsAction(Recording.FileExistsAction.OK);
                 }
             }
             setActiveButton();
@@ -221,7 +267,7 @@ public class RecordingsExistDialog {
 
         private void setActiveButton() {
             switch (recording.getFileExistsAction()) {
-                case RENAME:
+                case OK:
                     rename.setSelected(true);
                     break;
                 case REPLACE:

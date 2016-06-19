@@ -474,6 +474,10 @@ public class Recording {
         dateArchived.setValue(date);
     }
 
+    public LocalDate getDateArchived() {
+        return dateArchived.get();
+    }
+
     public ArchiveStatus getStatus() {
         return status.get();
     }
@@ -603,8 +607,8 @@ public class Recording {
     }
 
     public enum FileExistsAction {
+        OK,
         REPLACE,
-        RENAME,
         CANCEL
     }
 

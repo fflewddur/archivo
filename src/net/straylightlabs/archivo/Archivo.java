@@ -461,7 +461,7 @@ public class Archivo extends Application {
             List<Recording> destExists = toArchive.stream().filter(recording -> Files.exists(recording.getDestination())).collect(Collectors.toList());
             destExists.addAll(RecordingsExistDialog.getRecordingsWithDuplicateDestination(toArchive));
             if (destExists.size() > 0) {
-                RecordingsExistDialog recordingsExistDialog = new RecordingsExistDialog(getPrimaryStage(), toArchive, destExists, prefs);
+                RecordingsExistDialog recordingsExistDialog = new RecordingsExistDialog(this, toArchive, destExists, prefs);
                 if (!recordingsExistDialog.showAndWait()) {
                     // The the user canceled the dialog, don't archive anything
                     return;
