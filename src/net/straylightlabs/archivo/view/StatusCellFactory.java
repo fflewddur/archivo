@@ -27,6 +27,9 @@ import javafx.scene.control.TreeTableRow;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
 
+import java.time.format.DateTimeFormatter;
+import java.time.format.FormatStyle;
+
 class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
     private ProgressIndicator progressIndicator;
 
@@ -122,7 +125,10 @@ class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
                     setText("Archived");
                     setProgress(1.0);
                     row.getStyleClass().add(STYLE_FINISHED);
-                    updateTooltip(null);
+                    String dateArchived = String.format(
+                            "Archived on %s", recording.getDateArchived().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
+                    );
+                    updateTooltip(dateArchived);
                     break;
                 case ERROR:
                     setText(status.getMessage());
