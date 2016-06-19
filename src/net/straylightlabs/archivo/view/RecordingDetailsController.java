@@ -237,7 +237,6 @@ public class RecordingDetailsController implements Initializable {
         LocalDate today = LocalDate.now();
         Period timeUntilDeletion = today.until(expectedRemovalDate.toLocalDate());
         int daysUntilDeletion = timeUntilDeletion.getDays();
-        logger.debug("Days until deletion = {}", daysUntilDeletion);
         if (daysUntilDeletion < 1) {
             expectedRemovalText.setValue("Will be removed today");
             expectedDeletion.getStyleClass().add("removing-today");

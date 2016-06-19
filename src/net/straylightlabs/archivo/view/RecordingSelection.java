@@ -119,7 +119,7 @@ public class RecordingSelection {
     }
 
     public void selectionChanged(ListChangeListener.Change<? extends TreeItem<Recording>> change) {
-        logger.debug("Selected changed");
+        logger.debug("Selection changed");
 
         ObservableList<? extends TreeItem<Recording>> selectedRecordings = change.getList();
 

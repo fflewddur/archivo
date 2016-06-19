@@ -30,5 +30,6 @@
     </orderEntry>
     <orderEntry type="library" name="hola" level="project" />
     <orderEntry type="library" name="mixpanel" level="project" />
+    <orderEntry type="library" name="controlsfx" level="project" />
   </component>
 </module>

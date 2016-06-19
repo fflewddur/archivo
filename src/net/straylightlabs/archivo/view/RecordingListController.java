@@ -372,6 +372,7 @@ public class RecordingListController implements Initializable {
             ArchiveHistory.ArchiveHistoryItem historyItem = archiveHistory.get(recording);
             recording.setStatus(ArchiveStatus.FINISHED);
             recording.setDestination(historyItem.getLocation());
+            recording.setDateArchived(historyItem.getDateArchived());
         });
     }
 

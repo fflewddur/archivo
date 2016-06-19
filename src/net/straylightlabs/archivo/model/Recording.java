@@ -40,9 +40,13 @@ import java.util.stream.Collectors;
 public class Recording {
     // Items displayed in the RecordingListView need to be observable properties
     private final StringProperty title;
+    private final StringProperty fullTitle;
     private final ObjectProperty<Duration> duration;
     private final ObjectProperty<LocalDateTime> dateRecorded;
+    private final ObjectProperty<LocalDate> dateArchived;
     private final ObjectProperty<ArchiveStatus> status;
+    private final ObjectProperty<Path> destination;
+    private final ObjectProperty<FileExistsAction> fileExistsAction;
     // Denotes Recordings used as the header line for the series in RecordingListView
     private final BooleanProperty isSeriesHeading;
     private final BooleanProperty isArchivable;
@@ -71,7 +75,6 @@ public class Recording {
     private final int numEpisodes;
     // Combine season and episode number(s) into a more useful string
     private final String seasonAndEpisode;
-    private Path destination;
     private FileType destinationType;
 
     public final static int DESIRED_IMAGE_WIDTH = 200;
@@ -102,9 +105,13 @@ public class Recording {
 
         isSeriesHeading = new SimpleBooleanProperty(builder.isSeriesHeading);
         title = new SimpleStringProperty(buildTitle());
+        fullTitle = new SimpleStringProperty(buildSingleRecordingTitle());
         duration = new SimpleObjectProperty<>(Duration.ofSeconds(builder.secondsLong));
         dateRecorded = new SimpleObjectProperty<>(builder.dateRecorded);
+        dateArchived = new SimpleObjectProperty<>();
         status = new SimpleObjectProperty<>(ArchiveStatus.EMPTY);
+        destination = new SimpleObjectProperty<>();
+        fileExistsAction = new SimpleObjectProperty<>(FileExistsAction.REPLACE);
         isArchivable = new SimpleBooleanProperty(isArchivable());
         isCancellable = new SimpleBooleanProperty(false);
         isPlayable = new SimpleBooleanProperty(false);
@@ -276,12 +283,16 @@ public class Recording {
         return numEpisodes;
     }
 
-    public Path getDestination() {
+    public ObjectProperty<Path> destinationProperty() {
         return destination;
     }
 
+    public Path getDestination() {
+        return destination.getValue();
+    }
+
     public void setDestination(Path val) {
-        destination = val;
+        destination.setValue(val);
     }
 
     public FileType getDestinationType() {
@@ -290,6 +301,18 @@ public class Recording {
 
     public void setDestinationType(FileType type) {
         destinationType = type;
+    }
+
+    public ObjectProperty<FileExistsAction> fileExistsActionProperty() {
+        return fileExistsAction;
+    }
+
+    public void setFileExistsAction(FileExistsAction action) {
+        fileExistsAction.setValue(action);
+    }
+
+    public FileExistsAction getFileExistsAction() {
+        return fileExistsAction.getValue();
     }
 
     public LocalDateTime getExpectedDeletion() {
@@ -426,6 +449,8 @@ public class Recording {
         return title;
     }
 
+    public StringProperty fullTitleProperty() { return fullTitle; }
+
     public Duration getDuration() {
         return duration.get();
     }
@@ -440,6 +465,13 @@ public class Recording {
 
     public ObjectProperty<LocalDateTime> dateRecordedProperty() {
         return dateRecorded;
+    }
+
+    @SuppressWarnings("unused")
+    public ObjectProperty<LocalDate> dateArchivedProperty() { return dateArchived; }
+
+    public void setDateArchived(LocalDate date) {
+        dateArchived.setValue(date);
     }
 
     public ArchiveStatus getStatus() {
@@ -568,6 +600,12 @@ public class Recording {
                     return SERIES;
             }
         }
+    }
+
+    public enum FileExistsAction {
+        REPLACE,
+        RENAME,
+        CANCEL
     }
 
     public static class Builder {
