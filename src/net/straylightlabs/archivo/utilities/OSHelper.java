@@ -29,6 +29,7 @@ public class OSHelper {
     private static final String osName;
     private static final Runtime runtime;
     private static int cpuThreads;
+    private static Boolean isAMD64;
     private static String exeSuffix;
 
     @SuppressWarnings("unused")
@@ -56,6 +57,26 @@ public class OSHelper {
             }
         }
         return exeSuffix;
+    }
+
+    public static String getArchSuffix() {
+        if (isWindows()) {
+            if (isAMD64()) {
+                return "-64";
+            } else {
+                return "-32";
+            }
+        } else {
+            return "";
+        }
+    }
+
+    private static boolean isAMD64() {
+        if (isAMD64 == null) {
+            String arch = System.getenv("PROCESSOR_ARCHITECTURE");
+            isAMD64 = arch.equalsIgnoreCase("amd64");
+        }
+        return isAMD64;
     }
 
     public static int getProcessorThreads() {

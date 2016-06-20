@@ -240,7 +240,9 @@ public class RecordingListController implements Initializable {
 
     private void archiveOnDoubleClick(MouseEvent event) {
         if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() > 1) {
-            if (recordingSelection.isArchivableProperty().get()) {
+            int numRecordings = recordingSelection.getRecordingsWithChildren().size();
+            // If the user double-clicks a group header, just expand/collapse it, don't archive everything in it
+            if (recordingSelection.isArchivableProperty().get() && numRecordings == 1) {
                 mainApp.archiveSelection();
             }
         }

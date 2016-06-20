@@ -22,7 +22,6 @@ package net.straylightlabs.archivo.model;
 import javafx.application.Application;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.controller.MAKManager;
-import net.straylightlabs.archivo.utilities.OSHelper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,6 +32,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.prefs.Preferences;
+
+import static net.straylightlabs.archivo.utilities.OSHelper.*;
 
 public class UserPrefs {
     private Preferences prefs;
@@ -269,27 +270,25 @@ public class UserPrefs {
     }
 
     public synchronized String getComskipPath() {
-        return prefs.get(COMSKIP_PATH, sysPrefs.get(COMSKIP_PATH, Paths.get(tooldir, "comskip" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(COMSKIP_PATH, sysPrefs.get(COMSKIP_PATH, Paths.get(tooldir, "comskip" + getExeSuffix()).toString()));
     }
 
     public synchronized String getFFmpegPath() {
-        return prefs.get(FFMPEG_PATH, sysPrefs.get(FFMPEG_PATH, Paths.get(tooldir, "ffmpeg" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(FFMPEG_PATH, sysPrefs.get(FFMPEG_PATH, Paths.get(tooldir, "ffmpeg" + getExeSuffix()).toString()));
     }
 
     public synchronized String getFFprobePath() {
-        return prefs.get(FFPROBE_PATH, sysPrefs.get(FFPROBE_PATH, Paths.get(tooldir, "ffprobe" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(FFPROBE_PATH, sysPrefs.get(FFPROBE_PATH, Paths.get(tooldir, "ffprobe" + getExeSuffix()).toString()));
     }
 
     public synchronized String getHandbrakePath() {
-        return prefs.get(HANDBRAKE_PATH, sysPrefs.get(HANDBRAKE_PATH, Paths.get(tooldir, "handbrake" + OSHelper.getExeSuffix()).toString()));
+        return prefs.get(HANDBRAKE_PATH, sysPrefs.get(
+                HANDBRAKE_PATH, Paths.get(tooldir, "handbrake" + getArchSuffix() + getExeSuffix()).toString()
+        ));
     }
 
     public synchronized boolean getShareTelemetry() {
-        if (Archivo.IS_BETA) {
-            return true;
-        } else {
-            return prefs.getBoolean(SHARE_TELEMETRY, sysPrefs.getBoolean(SHARE_TELEMETRY, true));
-        }
+        return Archivo.IS_BETA || prefs.getBoolean(SHARE_TELEMETRY, sysPrefs.getBoolean(SHARE_TELEMETRY, true));
     }
 
     public synchronized void setShareTelemetry(boolean val) {
