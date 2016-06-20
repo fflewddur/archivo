@@ -29,7 +29,6 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.text.Text;
 import javafx.stage.Modality;
-import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import net.straylightlabs.archivo.Archivo;
 import org.slf4j.Logger;
@@ -59,7 +58,6 @@ class AboutDialog {
     private void initDialog(Window parent) {
         dialog.initOwner(parent);
         dialog.initModality(Modality.NONE);
-        dialog.initStyle(StageStyle.UTILITY);
 
         dialog.setTitle("About " + Archivo.APPLICATION_NAME);
         dialog.setGraphic(new ImageView(new Image(Archivo.class.getClassLoader().getResourceAsStream("resources/archivo-64.png"))));
