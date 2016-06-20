@@ -156,6 +156,7 @@ class ArchiveTask extends Task<Recording> {
             logger.debug("PROCESS LOCKED");
             if (isCancelled()) {
                 logger.info("ArchiveTask canceled by user.");
+                cleanupIntermediateFiles();
                 return;
             }
             long processingStartTime = System.currentTimeMillis();
@@ -291,11 +292,13 @@ class ArchiveTask extends Task<Recording> {
                 if (decrypt && !keepEncryptedFile && !thread.isAlive()) {
                     logger.error("Decoding thread died prematurely");
                     response.close();
+                    cleanupIntermediateFiles();
                     throw new ArchiveTaskException("Problem decoding recording");
                 }
                 if (isCancelled()) {
                     logger.info("ArchiveTask cancelled by user.");
                     response.close(); // Stop the network transaction
+                    cleanupIntermediateFiles();
                     return;
                 }
                 totalBytesRead += bytesRead;
@@ -395,6 +398,7 @@ class ArchiveTask extends Task<Recording> {
             }
         } catch (IOException e) {
             logger.error("Could not rename {} to {}: {}", downloadPath, encryptedPath, e.getLocalizedMessage());
+            cleanupIntermediateFiles();
             throw new ArchiveTaskException("Failed to rename recording");
         }
     }
@@ -404,6 +408,7 @@ class ArchiveTask extends Task<Recording> {
                 .mak(mak).compatibilityMode(false).build();
         if (!decoder.decode()) {
             logger.error("Failed to decode file");
+            cleanupIntermediateFiles();
             throw new ArchiveTaskException("Problem decoding recording");
         }
         if (recording.getDestinationType().includeMetadata()) {
@@ -442,6 +447,7 @@ class ArchiveTask extends Task<Recording> {
             FFmpegOutputReader outputReader = new FFmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMUXING);
             if (!runProcess(cmd, outputReader)) {
                 logger.error("FFmpeg error: {}", outputReader.getOutput());
+                cleanupIntermediateFiles();
                 throw new ArchiveTaskException("Error repairing video");
             } else {
                 logger.debug("FFmpeg output: {}", outputReader.getOutput());
@@ -455,6 +461,7 @@ class ArchiveTask extends Task<Recording> {
                 alert.showAndWait();
             });
             logger.error("Error running ffmpeg to remux download: ", e);
+            cleanupIntermediateFiles();
             throw new ArchiveTaskException("Error repairing video");
         } finally {
             cleanupFiles(downloadPath);
@@ -486,12 +493,14 @@ class ArchiveTask extends Task<Recording> {
             outputReader.addExitCode(1); // Means that commercials were found
             if (!runProcess(cmd, outputReader)) {
                 logger.error("Comskip error: {}", outputReader.getOutput());
+                cleanupIntermediateFiles();
                 throw new ArchiveTaskException("Error finding commercials");
             } else {
                 logger.debug("Comskip output: {}", outputReader.getOutput());
             }
         } catch (InterruptedException | IOException e) {
             logger.error("Error running comskip: ", e);
+            cleanupIntermediateFiles();
             throw new ArchiveTaskException("Error finding commercials");
         } finally {
             cleanupFiles(logoPath, logPath);
@@ -535,6 +544,9 @@ class ArchiveTask extends Task<Recording> {
                     cleanupFiles(partPath);
                     if (!runProcess(cmd, outputReader)) {
                         logger.error("FFmpeg error: {}", outputReader.getOutput());
+                        cleanupIntermediateFiles();
+                        cleanupFiles(partList);
+                        cleanupFiles(partPaths);
                         throw new ArchiveTaskException("Error removing commercials");
                     } else {
                         logger.debug("FFmpeg output: {}", outputReader.getOutput());
@@ -545,6 +557,9 @@ class ArchiveTask extends Task<Recording> {
                     );
                 } catch (InterruptedException | IOException e) {
                     logger.error("Error running ffmpeg to cut commercials: ", e);
+                    cleanupIntermediateFiles();
+                    cleanupFiles(partList);
+                    cleanupFiles(partPaths);
                     throw new ArchiveTaskException("Error removing commercials");
                 }
             }
@@ -581,12 +596,14 @@ class ArchiveTask extends Task<Recording> {
             FFmpegOutputReader outputReader = new FFmpegOutputReader(recording, ArchiveStatus.TaskStatus.REMOVING_COMMERCIALS);
             if (!runProcess(cmd, outputReader)) {
                 logger.error("FFmpeg error: {}", outputReader.getOutput());
+                cleanupIntermediateFiles();
                 throw new ArchiveTaskException("Error removing commercials");
             } else {
                 logger.debug("FFmpeg output: {}", outputReader.getOutput());
             }
         } catch (InterruptedException | IOException e) {
             logger.error("Error running ffmpeg to join files: ", e);
+            cleanupIntermediateFiles();
             throw new ArchiveTaskException("Error removing commercials");
         } finally {
             cleanupFiles(partList);
@@ -656,6 +673,8 @@ class ArchiveTask extends Task<Recording> {
             HandbrakeOutputReader outputReader = new HandbrakeOutputReader(recording);
             if (!runProcess(cmd, outputReader)) {
                 logger.error("HandBrake error: {}", outputReader.getOutput());
+                cleanupIntermediateFiles();
+                cleanupFiles(recording.getDestination());
                 throw new ArchiveTaskException("Error compressing video");
             } else {
                 logger.debug("HandBrake output: {}", outputReader.getOutput());
@@ -669,6 +688,8 @@ class ArchiveTask extends Task<Recording> {
                 alert.showAndWait();
             });
             logger.error("Error running HandBrake: ", e);
+            cleanupIntermediateFiles();
+            cleanupFiles(recording.getDestination());
             throw new ArchiveTaskException("Error compressing video");
         } finally {
             cleanupFiles(cutPath);
@@ -747,12 +768,16 @@ class ArchiveTask extends Task<Recording> {
         }
     }
 
+    private void cleanupIntermediateFiles() {
+        cleanupFiles(downloadPath, encryptedPath, fixedPath, cutPath, metadataPath, ffsplitPath);
+    }
+
     private void cleanupFiles(Path... files) {
         cleanupFiles(Arrays.asList(files));
     }
 
     private void cleanupFiles(List<Path> files) {
-        files.stream().forEach(f -> {
+        files.stream().filter(f -> f != null).forEach(f -> {
             try {
                 Files.deleteIfExists(f);
             } catch (IOException e) {
