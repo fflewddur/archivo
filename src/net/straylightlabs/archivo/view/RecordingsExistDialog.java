@@ -38,8 +38,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -127,11 +126,10 @@ public class RecordingsExistDialog {
         Label destination = new Label();
         destination.getStyleClass().add("destination");
         destination.textProperty().bind(recording.destinationProperty().asString());
-        if (recording.getDateArchived() != null) {
-            String dateArchived = String.format(
-                    "Archived on %s", recording.getDateArchived().format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
-            );
-            Tooltip tooltip = new Tooltip(dateArchived);
+        LocalDate dateArchived = recording.getDateArchived();
+        if (dateArchived != null) {
+            String dateArchivedText = String.format("Archived %s", DateUtils.formatArchivedOnDate(dateArchived));
+            Tooltip tooltip = new Tooltip(dateArchivedText);
             title.setTooltip(tooltip);
             destination.setTooltip(tooltip);
         }

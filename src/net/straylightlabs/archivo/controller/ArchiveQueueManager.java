@@ -27,6 +27,7 @@ import net.straylightlabs.archivo.model.Tivo;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDate;
 import java.util.Observable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -66,6 +67,7 @@ public class ArchiveQueueManager extends Observable {
                 logger.info("ArchiveTask succeeded for {}", recording.getFullTitle());
                 updateArchiveHistory(recording);
                 removeTask(recording);
+                recording.setDateArchived(LocalDate.now());
                 recording.setStatus(ArchiveStatus.FINISHED);
             });
             task.setOnFailed(event -> {

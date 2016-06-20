@@ -20,6 +20,7 @@
 package net.straylightlabs.archivo.view;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.FormatStyle;
@@ -79,6 +80,19 @@ class DateUtils {
             return dateTime.format(DATE_RECORDED_SHORT_DATE_FORMATTER);
         } else {
             return dateTime.format(DATE_RECORDED_LONG_DATE_FORMATTER);
+        }
+    }
+
+    public static String formatArchivedOnDate(LocalDate date) {
+        if (date.getDayOfYear() == today) {
+            return "today";
+        } else if (date.getDayOfYear() == yesterday) {
+            return "yesterday";
+        } else if (date.getYear() == currentYear) {
+            // Don't include the year for recordings from the current year
+            return "on " + date.format(DATE_RECORDED_SHORT_DATE_FORMATTER);
+        } else {
+            return "on " + date.format(DATE_RECORDED_LONG_DATE_FORMATTER);
         }
     }
 

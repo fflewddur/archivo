@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.net.URL;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -61,6 +62,7 @@ public class RecordingSelection {
     private final StringProperty duration;
     private final StringProperty channel;
     private final ObjectProperty<LocalDateTime> expectedRemovalDate;
+    private final StringProperty archivedOn;
     private final BooleanProperty isRecording;
     private final BooleanProperty isCopyProtected;
     private final ObjectProperty<URL> posterURL;
@@ -93,6 +95,7 @@ public class RecordingSelection {
         duration = new SimpleStringProperty();
         channel = new SimpleStringProperty();
         expectedRemovalDate = new SimpleObjectProperty<>();
+        archivedOn = new SimpleStringProperty();
         isRecording = new SimpleBooleanProperty();
         isCopyProtected = new SimpleBooleanProperty();
         posterURL = new SimpleObjectProperty<>();
@@ -225,6 +228,7 @@ public class RecordingSelection {
         duration.setValue("");
         channel.setValue("");
         expectedRemovalDate.setValue(null);
+        archivedOn.setValue("");
         isCopyProtected.setValue(false);
         isRecording.setValue(false);
         posterURL.setValue(null);
@@ -259,6 +263,11 @@ public class RecordingSelection {
             ));
         }
         expectedRemovalDate.setValue(recording.getExpectedDeletion());
+        LocalDate dateArchived = recording.getDateArchived();
+        if (dateArchived != null) {
+            String dateArchivedText = String.format("Archived %s", DateUtils.formatArchivedOnDate(dateArchived));
+            archivedOn.setValue(dateArchivedText);
+        }
         isRecording.setValue(recording.isInProgress());
         isCopyProtected.setValue(recording.isCopyProtected());
         posterURL.setValue(recording.getImageURL());
@@ -322,6 +331,10 @@ public class RecordingSelection {
 
     public ObjectProperty<LocalDateTime> expectedRemovalDateProperty() {
         return expectedRemovalDate;
+    }
+
+    public StringProperty archivedOnProperty() {
+        return archivedOn;
     }
 
     public BooleanProperty isRecordingProperty() {

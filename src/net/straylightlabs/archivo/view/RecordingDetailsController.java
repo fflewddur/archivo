@@ -81,6 +81,8 @@ public class RecordingDetailsController implements Initializable {
     @FXML
     private Label expectedDeletion;
     @FXML
+    private Label archivedOn;
+    @FXML
     private ImageView poster;
     @FXML
     private Pane posterPane;
@@ -159,6 +161,10 @@ public class RecordingDetailsController implements Initializable {
         expectedDeletion.textProperty().bind(expectedRemovalText);
         expectedDeletion.visibleProperty().bind(recordingSelection.expectedRemovalDateProperty().isNotNull());
         expectedDeletion.managedProperty().bind(recordingSelection.expectedRemovalDateProperty().isNotNull());
+
+        archivedOn.textProperty().bind(recordingSelection.archivedOnProperty());
+        archivedOn.visibleProperty().bind(recordingSelection.archivedOnProperty().isEmpty().not());
+        archivedOn.managedProperty().bind(recordingSelection.archivedOnProperty().isEmpty().not());
 
         copyProtected.visibleProperty().bind(recordingSelection.isCopyProtectedProperty());
         copyProtected.managedProperty().bind(recordingSelection.isCopyProtectedProperty());
