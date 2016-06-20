@@ -355,10 +355,13 @@ public class Recording {
             numComponents++;
         }
 
-        // If we only have a title and this isn't a movie, add the original air date.
-        // If that doesn't exist, use the recording date.
+        // If we only have a title and this isn't a movie, check the value of the original air date; if it's within
+        // one week of the recording date, use it, otherwise, assume the original air date refers to the start
+        // of the series and use the date the show was recorded. If there is no original air date, use the recording
+        // date instead.
         if (numComponents == 1 && collectionType != Type.MOVIE) {
-            if (originalAirDate != null) {
+            LocalDate dateRecorded = getDateRecorded().toLocalDate();
+            if (originalAirDate != null && originalAirDate.plusWeeks(1).isAfter(dateRecorded)) {
                 components.add(originalAirDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
             } else {
                 components.add(getDateRecorded().format(DateTimeFormatter.ISO_LOCAL_DATE));
@@ -387,12 +390,15 @@ public class Recording {
         if (episodeNumbers.size() > 0) {
             joiner.add(getEpisodeNumberRange());
         }
-        if (episodeTitle != null && !episodeTitle.isEmpty()) {
-            joiner.add(episodeTitle);
-        } else if (originalAirDate != null) {
-            joiner.add(originalAirDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
-        } else {
-            joiner.add(getDateRecorded().format(DateTimeFormatter.ISO_LOCAL_DATE));
+        if (collectionType != Type.MOVIE) {
+            LocalDate dateRecorded = getDateRecorded().toLocalDate();
+            if (episodeTitle != null && !episodeTitle.isEmpty()) {
+                joiner.add(episodeTitle);
+            } else if (originalAirDate != null && originalAirDate.plusWeeks(1).isAfter(dateRecorded)) {
+                joiner.add(originalAirDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
+            } else {
+                joiner.add(getDateRecorded().format(DateTimeFormatter.ISO_LOCAL_DATE));
+            }
         }
         nestedComponents.add(filterUnsafeChars(joiner.toString()));
 
