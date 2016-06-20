@@ -71,6 +71,7 @@ class ArchiveTask extends Task<Recording> {
     private Path metadataPath; // PyTivo metadata file
     private long downloadDurationMS;
     private long processingDurationMS;
+    private final boolean keepEncryptedFile;
 
     private final static Logger logger = LoggerFactory.getLogger(ArchiveTask.class);
 
@@ -93,6 +94,7 @@ class ArchiveTask extends Task<Recording> {
         this.prefs = prefs;
         this.downloadLock = downloadLock;
         this.processingLock = processingLock;
+        this.keepEncryptedFile = prefs.getDebugMode();
     }
 
     public Recording getRecording() {
@@ -265,7 +267,7 @@ class ArchiveTask extends Task<Recording> {
     private void handleResponse(CloseableHttpResponse response, Recording recording) throws ArchiveTaskException {
         long estimatedLength = getEstimatedLengthFromHeaders(response);
         boolean decrypt = shouldDecrypt(recording);
-        boolean keepEncryptedFile = prefs.getDebugMode();
+
         cleanupFiles(downloadPath);
         try (BufferedOutputStream outputStream = new BufferedOutputStream(Files.newOutputStream(downloadPath));
              BufferedInputStream inputStream = new BufferedInputStream(response.getEntity().getContent(), BUFFER_SIZE);
@@ -769,7 +771,11 @@ class ArchiveTask extends Task<Recording> {
     }
 
     private void cleanupIntermediateFiles() {
-        cleanupFiles(downloadPath, encryptedPath, fixedPath, cutPath, metadataPath, ffsplitPath);
+        List<Path> intermediateFiles = Arrays.asList(downloadPath, fixedPath, cutPath, metadataPath, ffsplitPath);
+        if (!keepEncryptedFile) {
+            intermediateFiles.add(encryptedPath);
+        }
+        cleanupFiles(intermediateFiles);
     }
 
     private void cleanupFiles(Path... files) {
