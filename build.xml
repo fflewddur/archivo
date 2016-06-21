@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="archivo" default="archivo">
     <property name="title" value="Archivo"/>
-    <property name="version" value="1.0.5"/>
+    <property name="version" value="1.1.0 Beta 1"/>
     <property name="copyright" value="2016 Straylight Labs LLC"/>
 
     <!-- Overwrite these in build.properties if necessary -->
@@ -63,6 +63,10 @@
 
     <!-- Project Libraries -->
 
+    <path id="library.controlsfx.classpath">
+        <pathelement location="${basedir}/lib/controlsfx-8.40.10.jar"/>
+    </path>
+
     <path id="library.hola.classpath">
         <pathelement location="${basedir}/lib/hola-0.2.1.jar"/>
     </path>
@@ -72,6 +76,7 @@
         <pathelement location="${basedir}/lib/commons-logging-1.2.jar"/>
         <pathelement location="${basedir}/lib/httpclient-4.5.2.jar"/>
         <pathelement location="${basedir}/lib/httpcore-4.4.4.jar"/>
+        <pathelement location="${basedir}/lib/httpmime-4.5.2.jar"/>
     </path>
 
     <path id="library.json.classpath">
@@ -119,6 +124,7 @@
         <path refid="library.logback.classpath"/>
         <path refid="library.hola.classpath"/>
         <path refid="library.mixpanel.classpath"/>
+        <path refid="library.controlsfx.classpath"/>
     </path>
 
     <path id="archivo.runtime.production.module.classpath">
@@ -130,6 +136,7 @@
         <path refid="library.logback.classpath"/>
         <path refid="library.hola.classpath"/>
         <path refid="library.mixpanel.classpath"/>
+        <path refid="library.controlsfx.classpath"/>
     </path>
 
     <path id="archivo.module.classpath">
@@ -144,6 +151,7 @@
         <pathelement location="${idea.home}/lib/junit-4.11.jar"/>
         <path refid="library.hola.classpath"/>
         <path refid="library.mixpanel.classpath"/>
+        <path refid="library.controlsfx.classpath"/>
     </path>
 
     <path id="archivo.runtime.module.classpath">
@@ -159,6 +167,7 @@
         <pathelement location="${idea.home}/lib/junit-4.11.jar"/>
         <path refid="library.hola.classpath"/>
         <path refid="library.mixpanel.classpath"/>
+        <path refid="library.controlsfx.classpath"/>
     </path>
 
 
