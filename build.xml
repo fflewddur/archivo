@@ -8,6 +8,7 @@
     <property name="signtool.bin" value="C:\Program Files (x86)\Windows Kits\8.1\bin\x86\signtool.exe"/>
     <property name="signtool.cert" value="C:\Users\todd\OneDrive\Documents\Straylight Labs\Straylight Code Signing.p12"/>
 
+    <property environment="env"/>
     <property file="build.properties"/>
     <!-- Uncomment the following property if no tests compilation is needed -->
     <property name="skip.tests" value="true"/>
@@ -257,7 +258,7 @@
         <mkdir dir="${artifacts.temp.dir}"/>
         <property name="artifact.temp.output.Archivo" value="${artifacts.temp.dir}/Archivo.jar"/>
         <taskdef resource="com/sun/javafx/tools/ant/antlib.xml" uri="javafx:com.sun.javafx.tools.ant"
-                 classpath=".:${jdk.home}/lib/ant-javafx.jar"/>
+                 classpath=".:${env.JAVA_HOME}/lib/ant-javafx.jar"/>
     </target>
 
     <target name="clean.artifact.archivo" description="clean Archivo artifact output">

@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppPublisher "Straylight Labs LLC"
-#define MyAppURL "https://github.com/fflewddur/archivo"
+#define MyAppURL "https://straylightlabs.net/archivo"
 #define MyAppExeName "Archivo.jar"
 
 [Setup]
@@ -46,19 +46,6 @@ Name: "{commondesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFil
 
 [Run]
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: shellexec postinstall skipifsilent; Check: IsJREInstalled
-
-[InstallDelete]
-;Type: files; Name: {app}\appbundler-*.jar;
-;Type: files; Name: {app}\commons-codec-*.jar;
-;Type: files; Name: {app}\commons-logging-*.jar;
-;Type: files; Name: {app}\hola-*.jar;
-;Type: files; Name: {app}\httpclient-*.jar;
-;Type: files; Name: {app}\httpcore-*.jar;
-;Type: files; Name: {app}\json-*.jar;
-;Type: files; Name: {app}\logback-classic-*.jar;
-;Type: files; Name: {app}\logback-core-*.jar;
-;Type: files; Name: {app}\slf4j-api-*.jar;
-;Type: files; Name: {app}\tivo-libre-*.jar;
 
 [Code]
 #define MinJRE "1.8"
