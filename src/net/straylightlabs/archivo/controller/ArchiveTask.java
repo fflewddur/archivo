@@ -526,7 +526,6 @@ class ArchiveTask extends Task<Recording> {
             logger.info("splitList: {}", splitList);
             List<FFSplitList.Segment> toKeep = splitList.getSegmentsToKeep();
             int curSegment = 1;
-            Path escapedPath = Paths.get(fixedPath.toString().replace("\'", ""));
             for (FFSplitList.Segment segment : toKeep) {
                 List<String> cmd = new ArrayList<>();
                 cmd.add(ffmpegPath);
@@ -536,8 +535,9 @@ class ArchiveTask extends Task<Recording> {
                 cmd.add("copy");
                 cmd.addAll(segment.buildFFmpegOutputParamList());
 
-                Path partPath = buildPath(escapedPath, String.format("part%02d.ts", filePartCounter++));
-                writer.println(String.format("file '%s'", partPath.toString().replace("'", "\\'")));
+                Path partPath = buildPath(fixedPath, String.format("part%02d.ts", filePartCounter++));
+                logger.debug("partPath = '{}'", partPath);
+                writer.println(String.format("file '%s'", partPath.toString().replace("\'", "\'\\\'\'")));
                 partPaths.add(partPath);
                 cmd.add(partPath.toString());
 
