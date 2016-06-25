@@ -192,6 +192,10 @@ public class Archivo extends Application {
         }
     }
 
+    public GlyphFont getSymbolFont() {
+        return symbolFont;
+    }
+
     public Glyph getGlyph(Enum<?> glyphName) {
         if (symbolFont == null) {
             logger.warn("No symbol font available");

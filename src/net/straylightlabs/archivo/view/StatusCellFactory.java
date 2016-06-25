@@ -26,18 +26,27 @@ import javafx.scene.control.TreeTableCell;
 import javafx.scene.control.TreeTableRow;
 import net.straylightlabs.archivo.model.ArchiveStatus;
 import net.straylightlabs.archivo.model.Recording;
+import org.controlsfx.glyphfont.FontAwesome;
+import org.controlsfx.glyphfont.GlyphFont;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDate;
 
 class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
     private ProgressIndicator progressIndicator;
+    private final GlyphFont symbolFont;
 
     private static final String STYLE_FINISHED = "status-finished";
     private static final String STYLE_UNAVAILABLE = "status-unavailable";
     private static final String STYLE_ROW_BASE = "recording-list-row";
 
-    public StatusCellFactory() {
+    @SuppressWarnings("unused")
+    private final static Logger logger = LoggerFactory.getLogger(StatusCellFactory.class);
+
+    public StatusCellFactory(GlyphFont symbolFont) {
         super();
+        this.symbolFont = symbolFont;
     }
 
     private ProgressIndicator getProgressIndicator() {
@@ -66,7 +75,6 @@ class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
             }
         }
         if (status != null && status.getStatus() != ArchiveStatus.TaskStatus.NONE && recording != null && !recording.isSeriesHeading()) {
-
             switch (status.getStatus()) {
                 case QUEUED:
                     setText("Waiting to download...");
@@ -133,8 +141,12 @@ class StatusCellFactory extends TreeTableCell<Recording, ArchiveStatus> {
                     }
                     break;
                 case ERROR:
-                    setText(status.getMessage());
-                    setGraphic(null);
+                    String message = status.getMessage();
+                    if (message == null || message.isEmpty()) {
+                        message = "Unknown error occurred";
+                    }
+                    setText(message);
+                    setGraphic(symbolFont.create(FontAwesome.Glyph.EXCLAMATION_CIRCLE));
                     updateTooltip(status.getTooltip());
                     break;
                 default:

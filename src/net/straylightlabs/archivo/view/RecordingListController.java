@@ -190,7 +190,7 @@ public class RecordingListController implements Initializable {
                 (observable, oldValue, newValue) -> mainApp.getUserPrefs().setDateColumnWidth(newValue.intValue())
         );
         statusColumn.setCellValueFactory(data -> data.getValue().getValue().statusProperty());
-        statusColumn.setCellFactory(col -> new StatusCellFactory());
+        statusColumn.setCellFactory(col -> new StatusCellFactory(mainApp.getSymbolFont()));
         statusColumn.setPrefWidth(mainApp.getUserPrefs().getStatusColumnWidth());
         statusColumn.widthProperty().addListener(
                 (observable, oldValue, newValue) -> mainApp.getUserPrefs().setStatusColumnWidth(newValue.intValue())
