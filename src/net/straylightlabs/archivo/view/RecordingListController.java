@@ -440,7 +440,8 @@ public class RecordingListController implements Initializable {
         removeTivoSelectedListener();
         trySearchAgain = false;
         if (tivoSearchTask == null) {
-            tivoSearchTask = new TivoSearchTask(tivos, mainApp.getMak(), timeout);
+            tivoSearchTask = new TivoSearchTask(tivos, mainApp.getMak(), timeout,
+                    mainApp.getUserPrefs().getNetworkInterface().getFirstAddress());
             tivoSearchTask.setOnSucceeded(e -> {
                 logger.debug("Tivo search task succeeded");
                 if (tivoSearchTask.searchFailed()) {

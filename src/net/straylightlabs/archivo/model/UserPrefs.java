@@ -20,25 +20,28 @@
 package net.straylightlabs.archivo.model;
 
 import javafx.application.Application;
+import javafx.beans.value.ChangeListener;
 import net.straylightlabs.archivo.Archivo;
 import net.straylightlabs.archivo.controller.MAKManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.prefs.Preferences;
 
-import static net.straylightlabs.archivo.utilities.OSHelper.*;
+import static net.straylightlabs.archivo.utilities.OSHelper.getArchSuffix;
+import static net.straylightlabs.archivo.utilities.OSHelper.getExeSuffix;
 
 public class UserPrefs {
     private Preferences prefs;
     private Preferences sysPrefs;
     private String tooldir;
+    private ChangeListener<NetInterface> networkChangedListener;
 
     private final static Logger logger = LoggerFactory.getLogger(UserPrefs.class);
 
@@ -58,6 +61,7 @@ public class UserPrefs {
     private static final String FFMPEG_PATH = "ffmpegPath";
     private static final String FFPROBE_PATH = "ffprobePath";
     private static final String HANDBRAKE_PATH = "handbrakePath";
+    private static final String NETWORK_INTERFACE = "networkInterface";
     private static final String SHARE_TELEMETRY = "shareTelemetry";
     private static final String DEBUG_MODE = "debugMode";
     private static final String USER_ID = "userId";
@@ -101,6 +105,10 @@ public class UserPrefs {
             }
         }
         return allParsed;
+    }
+
+    public void addNetworkChangedListener(ChangeListener<NetInterface> listener) {
+        networkChangedListener = listener;
     }
 
     public synchronized void loadMAKs(MAKManager manager) {
@@ -285,6 +293,58 @@ public class UserPrefs {
         return prefs.get(HANDBRAKE_PATH, sysPrefs.get(
                 HANDBRAKE_PATH, Paths.get(tooldir, "handbrake" + getArchSuffix() + getExeSuffix()).toString()
         ));
+    }
+
+    public synchronized NetInterface getNetworkInterface() {
+        int hardwareAddressHash = prefs.getInt(NETWORK_INTERFACE, sysPrefs.getInt(
+                NETWORK_INTERFACE, NetInterface.DEFAULT_MACHINE_REPRESENTATION.hashCode())
+        );
+
+        if (hardwareAddressHash == NetInterface.DEFAULT_MACHINE_REPRESENTATION.hashCode()) {
+            return new NetInterface();
+        } else {
+            NetworkInterface ni = getInterfaceByHardwareAddress(hardwareAddressHash);
+            if (ni != null) {
+                return new NetInterface(ni);
+            } else {
+                return new NetInterface();
+            }
+        }
+    }
+
+    private NetworkInterface getInterfaceByHardwareAddress(int macHash) {
+        NetworkInterface networkInterface = null;
+        try {
+            for (NetworkInterface anInterface : Collections.list(NetworkInterface.getNetworkInterfaces())) {
+                try {
+                    byte[] macBytes = anInterface.getHardwareAddress();
+                    if (macBytes != null) {
+                        String thisMac = new String(anInterface.getHardwareAddress());
+                        if (thisMac.hashCode() == macHash) {
+                            networkInterface = anInterface;
+                        }
+                    }
+                } catch (SocketException e) {
+                    logger.error(
+                            "Unable to get hardware address for interface '{}': {}",
+                            anInterface.getDisplayName(), e.getLocalizedMessage()
+                    );
+                }
+            }
+        } catch (SocketException e) {
+            logger.error("Unable to get list of network interfaces: {}", e.getLocalizedMessage());
+        }
+        return networkInterface;
+    }
+
+    public synchronized void setNetworkInterface(NetInterface netInterface) {
+        int hardwareAddressHash = prefs.getInt(NETWORK_INTERFACE, sysPrefs.getInt(
+                NETWORK_INTERFACE, NetInterface.DEFAULT_MACHINE_REPRESENTATION.hashCode())
+        );
+        if (netInterface.getMachineHash() != hardwareAddressHash) {
+            prefs.putInt(NETWORK_INTERFACE, netInterface.getMachineHash());
+            networkChangedListener.changed(null, null, netInterface);
+        }
     }
 
     public synchronized boolean getShareTelemetry() {

@@ -42,6 +42,7 @@ public class TivoSearchTask extends Task<Void> {
     private final ObservableList<Tivo> tivos;
     private final String mak;
     private final int timeout;
+    private final InetAddress localhost;
     private boolean searchFailed;
 
     private static final String SERVICE_TYPE = "_tivo-mindrpc._tcp";
@@ -55,10 +56,11 @@ public class TivoSearchTask extends Task<Void> {
     public final static int SEARCH_TIMEOUT_LONG = 7000;
     public final static int TIMEOUTS_BEFORE_PROMPT = 3;
 
-    public TivoSearchTask(ObservableList<Tivo> tivos, String mak, int timeout) {
+    public TivoSearchTask(ObservableList<Tivo> tivos, String mak, int timeout, InetAddress localhost) {
         this.tivos = tivos;
         this.mak = mak;
         this.timeout = timeout;
+        this.localhost = localhost;
     }
 
     @Override
@@ -76,7 +78,7 @@ public class TivoSearchTask extends Task<Void> {
         Service tivoMindService = Service.fromName(SERVICE_TYPE);
         Query query = Query.createWithTimeout(tivoMindService, Domain.LOCAL, timeout);
         try {
-            Set<Instance> instances = query.runOnce();
+            Set<Instance> instances = query.runOnceOn(localhost);
             logger.info("Found instances: {}", instances);
             addTivosFromInstances(instances);
             searchFailed = false;

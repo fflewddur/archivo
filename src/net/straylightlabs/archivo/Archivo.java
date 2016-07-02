@@ -178,6 +178,7 @@ public class Archivo extends Application {
             }
         });
 
+        prefs.addNetworkChangedListener(((observable, oldValue, newValue) -> recordingListController.startTivoSearch()));
         telemetryController.sendStartupEvent();
         checkForUpdates();
     }

@@ -1,7 +1,7 @@
 <component name="libraryTable">
   <library name="hola">
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/hola-0.2.1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/hola-0.2.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

@@ -33,17 +33,16 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Modality;
 import javafx.stage.Window;
 import net.straylightlabs.archivo.Archivo;
-import net.straylightlabs.archivo.model.AudioChannel;
-import net.straylightlabs.archivo.model.FileType;
-import net.straylightlabs.archivo.model.UserPrefs;
-import net.straylightlabs.archivo.model.VideoResolution;
+import net.straylightlabs.archivo.model.*;
 import net.straylightlabs.archivo.utilities.OSHelper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * This dialog is for user-configurable options.
@@ -56,6 +55,9 @@ class PreferencesDialog {
 
     private final ObservableList<VideoResolution> videoResolutions;
     private final ObservableList<AudioChannel> audioChannels;
+    private final ObservableList<NetInterface> networkInterfaces;
+
+    private final static Logger logger = LoggerFactory.getLogger(PreferencesDialog.class);
 
     private static final int HEADER_COL = 0;
     private static final int LABEL_COL = 1;
@@ -69,6 +71,8 @@ class PreferencesDialog {
         updateOrganizeLabel();
         videoResolutions = buildVideoResolutionList();
         audioChannels = buildAudioChannelList();
+        networkInterfaces = buildNetworkInterfaceList();
+
         initDialog(parent);
     }
 
@@ -88,6 +92,23 @@ class PreferencesDialog {
         List<AudioChannel> channels = new ArrayList<>();
         channels.addAll(Arrays.asList(AudioChannel.values()));
         return FXCollections.observableArrayList(channels);
+    }
+
+    private ObservableList<NetInterface> buildNetworkInterfaceList() {
+        List<NetInterface> networkInterfaces = new ArrayList<>();
+        networkInterfaces.add(NetInterface.DEFAULT);
+        try {
+            Enumeration<NetworkInterface> nets = NetworkInterface.getNetworkInterfaces();
+            for (NetworkInterface networkInterface : Collections.list(nets)) {
+                NetInterface netInterface = new NetInterface(networkInterface);
+                if (netInterface.isRealIPv4Multicast()) {
+                    networkInterfaces.add(netInterface);
+                }
+            }
+        } catch (SocketException e) {
+            logger.error("Error listing network interfaces: {}", e.getLocalizedMessage());
+        }
+        return FXCollections.observableArrayList(networkInterfaces);
     }
 
     private void initDialog(Window parent) {
@@ -176,6 +197,16 @@ class PreferencesDialog {
         grid.add(audioChannel, CONTROL_COL, row);
         row++;
 
+        header = createHeader("Network Settings");
+        grid.add(header, HEADER_COL, row++, 3, 1);
+
+        label = createLabelWithTooltip("Look for TiVos on", "Select the same network your TiVo is connected to");
+        grid.add(label, LABEL_COL, row);
+        ChoiceBox<NetInterface> networkInterface = new ChoiceBox<>(networkInterfaces);
+        networkInterface.setValue(userPrefs.getNetworkInterface());
+        grid.add(networkInterface, CONTROL_COL, row);
+        row++;
+
         header = createHeader("Help Improve Archivo");
         grid.add(header, HEADER_COL, row++, 3, 1);
 
@@ -207,6 +238,7 @@ class PreferencesDialog {
                 }
                 userPrefs.setVideoResolution(videoResolution.getValue());
                 userPrefs.setAudioChannels(audioChannel.getValue());
+                userPrefs.setNetworkInterface(networkInterface.getValue());
                 userPrefs.setShareTelemetry(telemetry.isSelected());
                 userPrefs.setDebugMode(debugMode.isSelected());
             }
