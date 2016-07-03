@@ -437,6 +437,7 @@ public class RecordingListController implements Initializable {
         logger.debug("startTivoSearch()");
         assert (mainApp != null);
 
+        recordingTreeTable.getSelectionModel().clearSelection();
         removeTivoSelectedListener();
         trySearchAgain = false;
         if (tivoSearchTask == null) {
@@ -473,11 +474,10 @@ public class RecordingListController implements Initializable {
                         );
                         trySearchAgain = mainApp.showErrorMessageWithAction("We didn't find any TiVos",
                                 "Archivo couldn't find any TiVos on your network.\n\n" +
-                                        "This may mean that your TiVo is too busy to respond, or that there's a problem with your network.",
-                                "Try Again");
-                        if (!trySearchAgain) {
-                            mainApp.cleanShutdown();
-                        }
+                                        "This may mean that your TiVo is too busy to respond, or that there's a problem with your network.\n\n" +
+                                        "If you have a complex network configuration, you can tell Archivo which network " +
+                                        "to search for TiVos on in the [Preferences dialog].",
+                                "Try Again", (event) -> mainApp.showPreferencesDialog());
                     }
                 } else {
                     Tivo lastDevice = mainApp.getLastDevice();

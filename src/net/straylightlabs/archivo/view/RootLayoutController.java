@@ -167,8 +167,7 @@ public class RootLayoutController implements Initializable, Observer {
 
     @FXML
     public void showPreferencesDialog(ActionEvent event) {
-        PreferencesDialog preferences = new PreferencesDialog(mainApp.getPrimaryStage(), mainApp);
-        preferences.show();
+        mainApp.showPreferencesDialog();
     }
 
     @FXML

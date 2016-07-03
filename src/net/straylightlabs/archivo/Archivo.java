@@ -25,7 +25,10 @@ import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
 import javafx.concurrent.Task;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
@@ -35,6 +38,7 @@ import javafx.scene.control.ButtonType;
 import javafx.scene.image.Image;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.Pane;
+import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import net.straylightlabs.archivo.controller.*;
 import net.straylightlabs.archivo.model.*;
@@ -42,6 +46,7 @@ import net.straylightlabs.archivo.net.MindCommandRecordingUpdate;
 import net.straylightlabs.archivo.net.MindTask;
 import net.straylightlabs.archivo.utilities.OSHelper;
 import net.straylightlabs.archivo.view.*;
+import org.controlsfx.control.HyperlinkLabel;
 import org.controlsfx.glyphfont.FontAwesome;
 import org.controlsfx.glyphfont.Glyph;
 import org.controlsfx.glyphfont.GlyphFont;
@@ -600,15 +605,36 @@ public class Archivo extends Application {
         rootController.hideStatus();
     }
 
+    public void showPreferencesDialog() {
+        PreferencesDialog preferences = new PreferencesDialog(getPrimaryStage(), this);
+        preferences.show();
+    }
+
     public void showErrorMessage(String header, String message) {
-        showErrorMessageWithAction(header, message, null);
+        showErrorMessageWithAction(header, message, null, null);
     }
 
     public boolean showErrorMessageWithAction(String header, String message, String action) {
+        return showErrorMessageWithAction(header, message, action, null);
+    }
+
+    public boolean showErrorMessageWithAction(String header, String message, String action,
+                                              EventHandler<ActionEvent> eventHandler) {
         Alert alert = new Alert(Alert.AlertType.ERROR);
         alert.setTitle("Something went wrong...");
         alert.setHeaderText(header);
-        alert.setContentText(message);
+
+        VBox contentPane = new VBox();
+        HyperlinkLabel contentText = new HyperlinkLabel(message);
+        contentText.setPrefWidth(500);
+        contentPane.setPadding(new Insets(30, 15, 20, 15));
+        contentPane.getChildren().add(contentText);
+        alert.getDialogPane().setContent(contentPane);
+
+        if (eventHandler != null) {
+            contentText.setOnAction(eventHandler);
+            contentText.addEventHandler(ActionEvent.ACTION, (event) -> alert.close());
+        }
 
         ButtonType closeButtonType = new ButtonType("Close", ButtonBar.ButtonData.CANCEL_CLOSE);
         ButtonType actionButtonType = new ButtonType(action, ButtonBar.ButtonData.YES);

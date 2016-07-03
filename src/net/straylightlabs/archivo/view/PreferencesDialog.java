@@ -47,7 +47,7 @@ import java.util.*;
 /**
  * This dialog is for user-configurable options.
  */
-class PreferencesDialog {
+public class PreferencesDialog {
     private final Dialog<String> dialog;
     private final UserPrefs userPrefs;
     private final StringProperty organizeLabel;
