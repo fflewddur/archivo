@@ -122,9 +122,8 @@ public class RecordingSelection {
     }
 
     public void selectionChanged(ListChangeListener.Change<? extends TreeItem<Recording>> change) {
-        logger.debug("Selection changed");
-
         ObservableList<? extends TreeItem<Recording>> selectedRecordings = change.getList();
+        logger.debug("Selection changed ({} recording(s) selected)", selectedRecordings.size());
 
         clearFields();
         boolean isAnyRecordingCopyProtected = false;
@@ -333,6 +332,7 @@ public class RecordingSelection {
         return expectedRemovalDate;
     }
 
+    @SuppressWarnings("unused")
     public StringProperty archivedOnProperty() {
         return archivedOn;
     }

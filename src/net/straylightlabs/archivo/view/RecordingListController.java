@@ -594,19 +594,22 @@ public class RecordingListController implements Initializable {
         showAllRecordings();
         searchBar.setVisible(false);
         searchBar.setManaged(false);
+        recordingTreeTable.requestFocus();
     }
 
     private void onlyShowMatchingRecordings(String search) {
         logger.debug("Only show recordings matching '{}'", search);
+        List<TreeItem<Recording>> selection = getSelection();
         TreeItem<Recording> filteredItems = new TreeItem<>();
         filteredItems.setValue(rootUnfiltered.getValue());
         filterRecordings(rootUnfiltered, search, filteredItems);
         recordingTreeTable.setRoot(filteredItems);
-        recordingTreeTable.getSelectionModel().select(0);
+        restoreSelection(selection);
         logger.debug("Completed showing recordings matching '{}'", search);
     }
 
     private void filterRecordings(TreeItem<Recording> node, String filter, TreeItem<Recording> filteredItems) {
+        filter = filter.toLowerCase();
         if (node.isLeaf()) {
             if (node.getValue().getFullTitle().toLowerCase().contains(filter)) {
                 TreeItem<Recording> newItem = new TreeItem<>();
@@ -635,8 +638,40 @@ public class RecordingListController implements Initializable {
     }
 
     private void showAllRecordings() {
-        recordingTreeTable.setRoot(rootUnfiltered);
-        recordingTreeTable.getSelectionModel().select(0);
+        if (!recordingTreeTable.getRoot().equals(rootUnfiltered)) {
+            logger.debug("showAllRecordings()");
+            List<TreeItem<Recording>> selection = getSelection();
+            recordingTreeTable.setRoot(rootUnfiltered);
+            restoreSelection(selection);
+        }
+    }
+
+    private List<TreeItem<Recording>> getSelection() {
+        return new ArrayList<>(recordingTreeTable.getSelectionModel().getSelectedItems());
+    }
+
+    private void restoreSelection(List<TreeItem<Recording>> priorSelection) {
+        logger.debug("Restoring selection of {} item(s)", priorSelection.size());
+        TreeTableView.TreeTableViewSelectionModel<Recording> selectionModel = recordingTreeTable.getSelectionModel();
+        selectionModel.clearSelection();
+        Set<Recording> selectionSet = new HashSet<>();
+        priorSelection.forEach(item -> selectionSet.add(item.getValue()));
+        selectRecordings(recordingTreeTable.getRoot(), selectionSet);
+        selectionModel.getSelectedIndices().stream().min(Integer::compare).ifPresent(i -> {
+            logger.debug("scrolling to {}", i);
+            recordingTreeTable.scrollTo(i);
+        });
+    }
+
+    private void selectRecordings(TreeItem<Recording> node, Set<Recording> recordings) {
+        Recording recording = node.getValue();
+        if (recording != null && recordings.contains(recording)) {
+            logger.debug("Selecting {}", recording.getFullTitle());
+            recordingTreeTable.getSelectionModel().select(node);
+        }
+        if (!node.isLeaf()) {
+            node.getChildren().forEach(child -> selectRecordings(child, recordings));
+        }
     }
 
     /**
@@ -670,6 +705,12 @@ public class RecordingListController implements Initializable {
      */
     public void removeRecording(Recording recording) {
         ObservableList<TreeItem<Recording>> recordingItems = recordingTreeTable.getRoot().getChildren();
+        int index = recordingTreeTable.getSelectionModel().getSelectedIndex();
+        TreeItem<Recording> treeItemAtSelection = recordingTreeTable.getSelectionModel().getModelItem(index);
+        if (treeItemAtSelection.getValue().equals(recording)) {
+            // Only adjust our selection when removing the recording with the lowest index
+            recordingTreeTable.getSelectionModel().clearAndSelect(Math.max(index - 1, 0));
+        }
         removeRecordingFromList(recording, recordingItems);
     }
 
@@ -717,6 +758,7 @@ public class RecordingListController implements Initializable {
             TreeItem<Recording> grandParent = parent.getParent();
             grandParent.getChildren().remove(parent);
             grandParent.getChildren().add(parentIndex, sibling);
+            recordingTreeTable.getSelectionModel().clearSelection();
             recordingTreeTable.getSelectionModel().select(sibling);
             Platform.runLater(() -> {
                 TreeItem<Recording> selectedItem = recordingTreeTable.getSelectionModel().getSelectedItem();
