@@ -291,7 +291,9 @@
         </fx:csstobin>
         <fx:jar destfile="${artifact.temp.output.Archivo}/Archivo.jar">
             <fx:application refid="Archivo_id"/>
-            <fx:platform javafx="8.0"/>
+            <fx:platform javafx="8.0">
+                <fx:jvmarg value="-Xmx512m"/>
+            </fx:platform>
             <fx:resources>
                 <fx:fileset dir="${artifact.temp.output.Archivo}" includes="*.jar"/>
             </fx:resources>
