@@ -374,35 +374,33 @@ public class Recording {
 
     /**
      * Build a sensible default nested filename.
+     * Try to follow Plex's guidelines at
+     * https://support.plex.tv/hc/en-us/articles/200220687-Naming-Series-Season-Based-TV-Shows
      */
     private Path buildDefaultNestedPath() {
         List<String> nestedComponents = new ArrayList<>();
+
+        if (collectionType == Type.MOVIE) {
+            nestedComponents.add("Movies");
+        } else {
+            nestedComponents.add("TV Shows");
+        }
 
         if (seriesTitle != null && !seriesTitle.isEmpty()) {
             nestedComponents.add(filterUnsafeChars(seriesTitle));
         }
 
         if (seriesNumber > 0) {
-            nestedComponents.add(String.format("Season %d", seriesNumber));
+            nestedComponents.add(String.format("Season %02d", seriesNumber));
         }
 
-        StringJoiner joiner = new StringJoiner(" - ");
-        if (episodeNumbers.size() > 0) {
-            joiner.add(getEpisodeNumberRange());
-        }
-        if (collectionType != Type.MOVIE) {
-            LocalDate dateRecorded = getDateRecorded().toLocalDate();
-            if (episodeTitle != null && !episodeTitle.isEmpty()) {
-                joiner.add(episodeTitle);
-            } else if (originalAirDate != null && originalAirDate.plusWeeks(1).isAfter(dateRecorded)) {
-                joiner.add(originalAirDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
-            } else {
-                joiner.add(getDateRecorded().format(DateTimeFormatter.ISO_LOCAL_DATE));
-            }
-        }
-        nestedComponents.add(filterUnsafeChars(joiner.toString()));
+        nestedComponents.add(buildDefaultFlatFilename());
 
-        if (nestedComponents.size() == 3) {
+        if (nestedComponents.size() == 4) {
+            return Paths.get(
+                    nestedComponents.get(0), nestedComponents.get(1), nestedComponents.get(2), nestedComponents.get(3)
+            );
+        } else if (nestedComponents.size() == 3) {
             return Paths.get(nestedComponents.get(0), nestedComponents.get(1), nestedComponents.get(2));
         } else if (nestedComponents.size() == 2) {
             return Paths.get(nestedComponents.get(0), nestedComponents.get(1));
@@ -414,6 +412,8 @@ public class Recording {
     private String getEpisodeNumberRange() {
         if (episodeNumbers.size() == 1) {
             return String.format("%02d", episodeNumbers.get(0));
+        } else if (episodeNumbers.size() == 2) {
+            return String.format("%02d-E%02d", episodeNumbers.get(0), episodeNumbers.get(1));
         } else {
             return episodeNumbers.stream().map(Object::toString).collect(Collectors.joining(","));
         }
