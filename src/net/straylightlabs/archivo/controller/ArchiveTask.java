@@ -771,7 +771,11 @@ class ArchiveTask extends Task<Recording> {
     }
 
     private void cleanupIntermediateFiles() {
-        List<Path> intermediateFiles = Arrays.asList(downloadPath, fixedPath, cutPath, metadataPath, ffsplitPath);
+        // the List returned from Arrays.asList() doesn't allow elements to be added, so we need copy the elements
+        // to a new ArrayList
+        List<Path> intermediateFiles = new ArrayList<>(
+                Arrays.asList(downloadPath, fixedPath, cutPath, metadataPath, ffsplitPath)
+        );
         if (!keepEncryptedFile) {
             intermediateFiles.add(encryptedPath);
         }
