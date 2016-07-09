@@ -90,7 +90,7 @@ public class Archivo extends Application {
     public static final int APP_MINOR_VERSION = 1;
     public static final int APP_RELEASE_VERSION = 0;
     public static final boolean IS_BETA = true;
-    public static final int BETA_VERSION = 1;
+    public static final int BETA_VERSION = 2;
     public static final String APPLICATION_VERSION;
     public static final String USER_AGENT;
     public static final Path LOG_PATH = Paths.get(OSHelper.getDataDirectory().toString(), "log.txt");
