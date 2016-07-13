@@ -42,6 +42,9 @@ public class Tivo {
     private static final String JSON_TSN = "tsn";
     private static final String JSON_ADDRESSES = "addresses";
     private static final String JSON_PORT = "port";
+    private static final String DEFAULT_NAME = "TiVo";
+    private static final String DEFAULT_TSN = "unknown";
+    private static final int DEFAULT_PORT = 1413;
 
     private Tivo(Builder builder) {
         name = builder.name;
@@ -155,7 +158,7 @@ public class Tivo {
      * @param json String containing the Tivo object in JSON
      * @param mak  Media access key to use for the resulting Tivo
      * @return A new Tivo object
-     * @throws IllegalArgumentException
+     * @throws IllegalArgumentException on invalid address
      */
     public static Tivo fromJSON(final String json, final String mak) throws IllegalArgumentException {
         JSONObject jo = new JSONObject(json);
@@ -174,6 +177,11 @@ public class Tivo {
         }
 
         return new Builder().name(name).tsn(tsn).port(port).addresses(addresses).mak(mak).build();
+    }
+
+    public static Tivo fromIP(final InetAddress address, final String mak) {
+        return new Builder().name(DEFAULT_NAME).tsn(DEFAULT_TSN).port(DEFAULT_PORT).
+                addresses(Collections.singleton(address)).mak(mak).build();
     }
 
     public static class Builder {

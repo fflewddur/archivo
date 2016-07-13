@@ -437,6 +437,11 @@ public class RecordingListController implements Initializable {
         logger.debug("startTivoSearch()");
         assert (mainApp != null);
 
+        if (!mainApp.getUserPrefs().getFindTivos()) {
+            setupManualTivoConnection();
+            return;
+        }
+
         recordingTreeTable.getSelectionModel().clearSelection();
         removeTivoSelectedListener();
         trySearchAgain = false;
@@ -448,6 +453,7 @@ public class RecordingListController implements Initializable {
                 if (tivoSearchTask.searchFailed()) {
                     logger.debug("Search task failed because of a network error");
                     logNetworkInterfaces();
+                    clearRecordings();
                     mainApp.clearStatusText();
                     enableUI();
                     mainApp.crashOccurred();
@@ -466,6 +472,7 @@ public class RecordingListController implements Initializable {
                     } else {
                         logger.debug("Could not find any TiVos");
                         logNetworkInterfaces();
+                        clearRecordings();
                         mainApp.clearStatusText();
                         enableUI();
                         mainApp.crashOccurred();
@@ -515,6 +522,18 @@ public class RecordingListController implements Initializable {
         mainApp.getRpcExecutor().submit(tivoSearchTask);
     }
 
+    private void setupManualTivoConnection() {
+        recordingTreeTable.getSelectionModel().clearSelection();
+        clearRecordings();
+        removeTivoSelectedListener();
+        tivos.clear();
+        Tivo tivo = Tivo.fromIP(mainApp.getUserPrefs().getTivoAddress(), mainApp.getMak());
+        tivos.add(tivo);
+        tivoList.getSelectionModel().clearSelection();
+        addTivoSelectedListener();
+        tivoList.getSelectionModel().selectFirst();
+    }
+
     private void logNetworkInterfaces() {
         List<String> nics = new ArrayList<>();
         try {
@@ -543,7 +562,7 @@ public class RecordingListController implements Initializable {
 
     public void updateMak(String newMak) {
         restartTivoSearch();
-        tivos.stream().forEach(tivo -> tivo.updateMak(newMak));
+        tivos.forEach(tivo -> tivo.updateMak(newMak));
     }
 
     private void restartTivoSearch() {
@@ -643,6 +662,13 @@ public class RecordingListController implements Initializable {
             List<TreeItem<Recording>> selection = getSelection();
             recordingTreeTable.setRoot(rootUnfiltered);
             restoreSelection(selection);
+        }
+    }
+
+    private void clearRecordings() {
+        TreeItem<Recording> root = recordingTreeTable.getRoot();
+        if (root != null) {
+            root.getChildren().clear();
         }
     }
 

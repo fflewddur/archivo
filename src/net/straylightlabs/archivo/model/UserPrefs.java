@@ -26,8 +26,7 @@ import net.straylightlabs.archivo.controller.MAKManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.NetworkInterface;
-import java.net.SocketException;
+import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -61,6 +60,8 @@ public class UserPrefs {
     private static final String FFMPEG_PATH = "ffmpegPath";
     private static final String FFPROBE_PATH = "ffprobePath";
     private static final String HANDBRAKE_PATH = "handbrakePath";
+    private static final String FIND_TIVOS = "findTiVos";
+    private static final String TIVO_ADDRESS = "tivoAddress";
     private static final String NETWORK_INTERFACE = "networkInterface";
     private static final String SHARE_TELEMETRY = "shareTelemetry";
     private static final String DEBUG_MODE = "debugMode";
@@ -344,6 +345,38 @@ public class UserPrefs {
         if (netInterface.getMachineHash() != hardwareAddressHash) {
             prefs.putInt(NETWORK_INTERFACE, netInterface.getMachineHash());
             networkChangedListener.changed(null, null, netInterface);
+        }
+    }
+
+    public synchronized boolean getFindTivos() {
+        return prefs.getBoolean(FIND_TIVOS, sysPrefs.getBoolean(FIND_TIVOS, true));
+    }
+
+    public synchronized void setFindTivos(boolean val) {
+        if (getFindTivos() != val) {
+            prefs.putBoolean(FIND_TIVOS, val);
+            networkChangedListener.changed(null, null, getNetworkInterface());
+        }
+    }
+
+    public synchronized InetAddress getTivoAddress() {
+        String addressString = prefs.get(TIVO_ADDRESS, sysPrefs.get(TIVO_ADDRESS, ""));
+        InetAddress address = null;
+        if (!addressString.isEmpty()) {
+            try {
+                address = InetAddress.getByName(addressString);
+            } catch (UnknownHostException e) {
+                logger.error("Address '{}' is invalid: {}", addressString, e.getLocalizedMessage());
+            }
+        }
+        return address;
+    }
+
+    public synchronized void setTivoAddress(String address) {
+        String oldAddress = prefs.get(TIVO_ADDRESS, sysPrefs.get(TIVO_ADDRESS, ""));
+        if (!oldAddress.equalsIgnoreCase(address)) {
+            prefs.put(TIVO_ADDRESS, address);
+            networkChangedListener.changed(null, null, getNetworkInterface());
         }
     }
 

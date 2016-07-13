@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.nio.file.Path;
@@ -52,6 +53,7 @@ public class PreferencesDialog {
     private final UserPrefs userPrefs;
     private final StringProperty organizeLabel;
     private Path defaultFolder;
+
 
     private final ObservableList<VideoResolution> videoResolutions;
     private final ObservableList<AudioChannel> audioChannels;
@@ -175,7 +177,7 @@ public class PreferencesDialog {
         box.setAlignment(Pos.CENTER_LEFT);
         box.setSpacing(10);
         box.disableProperty().bind(organize.selectedProperty().not());
-        Label label = new Label("Save as");
+        Label label = new Label("Save as:");
         ComboBox<FileType> fileType = new ComboBox<>();
         fileType.getItems().addAll(FileType.values());
         fileType.getSelectionModel().select(FileType.fromDescription(userPrefs.getMostRecentFileType()));
@@ -183,16 +185,18 @@ public class PreferencesDialog {
         box.getChildren().addAll(label, fileType);
         grid.add(box, LABEL_COL, row++, 2, 1);
 
-        label = createLabelWithTooltip("Limit video resolution to", "If your selected file type has a larger resolution than this, archived recordings will be scaled down to this size");
+        label = createLabelWithTooltip("Limit video resolution to:", "If your selected file type has a larger resolution than this, archived recordings will be scaled down to this size");
         grid.add(label, LABEL_COL, row);
         ChoiceBox<VideoResolution> videoResolution = new ChoiceBox<>(videoResolutions);
+        videoResolution.setTooltip(label.getTooltip());
         videoResolution.setValue(userPrefs.getVideoResolution());
         grid.add(videoResolution, CONTROL_COL, row);
         row++;
 
-        label = createLabelWithTooltip("Limit audio channels to", "If your selected file type supports multiple audio channels, archived recordings will have their sound limited to these channels");
+        label = createLabelWithTooltip("Limit audio channels to:", "If your selected file type supports multiple audio channels, archived recordings will have their sound limited to these channels");
         grid.add(label, LABEL_COL, row);
         ChoiceBox<AudioChannel> audioChannel = new ChoiceBox<>(audioChannels);
+        audioChannel.setTooltip(label.getTooltip());
         audioChannel.setValue(userPrefs.getAudioChannels());
         grid.add(audioChannel, CONTROL_COL, row);
         row++;
@@ -200,11 +204,28 @@ public class PreferencesDialog {
         header = createHeader("Network Settings");
         grid.add(header, HEADER_COL, row++, 3, 1);
 
-        label = createLabelWithTooltip("Look for TiVos on", "Select the same network your TiVo is connected to");
-        grid.add(label, LABEL_COL, row);
+        CheckBox findTivos = new CheckBox("Look for TiVos on:");
+        findTivos.setTooltip(new Tooltip("Select the same network your TiVo is connected to,\nor uncheck to specify your TiVo's IP address manually."));
+        findTivos.setSelected(userPrefs.getFindTivos());
+        grid.add(findTivos, LABEL_COL, row);
         ChoiceBox<NetInterface> networkInterface = new ChoiceBox<>(networkInterfaces);
+        networkInterface.disableProperty().bind(findTivos.selectedProperty().not());
+        networkInterface.setTooltip(findTivos.getTooltip());
         networkInterface.setValue(userPrefs.getNetworkInterface());
         grid.add(networkInterface, CONTROL_COL, row);
+        row++;
+
+        label = createLabelWithTooltip("TiVo IP address:", "If Archivo can't automatically find your TiVo, specify its IP address");
+        label.disableProperty().bind(findTivos.selectedProperty());
+        grid.add(label, LABEL_COL, row);
+        TextField ipAddress = new TextField();
+        ipAddress.disableProperty().bind(findTivos.selectedProperty());
+        ipAddress.setTooltip(label.getTooltip());
+        InetAddress tivoIPAddress = userPrefs.getTivoAddress();
+        if (tivoIPAddress != null) {
+            ipAddress.setText(tivoIPAddress.getHostAddress());
+        }
+        grid.add(ipAddress, CONTROL_COL, row);
         row++;
 
         header = createHeader("Help Improve Archivo");
@@ -238,7 +259,9 @@ public class PreferencesDialog {
                 }
                 userPrefs.setVideoResolution(videoResolution.getValue());
                 userPrefs.setAudioChannels(audioChannel.getValue());
+                userPrefs.setFindTivos(findTivos.isSelected());
                 userPrefs.setNetworkInterface(networkInterface.getValue());
+                userPrefs.setTivoAddress(ipAddress.getText().trim());
                 userPrefs.setShareTelemetry(telemetry.isSelected());
                 userPrefs.setDebugMode(debugMode.isSelected());
             }
