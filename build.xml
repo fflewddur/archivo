@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="archivo" default="archivo">
     <property name="title" value="Archivo"/>
-    <property name="version" value="1.1.0 Beta 2"/>
+    <property name="version" value="1.1.0"/>
     <property name="copyright" value="2016 Straylight Labs LLC"/>
 
     <!-- Overwrite these in build.properties if necessary -->
