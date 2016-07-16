@@ -74,7 +74,7 @@ public class TivoSearchTask extends Task<Void> {
     }
 
     private void startSearch() {
-        logger.info("Starting search for TiVo devices...");
+        logger.info("Starting search for TiVo devices on {}...", localhost);
         Service tivoMindService = Service.fromName(SERVICE_TYPE);
         Query query = Query.createWithTimeout(tivoMindService, Domain.LOCAL, timeout);
         try {
@@ -83,7 +83,7 @@ public class TivoSearchTask extends Task<Void> {
             addTivosFromInstances(instances);
             searchFailed = false;
         } catch (IOException e) {
-            logger.error("Error searching for TiVo devices: ", e);
+            logger.error("Error searching for TiVo devices on {}: ", localhost, e);
             searchFailed = true;
         }
     }
