@@ -26,11 +26,17 @@ import net.straylightlabs.archivo.controller.MAKManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.net.*;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 import java.util.prefs.Preferences;
 
 import static net.straylightlabs.archivo.utilities.OSHelper.getArchSuffix;
@@ -279,15 +285,18 @@ public class UserPrefs {
     }
 
     public synchronized String getComskipPath() {
-        return prefs.get(COMSKIP_PATH, sysPrefs.get(COMSKIP_PATH, Paths.get(tooldir, "comskip" + getExeSuffix()).toString()));
+        return prefs.get(COMSKIP_PATH, sysPrefs.get(COMSKIP_PATH,
+                Paths.get(tooldir, "comskip" + getExeSuffix()).toString()));
     }
 
     public synchronized String getFFmpegPath() {
-        return prefs.get(FFMPEG_PATH, sysPrefs.get(FFMPEG_PATH, Paths.get(tooldir, "ffmpeg" + getExeSuffix()).toString()));
+        return prefs.get(FFMPEG_PATH, sysPrefs.get(FFMPEG_PATH,
+                Paths.get(tooldir, "ffmpeg" + getExeSuffix()).toString()));
     }
 
     public synchronized String getFFprobePath() {
-        return prefs.get(FFPROBE_PATH, sysPrefs.get(FFPROBE_PATH, Paths.get(tooldir, "ffprobe" + getExeSuffix()).toString()));
+        return prefs.get(FFPROBE_PATH, sysPrefs.get(FFPROBE_PATH,
+                Paths.get(tooldir, "ffprobe" + getExeSuffix()).toString()));
     }
 
     public synchronized String getHandbrakePath() {
@@ -302,9 +311,11 @@ public class UserPrefs {
         );
 
         if (hardwareAddressHash == NetInterface.DEFAULT_MACHINE_REPRESENTATION.hashCode()) {
+            logger.info("Using default network interface");
             return new NetInterface();
         } else {
             NetworkInterface ni = getInterfaceByHardwareAddress(hardwareAddressHash);
+            logger.info("Using custom network interface: {}", ni);
             if (ni != null) {
                 return new NetInterface(ni);
             } else {
@@ -349,7 +360,9 @@ public class UserPrefs {
     }
 
     public synchronized boolean getFindTivos() {
-        return prefs.getBoolean(FIND_TIVOS, sysPrefs.getBoolean(FIND_TIVOS, true));
+        boolean retval = prefs.getBoolean(FIND_TIVOS, sysPrefs.getBoolean(FIND_TIVOS, true));
+        logger.info("Search for TiVos: {}", retval);
+        return retval;
     }
 
     public synchronized void setFindTivos(boolean val) {
@@ -361,6 +374,7 @@ public class UserPrefs {
 
     public synchronized InetAddress getTivoAddress() {
         String addressString = prefs.get(TIVO_ADDRESS, sysPrefs.get(TIVO_ADDRESS, ""));
+        logger.info("Looking for TiVo with address '{}'", addressString);
         InetAddress address = null;
         if (!addressString.isEmpty()) {
             try {
@@ -380,6 +394,7 @@ public class UserPrefs {
         }
     }
 
+    @SuppressWarnings("all")
     public synchronized boolean getShareTelemetry() {
         return Archivo.IS_BETA || prefs.getBoolean(SHARE_TELEMETRY, sysPrefs.getBoolean(SHARE_TELEMETRY, true));
     }

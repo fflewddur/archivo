@@ -451,7 +451,7 @@ public class RecordingListController implements Initializable {
             tivoSearchTask.setOnSucceeded(e -> {
                 logger.debug("Tivo search task succeeded");
                 if (tivoSearchTask.searchFailed()) {
-                    logger.debug("Search task failed because of a network error");
+                    logger.info("Search task failed because of a network error");
                     logNetworkInterfaces();
                     clearRecordings();
                     mainApp.clearStatusText();
@@ -470,7 +470,7 @@ public class RecordingListController implements Initializable {
                     if (retries_before_prompt > 0) {
                         trySearchAgain = true;
                     } else {
-                        logger.debug("Could not find any TiVos");
+                        logger.info("Could not find any TiVos");
                         logNetworkInterfaces();
                         clearRecordings();
                         mainApp.clearStatusText();
@@ -543,7 +543,7 @@ public class RecordingListController implements Initializable {
                             nic.getDisplayName(), nic.isLoopback(), nic.isPointToPoint(), nic.isVirtual(),
                             nic.supportsMulticast(), TelemetryController.getAddressesAsString(nic)));
             }
-            logger.debug("Localhost address: {}", InetAddress.getLocalHost());
+            logger.info("Localhost address: {}", InetAddress.getLocalHost());
         } catch (SocketException e) {
             logger.error("Error fetching network interface list: ", e);
         } catch (UnknownHostException e) {

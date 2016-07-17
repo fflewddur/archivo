@@ -117,19 +117,19 @@ public class TivoSearchTask extends Task<Void> {
             if (tsn.startsWith("A")) {
                 // Streaming device
                 isSupportedTivo = false;
-                logger.debug("Unsupported streaming-only TiVo found: {}", instance);
+                logger.info("Unsupported streaming-only TiVo found: {}", instance);
             } else if (tsn.startsWith("0")) {
                 // Series 1
                 isSupportedTivo = false;
-                logger.debug("Unsupported Series 1 TiVo found: {}", instance);
+                logger.info("Unsupported Series 1 TiVo found: {}", instance);
             } else if (tsn.startsWith("1") || tsn.startsWith("2") || tsn.startsWith("3") || tsn.startsWith("5")) {
                 // Series 2
                 isSupportedTivo = false;
-                logger.debug("Unsupported Series 2 TiVo found: {}", instance);
+                logger.info("Unsupported Series 2 TiVo found: {}", instance);
             } else if (tsn.startsWith("6")) {
                 // Series 3
                 isSupportedTivo = false;
-                logger.debug("Unsupported Series 3 TiVo found: {}", instance);
+                logger.info("Unsupported Series 3 TiVo found: {}", instance);
             }
             logger.info("isSupported = {} for instance {}", isSupportedTivo, instance);
         } else {
