@@ -412,7 +412,7 @@
             <arg value="convert"/>
             <arg value="${dmg.path.tmp}"/>
             <arg value="-format"/>
-            <arg value="UDZO"/>
+            <arg value="UDBZ"/>
             <arg value="-o"/>
             <arg value="${dmg.path}"/>
         </exec>
