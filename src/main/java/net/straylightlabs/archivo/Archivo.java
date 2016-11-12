@@ -189,7 +189,7 @@ public class Archivo extends Application {
     }
 
     private void loadSymbolFont() {
-        URL fontUrl = getClass().getClassLoader().getResource("resources/fontawesome.otf");
+        URL fontUrl = getClass().getClassLoader().getResource("fontawesome.otf");
         logger.debug("Loading font resource at {}", fontUrl);
         if (fontUrl == null) {
             logger.error("Error loading symbol font");
@@ -363,7 +363,8 @@ public class Archivo extends Application {
     private void initRootLayout() {
         try {
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(Archivo.class.getResource("view/RootLayout.fxml"));
+            loader.setLocation(getClass().getClassLoader().getResource("RootLayout.fxml"));
+
             BorderPane rootLayout = loader.load();
 
             rootController = loader.getController();
@@ -371,19 +372,19 @@ public class Archivo extends Application {
             rootController.disableMenuItems();
 
             Scene scene = new Scene(rootLayout);
-            URL styleUrl = getClass().getClassLoader().getResource("resources/style.css");
+            URL styleUrl = getClass().getClassLoader().getResource("style.css");
             if (styleUrl != null) {
                 scene.getStylesheets().add(styleUrl.toExternalForm());
             }
             primaryStage.setScene(scene);
 
             primaryStage.getIcons().addAll(
-                    new Image(getClass().getClassLoader().getResourceAsStream("resources/archivo-16.png")),
-                    new Image(getClass().getClassLoader().getResourceAsStream("resources/archivo-32.png")),
-                    new Image(getClass().getClassLoader().getResourceAsStream("resources/archivo-64.png")),
-                    new Image(getClass().getClassLoader().getResourceAsStream("resources/archivo-96.png")),
-                    new Image(getClass().getClassLoader().getResourceAsStream("resources/archivo-128.png")),
-                    new Image(getClass().getClassLoader().getResourceAsStream("resources/archivo-48.png"))
+                    new Image(getClass().getClassLoader().getResourceAsStream("archivo-16.png")),
+                    new Image(getClass().getClassLoader().getResourceAsStream("archivo-32.png")),
+                    new Image(getClass().getClassLoader().getResourceAsStream("archivo-64.png")),
+                    new Image(getClass().getClassLoader().getResourceAsStream("archivo-96.png")),
+                    new Image(getClass().getClassLoader().getResourceAsStream("archivo-128.png")),
+                    new Image(getClass().getClassLoader().getResourceAsStream("archivo-48.png"))
             );
             primaryStage.show();
         } catch (IOException e) {
@@ -396,7 +397,7 @@ public class Archivo extends Application {
 
         try {
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(Archivo.class.getResource("view/RecordingList.fxml"));
+            loader.setLocation(getClass().getClassLoader().getResource("RecordingList.fxml"));
 
             recordingListController = new RecordingListController(this);
             loader.setController(recordingListController);
@@ -417,7 +418,7 @@ public class Archivo extends Application {
 
         try {
             FXMLLoader loader = new FXMLLoader();
-            loader.setLocation(Archivo.class.getResource("view/RecordingDetails.fxml"));
+            loader.setLocation(getClass().getClassLoader().getResource("RecordingDetails.fxml"));
 
             recordingDetailsController = new RecordingDetailsController(this);
             loader.setController(recordingDetailsController);

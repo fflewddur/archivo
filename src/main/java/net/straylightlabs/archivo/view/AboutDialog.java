@@ -60,7 +60,7 @@ class AboutDialog {
         dialog.initModality(Modality.NONE);
 
         dialog.setTitle("About " + Archivo.APPLICATION_NAME);
-        dialog.setGraphic(new ImageView(new Image(Archivo.class.getClassLoader().getResourceAsStream("resources/archivo-64.png"))));
+        dialog.setGraphic(new ImageView(new Image(getClass().getClassLoader().getResourceAsStream("archivo-64.png"))));
         dialog.setHeaderText(String.format("%s %s", Archivo.APPLICATION_NAME, Archivo.APPLICATION_VERSION));
 
         VBox pane = new VBox();

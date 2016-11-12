@@ -58,7 +58,7 @@ public class MindRPC {
 
     public static final int SCHEMA_VER = 9;
     public static final String LINE_ENDING = "\r\n";
-    private static final String KEY_PATH = "resources/cdata.p12";
+    private static final String KEY_PATH = "cdata.p12";
     private static final Pattern RESPONSE_HEAD = Pattern.compile("MRPC/2\\s+(\\d+)\\s+(\\d+)");
     private static final String KEY_PASSWORD = "LwrbLEFYvG";
     private static final int MAX_SESSION_ID_VAL = 0x27dc20;
@@ -128,7 +128,7 @@ public class MindRPC {
 
     private KeyStore createKeyStore() throws KeyStoreException, NoSuchAlgorithmException, CertificateException {
         KeyStore store = KeyStore.getInstance("PKCS12");
-        try (InputStream key = Archivo.class.getClassLoader().getResourceAsStream(KEY_PATH)) {
+        try (InputStream key = getClass().getClassLoader().getResourceAsStream(KEY_PATH)) {
             assert (key != null);
             store.load(key, KEY_PASSWORD.toCharArray());
         } catch (IOException e) {
