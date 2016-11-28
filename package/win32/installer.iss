@@ -25,6 +25,8 @@ SolidCompression=yes
 SourceDir={#SrcDir}
 MinVersion=0,6.0
 SignTool=signtool
+SetupIconFile=archivo.ico
+UninstallDisplayIcon={app}\archivo.ico
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -33,7 +35,8 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"; Flags: unchecked
 
 [Files]
-Source: "*.jar"; DestDir: "{app}"; Flags: ignoreversion
+Source: "archivo.jar"; DestDir: "{app}"; Flags: ignoreversion
+Source: "lib\*.jar"; DestDir: "{app}\lib"; Flags: ignoreversion
 Source: "*.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "comskip.ini"; DestDir: "{app}"; Flags: ignoreversion
 Source: "comskip.dictionary"; DestDir: "{app}"; Flags: ignoreversion
