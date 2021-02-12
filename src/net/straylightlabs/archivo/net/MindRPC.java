@@ -60,7 +60,7 @@ public class MindRPC {
     public static final String LINE_ENDING = "\r\n";
     private static final String KEY_PATH = "resources/cdata.p12";
     private static final Pattern RESPONSE_HEAD = Pattern.compile("MRPC/2\\s+(\\d+)\\s+(\\d+)");
-    private static final String KEY_PASSWORD = "LwrbLEFYvG";
+    private static final String KEY_PASSWORD = "XF7x4714qw";
     private static final int MAX_SESSION_ID_VAL = 0x27dc20;
     private static final String ENCODING = "UTF-8";
 
